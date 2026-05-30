@@ -35,8 +35,8 @@
 
       <!-- ESTADO: Erro -->
       <div id="erro" class="cartao-aviso text-center" style="display: none;">
-        <p class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle"></i> Não foi possível analisar agora.</p>
-        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Verifique sua conexão e tente novamente.</p>
+        <p class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle"></i> <span id="erroTitulo">Não foi possível analisar agora.</span></p>
+        <p id="erroTexto" class="text-secondary mb-3" style="font-size: 0.9rem;">Verifique sua conexão e tente novamente.</p>
         <button class="btn-roxo" onclick="iniciarTriagem()">Tentar Novamente</button>
       </div>
 
@@ -170,6 +170,19 @@
         }
       } catch (e) {
         console.error(e);
+        if (e.status === 429) {
+          document.getElementById("erroTitulo").textContent = "Limite da IA atingido.";
+          document.getElementById("erroTexto").textContent =
+            "A cota gratuita deste modelo no Google AI Studio foi esgotada (ex.: 20 req/dia no gemini-3.5-flash). Aguarde o reset diário (meia-noite horário do Pacífico/EUA) ou troque o model em js/config.js (ex.: gemini-2.5-flash).";
+        } else if (e.status === 403 || e.status === 401) {
+          document.getElementById("erroTitulo").textContent = "Chave da IA inválida.";
+          document.getElementById("erroTexto").textContent =
+            "Verifique a apiKey do Gemini em js/config.js (Google AI Studio).";
+        } else {
+          document.getElementById("erroTitulo").textContent = "Não foi possível analisar agora.";
+          document.getElementById("erroTexto").textContent =
+            "Verifique sua conexão com a internet e tente novamente.";
+        }
         mostrarEstado("erro");
       }
     }

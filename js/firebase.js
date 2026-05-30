@@ -89,6 +89,23 @@ async function listarMeusAtendimentos(usuarioId) {
   return lista;
 }
 
+// Apaga do Firestore os atendimentos "Resolvido pela IA" do usuário logado
+async function apagarAtendimentosResolvidos(usuarioId) {
+  const lista = await listarMeusAtendimentos(usuarioId);
+  const resolvidos = lista.filter(function (a) {
+    return (a.status || "").toLowerCase().includes("resolvido");
+  });
+
+  if (resolvidos.length === 0) return 0;
+
+  const lote = db.batch();
+  resolvidos.forEach(function (a) {
+    lote.delete(db.collection("atendimentos").doc(a.id));
+  });
+  await lote.commit();
+  return resolvidos.length;
+}
+
 // Gera um número de protocolo no formato #ATD-ANO-XXXXX
 function gerarProtocolo() {
   const ano = new Date().getFullYear();

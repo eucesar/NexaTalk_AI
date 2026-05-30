@@ -62,10 +62,22 @@ Mensagem do cliente: "${descricao}"
   });
 
   if (!resposta.ok) {
-    throw new Error("Erro na chamada da Gemini API: " + resposta.status);
+    let detalhe = "";
+    try {
+      const err = await resposta.json();
+      detalhe = err.error && err.error.message ? err.error.message : "";
+    } catch (ignore) {}
+    const erro = new Error("Erro na chamada da Gemini API: " + resposta.status);
+    erro.status = resposta.status;
+    erro.detalhe = detalhe;
+    throw erro;
   }
 
   const dados = await resposta.json();
+
+  if (!dados.candidates || !dados.candidates[0] || !dados.candidates[0].content) {
+    throw new Error("A IA não devolveu resposta válida.");
+  }
 
   // Texto bruto devolvido pela IA
   let textoIA = dados.candidates[0].content.parts[0].text;

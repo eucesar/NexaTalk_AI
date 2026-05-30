@@ -8,9 +8,9 @@
 // ----- Gemini API -----
 const GEMINI_CONFIG = {
   apiKey: "SUA_CHAVE_GEMINI_AQUI",
-  model: "gemini-flash-latest",
+  model: "gemini-2.5-flash",
   endpoint:
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
   projectNumber: "SEU_PROJECT_NUMBER",
 };
 

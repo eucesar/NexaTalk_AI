@@ -53,11 +53,42 @@
         <p class="mt-2 mb-0">Nenhum atendimento encontrado.</p>
       </div>
 
+      <!-- Feedback da exclusão -->
+      <div id="msgApagar" class="text-center mb-2" style="font-size: 0.85rem; display: none;"></div>
+
+      <!-- Apagar resolvidos pela IA -->
+      <button id="btnApagarResolvidos" class="btn-apagar mb-2" onclick="apagarResolvidos()">
+        <i class="bi bi-trash me-2"></i> Apagar atendimentos já resolvidos
+      </button>
+
       <!-- Novo atendimento -->
       <button class="btn-roxo mt-2" onclick="window.location.href='novo-atendimento.html'">
         <i class="bi bi-plus-circle me-2"></i> Abrir Novo Atendimento
       </button>
 
+    </div>
+  </div>
+
+  <!-- Popup de confirmação (no app, sem alert do navegador) -->
+  <div class="modal fade modal-nexatalk" id="modalApagar" tabindex="-1" aria-labelledby="modalApagarTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4 pb-2">
+          <div class="icone-modal-apagar mb-3">
+            <i class="bi bi-trash"></i>
+          </div>
+          <h5 class="mb-2" id="modalApagarTitulo">Apagar atendimentos?</h5>
+          <p id="modalApagarTexto" class="text-secondary mb-0" style="font-size: 0.9rem;"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4 flex-column gap-2">
+          <button type="button" class="btn-apagar-modal" id="btnModalConfirmarApagar">
+            Sim, apagar
+          </button>
+          <button type="button" class="btn-roxo-claro" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -73,6 +104,13 @@
   <script>
     let todosAtendimentos = [];   // tudo que veio do banco
     let filtroAtual = "todos";
+    let usuarioAtual = null;
+    let modalApagar = null;
+    let qtdParaApagar = 0;
+
+    // Modal Bootstrap (popup dentro do app)
+    modalApagar = new bootstrap.Modal(document.getElementById("modalApagar"));
+    document.getElementById("btnModalConfirmarApagar").addEventListener("click", executarApagarResolvidos);
 
     // Exige login
     auth.onAuthStateChanged(async function (usuario) {
@@ -80,6 +118,7 @@
         window.location.href = "../index.html";
         return;
       }
+      usuarioAtual = usuario;
       try {
         todosAtendimentos = await listarMeusAtendimentos(usuario.uid);
         renderizar();
@@ -159,6 +198,56 @@
 
     // Busca em tempo real
     document.getElementById("busca").addEventListener("input", renderizar);
+
+    // Abre popup perguntando se quer apagar
+    function apagarResolvidos() {
+      if (!usuarioAtual) return;
+
+      qtdParaApagar = todosAtendimentos.filter(function (a) {
+        return (a.status || "").toLowerCase().includes("resolvido");
+      }).length;
+
+      if (qtdParaApagar === 0) {
+        mostrarMsgApagar("Nenhum atendimento resolvido pela IA para apagar.", "text-secondary");
+        return;
+      }
+
+      document.getElementById("modalApagarTexto").textContent =
+        "Serão apagados " + qtdParaApagar + ' atendimento(s) com status "Resolvido pela IA". Esta ação remove do banco de dados e não pode ser desfeita.';
+      modalApagar.show();
+    }
+
+    // Confirma no popup e apaga no Firestore
+    async function executarApagarResolvidos() {
+      modalApagar.hide();
+
+      const btn = document.getElementById("btnApagarResolvidos");
+      const btnModal = document.getElementById("btnModalConfirmarApagar");
+      btn.disabled = true;
+      btnModal.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Apagando...';
+
+      try {
+        const apagados = await apagarAtendimentosResolvidos(usuarioAtual.uid);
+        todosAtendimentos = await listarMeusAtendimentos(usuarioAtual.uid);
+        renderizar();
+        mostrarMsgApagar(apagados + " atendimento(s) apagado(s) do banco com sucesso.", "#16a34a");
+      } catch (e) {
+        console.error(e);
+        mostrarMsgApagar("Não foi possível apagar. Tente novamente.", "#dc2626");
+      }
+
+      btn.disabled = false;
+      btnModal.disabled = false;
+      btn.innerHTML = '<i class="bi bi-trash me-2"></i> Apagar atendimentos já resolvidos';
+    }
+
+    function mostrarMsgApagar(texto, cor) {
+      const el = document.getElementById("msgApagar");
+      el.style.display = "block";
+      el.style.color = cor;
+      el.textContent = texto;
+    }
   </script>
 </body>
 </html>
