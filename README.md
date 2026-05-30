@@ -1,58 +1,94 @@
 # NexaTalk AI — Fase 4 (Challenge Claro)
 
-Hub de convergência de interfaces conversacionais — fluxo mobile do cliente com IA (Gemini) e banco de dados (Firebase Firestore).
+Hub de convergência de interfaces conversacionais — fluxo mobile do cliente com IA (Google Gemini) e banco de dados (Firebase Auth + Firestore).
 
-**Grupo:** Cesar Iglesias Balseiro Neto (RM 98007) · Samuel Aguiar (RM 550212)
+## Integrantes
 
----
+| Nome | RM |
+|---|---|
+| Cesar Iglesias | 98007 |
+| Samuel Aguiar | 550212 |
 
-## Como rodar o projeto
-
-1. Baixe ou clone este repositório.
-2. Configure as chaves (passo a passo abaixo).
-3. Abra o arquivo **`index.html`** no navegador.
-   - Recomendado: usar **Live Server** (VS Code) ou servidor local na porta 5500/8000.
-   - Evite abrir direto como `file://` se a IA não responder (use `http://localhost`).
+**Repositório:** https://github.com/eucesar/NexaTalk_AI  
+**Demo online:** https://eucesar.github.io/NexaTalk_AI/
 
 ---
 
-## Onde colar as chaves (passo a passo)
+## Sobre o projeto
 
-O arquivo **`js/config.js`** não vai para o GitHub (contém chaves). Você precisa **criá-lo na sua máquina**:
+Protótipo mobile do fluxo do **cliente**: login, abertura de chamado, triagem com IA, análise visual, registro de protocolo e listagem de atendimentos no Firestore.
 
-### Opção A — Copiar o exemplo (mais fácil)
+---
 
-1. Na pasta `js/`, copie o arquivo:
-   - De: `config.example.js`
-   - Para: `config.js`
-2. Abra `js/config.js` e substitua os valores pelas chaves abaixo (seção **Chaves do grupo**).
+## Como rodar — passo a passo (professor)
 
-### Opção B — Editar manualmente
+### Resumo em 3 passos
 
-1. Crie o arquivo `js/config.js` (se não existir).
-2. Cole o conteúdo de `js/config.example.js`.
-3. Preencha os campos indicados.
+1. **Copiar** `js/config.example.js` → `js/config.js`
+2. **Colar a chave da IA** no lugar certo (linha `apiKey` do Gemini — veja abaixo)
+3. **Abrir** `index.html` no navegador (Live Server ou GitHub Pages)
 
-### Campos que DEVEM ser preenchidos
+---
 
-| Onde no código | Campo | Para que serve |
-|---|---|---|
-| `GEMINI_CONFIG.apiKey` | Chave da IA | Triagem e análise da mensagem (Telas 2–3) |
-| `GEMINI_CONFIG.projectNumber` | Número do projeto Google | Identificação (opcional para funcionar) |
-| `FIREBASE_CONFIG` (objeto inteiro) | Config do Firebase | Login, cadastro e salvar atendimentos |
+### Passo 1 — Criar o arquivo de configuração
 
-**Arquivo:** `js/config.js`
+Na pasta `js/` do projeto:
+
+```bash
+cp js/config.example.js js/config.js
+```
+
+No Windows: copie `config.example.js`, cole na mesma pasta e renomeie para **`config.js`**.
+
+> Sem esse arquivo o login e a IA **não funcionam**.
+
+---
+
+### Passo 2 — Onde colar a chave (único lugar obrigatório)
+
+Abra **`js/config.js`** no editor e localize esta linha:
+
+```javascript
+apiKey: "SUA_CHAVE_GEMINI_AQUI",
+```
+
+**Apague** `SUA_CHAVE_GEMINI_AQUI` e **cole a chave da Gemini** (mantendo as aspas).
+
+A chave está no **PDF de entrega FIAP ON** do grupo. Formato: começa com `AQ.` — cole o valor completo entre aspas.
+
+Fica assim (exemplo):
+
+```javascript
+apiKey: "AQ.xxxxxxxxxxxxxxxxxxxxxxxxx",
+```
+
+O resto do arquivo (`model`, `endpoint`, `FIREBASE_CONFIG`) **já vem pronto** no `config.example.js` — não precisa mudar nada.
+
+---
+
+### Passo 3 — Abrir o sistema
+
+- **Local:** abra `index.html` com **Live Server** (VS Code) — use `http://localhost`, não abra como `file://`
+- **Online:** https://eucesar.github.io/NexaTalk_AI/ (também precisa do `config.js` se for clonar; na Pages só funciona se o arquivo existir no deploy)
+
+Na **Tela 1**, crie uma conta (senha com **mínimo 6 caracteres**) e siga o fluxo.
+
+---
+
+### Referência — bloco completo do `js/config.js`
+
+Se preferir, copie tudo abaixo para o arquivo `js/config.js`:
 
 ```javascript
 const GEMINI_CONFIG = {
-  apiKey: "COLE_A_CHAVE_GEMINI_AQUI",   // ← linha 11
-  model: "gemini-flash-latest",
-  endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+  apiKey: "COLE_A_CHAVE_DO_PDF_FIAP_AQUI",
+  model: "gemini-2.5-flash",
+  endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
   projectNumber: "666394709185",
 };
 
 const FIREBASE_CONFIG = {
-  apiKey: "COLE_A_API_KEY_FIREBASE_AQUI",           // ← linha 26
+  apiKey: "AIzaSyBFYJtQrvQZCcwQ-9n3N2LkDcsUoYFnPEo",
   authDomain: "nexatalkai-d6540.firebaseapp.com",
   projectId: "nexatalkai-d6540",
   storageBucket: "nexatalkai-d6540.firebasestorage.app",
@@ -62,66 +98,30 @@ const FIREBASE_CONFIG = {
 };
 ```
 
-> **Só trocar a `apiKey` do Gemini e o bloco `FIREBASE_CONFIG` já resolve.** O `model` e o `endpoint` podem ficar iguais ao exemplo.
+> O arquivo `js/config.js` não sobe no GitHub (`.gitignore`). A chave da Gemini está no **PDF FIAP ON** — o GitHub bloqueia essa chave se colocada no README ou no código.
 
 ---
 
-## Chaves do grupo (para o professor / avaliador)
-
-> **A chave da Gemini não está neste README** (o GitHub bloqueia push com segredos).  
-> Ela está no **documento de entrega da FIAP ON** (PDF). Copie de lá para `GEMINI_CONFIG.apiKey`.
-
-Use estes valores do **Firebase** ao criar o `js/config.js`:
-
-### Gemini API (Inteligência Artificial)
-
-- Cole a chave no campo `GEMINI_CONFIG.apiKey` (documento FIAP ON / PDF da entrega).
-- `projectNumber`: `666394709185`
-- `model`: `gemini-flash-latest` (já vem no `config.example.js`)
-
-### Firebase (Login + Banco de dados)
-
-```
-apiKey: AIzaSyBFYJtQrvQZCcwQ-9n3N2LkDcsUoYFnPEo
-authDomain: nexatalkai-d6540.firebaseapp.com
-projectId: nexatalkai-d6540
-storageBucket: nexatalkai-d6540.firebasestorage.app
-messagingSenderId: 597613220333
-appId: 1:597613220333:web:70c4c39be21ed47824d7e4
-measurementId: G-M1LDVFTJV0
-```
-
----
-
-## Isso quebra a IA?
-
-**Não.** Desde que você:
-
-1. Crie o arquivo `js/config.js` (copiando de `config.example.js`).
-2. Cole a **chave do Gemini** em `GEMINI_CONFIG.apiKey` (entre aspas).
-3. Cole o **Firebase** completo em `FIREBASE_CONFIG`.
-
-A IA continua funcionando normalmente: triagem, análise, dashboard e respostas automáticas.
-
-Se a IA **não responder**, verifique:
-
-- O arquivo `js/config.js` existe na pasta `js/`?
-- A chave está entre aspas, sem espaço extra?
-- Está rodando via `http://localhost` (não `file://`)?
-- No Firebase Console, **Authentication → E-mail/senha** está **ativado**?
-
----
-
-## Fluxo das telas
+## Telas
 
 | # | Arquivo | Função |
 |---|---|---|
-| 1 | `index.html` | Login / cadastro |
+| 1 | `index.html` | Login e cadastro |
 | 2 | `paginas/novo-atendimento.html` | Abertura do chamado |
-| 2.5 | `paginas/triagem-ia.html` | IA decide: resolve na hora ou encaminha |
-| 3 | `paginas/analise-ia.html` | Análise + dashboard |
-| 4 | `paginas/atendimento-criado.html` | Protocolo + salva no Firestore |
-| 5 | `paginas/meus-atendimentos.html` | Lista dos atendimentos do usuário |
+| 2.5 | `paginas/triagem-ia.html` | Triagem com IA |
+| 3 | `paginas/analise-ia.html` | Análise e dashboard |
+| 4 | `paginas/atendimento-criado.html` | Protocolo e gravação no banco |
+| 5 | `paginas/meus-atendimentos.html` | Lista e gestão dos atendimentos |
+
+---
+
+## Status dos atendimentos
+
+| Status | Descrição |
+|---|---|
+| Em análise | Encaminhado para equipe |
+| Resolvido pela IA | Finalizado automaticamente na triagem |
+| Concluído | Finalizado pelo operador (próxima entrega) |
 
 ---
 
@@ -130,47 +130,21 @@ Se a IA **não responder**, verifique:
 - HTML5, CSS3, JavaScript
 - Bootstrap 5.3.8
 - Firebase Authentication + Firestore
-- Google Gemini API (`gemini-flash-latest`)
+- Google Gemini API (`gemini-2.5-flash`)
 
 ---
 
-## Estrutura de pastas
+## Estrutura
 
 ```
 NexaTalk_AI/
 ├── index.html
-├── README.md
-├── .gitignore
 ├── css/estilo.css
 ├── js/
-│   ├── config.js          ← CRIAR localmente (não vai pro Git)
-│   ├── config.example.js  ← Modelo sem chaves
+│   ├── config.js          ← criar localmente (não vai pro Git)
+│   ├── config.example.js
 │   ├── firebase.js
 │   └── gemini.js
 ├── paginas/
-│   ├── novo-atendimento.html
-│   ├── triagem-ia.html
-│   ├── analise-ia.html
-│   ├── atendimento-criado.html
-│   └── meus-atendimentos.html
 └── firestore.rules
 ```
-
----
-
-## Conta de teste (opcional)
-
-O professor pode **criar uma conta nova** na Tela 1:
-
-- Nome: qualquer
-- E-mail: qualquer e-mail válido
-- Senha: mínimo **6 caracteres**
-
-Ou usar uma conta já criada pelo grupo durante a demonstração.
-
----
-
-## Observação sobre o GitHub
-
-O arquivo `js/config.js` está no `.gitignore` (não sobe pro Git).  
-A **chave da Gemini** está no **PDF da entrega FIAP ON**. O Firebase abaixo pode ser copiado daqui.

@@ -2,7 +2,8 @@
 // NexaTalk AI - Configurações do projeto (EXEMPLO)
 // ============================================================
 // 1. Copie este arquivo para config.js
-// 2. Preencha com suas chaves do Google AI Studio e Firebase
+// 2. Cole a chave Gemini (PDF FIAP ON) em GEMINI_CONFIG.apiKey
+// 3. O Firebase abaixo já pode ser usado como está
 // ============================================================
 
 // ----- Gemini API -----
@@ -11,22 +12,16 @@ const GEMINI_CONFIG = {
   model: "gemini-2.5-flash",
   endpoint:
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-  projectNumber: "SEU_PROJECT_NUMBER",
+  projectNumber: "666394709185",
 };
-
-// ----- Bootstrap 5.3.8 (CDN oficial usado no projeto) -----
-// CSS:
-// <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-// JS:
-// <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
 // ----- Firebase -----
 const FIREBASE_CONFIG = {
-  apiKey: "SUA_API_KEY_FIREBASE",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.firebasestorage.app",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxx",
-  measurementId: "G-XXXXXXXXXX",
+  apiKey: "AIzaSyBFYJtQrvQZCcwQ-9n3N2LkDcsUoYFnPEo",
+  authDomain: "nexatalkai-d6540.firebaseapp.com",
+  projectId: "nexatalkai-d6540",
+  storageBucket: "nexatalkai-d6540.firebasestorage.app",
+  messagingSenderId: "597613220333",
+  appId: "1:597613220333:web:70c4c39be21ed47824d7e4",
+  measurementId: "G-M1LDVFTJV0",
 };
