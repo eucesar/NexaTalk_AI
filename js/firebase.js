@@ -89,21 +89,61 @@ async function listarMeusAtendimentos(usuarioId) {
   return lista;
 }
 
-// Apaga do Firestore os atendimentos "Resolvido pela IA" do usuário logado
-async function apagarAtendimentosResolvidos(usuarioId) {
+// Status padronizados (cliente + operador na próxima entrega)
+const STATUS_RESOLVIDO_IA = "Resolvido pela IA";
+const STATUS_EM_ANALISE = "Em análise";
+const STATUS_CONCLUIDO = "Concluído"; // operador encerra o atendimento → cliente pode apagar
+
+// Finalizado = resolvido pela IA OU concluído pelo operador (cliente pode limpar da lista)
+function atendimentoFinalizadoParaCliente(status) {
+  const s = (status || "").toLowerCase();
+  return s.includes("resolvido") || s.includes("conclu");
+}
+
+// Apaga do Firestore os atendimentos finalizados do usuário logado
+async function apagarAtendimentosFinalizados(usuarioId) {
   const lista = await listarMeusAtendimentos(usuarioId);
-  const resolvidos = lista.filter(function (a) {
-    return (a.status || "").toLowerCase().includes("resolvido");
+  const finalizados = lista.filter(function (a) {
+    return atendimentoFinalizadoParaCliente(a.status);
   });
 
-  if (resolvidos.length === 0) return 0;
+  if (finalizados.length === 0) return 0;
 
   const lote = db.batch();
-  resolvidos.forEach(function (a) {
+  finalizados.forEach(function (a) {
     lote.delete(db.collection("atendimentos").doc(a.id));
   });
   await lote.commit();
-  return resolvidos.length;
+  return finalizados.length;
+}
+
+// Mantém nome antigo para compatibilidade
+async function apagarAtendimentosResolvidos(usuarioId) {
+  return apagarAtendimentosFinalizados(usuarioId);
+}
+
+// Área do operador (próxima entrega): encerra atendimento → cliente pode apagar da lista
+async function concluirAtendimentoPeloOperador(atendimentoId, dados) {
+  const ref = db.collection("atendimentos").doc(atendimentoId);
+  const dataTexto =
+    dados.dataTexto ||
+    new Date().toLocaleDateString("pt-BR") +
+      " às " +
+      new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+  await ref.update({
+    status: STATUS_CONCLUIDO,
+    mensagem_operacao: dados.mensagem || "",
+    atribuido_a: dados.operador || "",
+    ultima_atualizacao_ts: firebase.firestore.FieldValue.serverTimestamp(),
+    historico: firebase.firestore.FieldValue.arrayUnion({
+      evento: "Atendimento concluído pelo operador",
+      status: STATUS_CONCLUIDO,
+      responsavel: dados.operador || "Operador",
+      mensagem: dados.mensagem || "",
+      data: dataTexto,
+    }),
+  });
 }
 
 // Gera um número de protocolo no formato #ATD-ANO-XXXXX
@@ -132,7 +172,7 @@ function montarAtendimento(dados) {
   const contato = dados.contato || "";
   const descricao = dados.descricao || "";
   const dataTexto = dados.dataTexto || new Date().toLocaleString("pt-BR");
-  const status = dados.status || "Em análise";
+  const status = dados.status || STATUS_EM_ANALISE;
   const ehEmail = contato.includes("@");
   const carimbo = firebase.firestore.FieldValue.serverTimestamp();
 
@@ -146,10 +186,10 @@ function montarAtendimento(dados) {
       data: dataTexto,
     },
   ];
-  if (status === "Resolvido pela IA") {
+  if (status === STATUS_RESOLVIDO_IA) {
     historico.push({
       evento: "Resolvido automaticamente pela IA",
-      status: "Resolvido pela IA",
+      status: STATUS_RESOLVIDO_IA,
       responsavel: "IA (" + GEMINI_CONFIG.model + ")",
       mensagem: a.resposta_automatica || a.resumo || "",
       data: dataTexto,

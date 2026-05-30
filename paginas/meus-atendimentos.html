@@ -56,9 +56,9 @@
       <!-- Feedback da exclusão -->
       <div id="msgApagar" class="text-center mb-2" style="font-size: 0.85rem; display: none;"></div>
 
-      <!-- Apagar resolvidos pela IA -->
-      <button id="btnApagarResolvidos" class="btn-apagar mb-2" onclick="apagarResolvidos()">
-        <i class="bi bi-trash me-2"></i> Apagar atendimentos já resolvidos
+      <!-- Apagar finalizados (Resolvido pela IA + Concluído pelo operador) -->
+      <button id="btnApagarFinalizados" class="btn-apagar mb-2" onclick="apagarFinalizados()">
+        <i class="bi bi-trash me-2"></i> Apagar atendimentos concluídos
       </button>
 
       <!-- Novo atendimento -->
@@ -110,7 +110,7 @@
 
     // Modal Bootstrap (popup dentro do app)
     modalApagar = new bootstrap.Modal(document.getElementById("modalApagar"));
-    document.getElementById("btnModalConfirmarApagar").addEventListener("click", executarApagarResolvidos);
+    document.getElementById("btnModalConfirmarApagar").addEventListener("click", executarApagarFinalizados);
 
     // Exige login
     auth.onAuthStateChanged(async function (usuario) {
@@ -199,39 +199,40 @@
     // Busca em tempo real
     document.getElementById("busca").addEventListener("input", renderizar);
 
-    // Abre popup perguntando se quer apagar
-    function apagarResolvidos() {
+    // Abre popup perguntando se quer apagar finalizados
+    function apagarFinalizados() {
       if (!usuarioAtual) return;
 
       qtdParaApagar = todosAtendimentos.filter(function (a) {
-        return (a.status || "").toLowerCase().includes("resolvido");
+        return atendimentoFinalizadoParaCliente(a.status);
       }).length;
 
       if (qtdParaApagar === 0) {
-        mostrarMsgApagar("Nenhum atendimento resolvido pela IA para apagar.", "text-secondary");
+        mostrarMsgApagar("Nenhum atendimento concluído para apagar (Resolvido pela IA ou Concluído).", "#6b7280");
         return;
       }
 
       document.getElementById("modalApagarTexto").textContent =
-        "Serão apagados " + qtdParaApagar + ' atendimento(s) com status "Resolvido pela IA". Esta ação remove do banco de dados e não pode ser desfeita.';
+        "Serão apagados " + qtdParaApagar +
+        ' atendimento(s) finalizados ("Resolvido pela IA" ou "Concluído" após resposta do operador). Remove do banco e não pode ser desfeita.';
       modalApagar.show();
     }
 
     // Confirma no popup e apaga no Firestore
-    async function executarApagarResolvidos() {
+    async function executarApagarFinalizados() {
       modalApagar.hide();
 
-      const btn = document.getElementById("btnApagarResolvidos");
+      const btn = document.getElementById("btnApagarFinalizados");
       const btnModal = document.getElementById("btnModalConfirmarApagar");
       btn.disabled = true;
       btnModal.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Apagando...';
 
       try {
-        const apagados = await apagarAtendimentosResolvidos(usuarioAtual.uid);
+        const apagados = await apagarAtendimentosFinalizados(usuarioAtual.uid);
         todosAtendimentos = await listarMeusAtendimentos(usuarioAtual.uid);
         renderizar();
-        mostrarMsgApagar(apagados + " atendimento(s) apagado(s) do banco com sucesso.", "#16a34a");
+        mostrarMsgApagar(apagados + " atendimento(s) concluído(s) apagado(s) do banco.", "#16a34a");
       } catch (e) {
         console.error(e);
         mostrarMsgApagar("Não foi possível apagar. Tente novamente.", "#dc2626");
@@ -239,7 +240,7 @@
 
       btn.disabled = false;
       btnModal.disabled = false;
-      btn.innerHTML = '<i class="bi bi-trash me-2"></i> Apagar atendimentos já resolvidos';
+      btn.innerHTML = '<i class="bi bi-trash me-2"></i> Apagar atendimentos concluídos';
     }
 
     function mostrarMsgApagar(texto, cor) {
