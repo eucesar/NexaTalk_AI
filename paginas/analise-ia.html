@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Análise da IA</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho -->
+    <div class="cabecalho">
+      <a class="voltar" href="novo-atendimento.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">Análise da IA</span>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo">PASSO 3</span>
+
+      <!-- ESTADO: Carregando (enquanto a IA processa) -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border text-primary mb-3" role="status" style="color: var(--roxo) !important;">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="fw-semibold" style="color: var(--roxo);">A IA está analisando sua mensagem...</p>
+        <p class="text-secondary" style="font-size: 0.9rem;">Isso leva apenas alguns segundos.</p>
+      </div>
+
+      <!-- ESTADO: Erro -->
+      <div id="erro" class="cartao-aviso text-center" style="display: none;">
+        <p class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle"></i> Não foi possível analisar agora.</p>
+        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Verifique sua conexão e tente novamente.</p>
+        <button class="btn-roxo" onclick="iniciarAnalise()">Tentar Novamente</button>
+      </div>
+
+      <!-- ESTADO: Resultado da IA -->
+      <div id="resultado" style="display: none;">
+
+        <!-- Faixa de status -->
+        <div class="btn-roxo text-center mb-3" style="cursor: default;">
+          <i class="bi bi-stars me-2"></i> IA processou sua mensagem
+        </div>
+
+        <!-- Mensagem original -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-card-text"></i> Mensagem Original</div>
+          <div id="mensagemOriginal" class="text-secondary"></div>
+        </div>
+
+        <!-- Observação -->
+        <div class="cartao">
+          <div class="rotulo-pequeno text-dark">Observação</div>
+          <div id="observacao" class="text-secondary"></div>
+        </div>
+
+        <!-- Resumo gerado pela IA -->
+        <div class="cartao-roxo">
+          <div class="rotulo-pequeno" style="color: var(--roxo);">
+            <i class="bi bi-robot"></i> Resumo Gerado pela IA
+          </div>
+          <div id="resumoIA" style="color: var(--texto-escuro);"></div>
+        </div>
+
+        <!-- Intenção -->
+        <div class="cartao d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-bullseye"></i> Intenção:</span>
+          <span id="intencao" class="badge-intencao">—</span>
+        </div>
+
+        <!-- Encaminhamento -->
+        <div class="cartao text-center">
+          <div class="rotulo-pequeno"><i class="bi bi-geo-alt"></i> Encaminhar para:</div>
+          <div id="encaminhamento" class="fw-bold" style="color: var(--roxo);">—</div>
+        </div>
+
+        <!-- Confiança da IA -->
+        <div class="cartao">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span><i class="bi bi-bar-chart"></i> Confiança da IA:</span>
+            <span id="confiancaTexto" class="fw-bold" style="color: var(--roxo);">0%</span>
+          </div>
+          <div class="barra-confianca">
+            <div id="confiancaBarra" class="barra-confianca-preenchida" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Prioridade -->
+        <div class="cartao d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-lightning-charge"></i> Prioridade:</span>
+          <span id="prioridade" class="badge-prioridade">—</span>
+        </div>
+
+        <!-- Tempo estimado -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-clock"></i> Tempo estimado de resolução</div>
+          <div id="tempoEstimado" class="fw-bold">—</div>
+          <div class="text-secondary" style="font-size: 0.8rem;">Baseado em casos similares anteriores</div>
+        </div>
+
+        <!-- O que acontece agora -->
+        <div class="cartao-aviso">
+          <div class="fw-semibold mb-1" style="color: #b45309;">
+            <i class="bi bi-lightbulb"></i> O que acontece agora?
+          </div>
+          <div class="text-secondary" style="font-size: 0.9rem;">
+            Sua solicitação será revisada por um operador da equipe responsável.
+            Você receberá uma resposta em breve.
+          </div>
+        </div>
+
+        <!-- ===== Painel da Análise (mini-dashboard / diferenciais) ===== -->
+        <hr class="my-3">
+        <div class="titulo-secao"><i class="bi bi-grid-1x2-fill"></i> Painel da Análise</div>
+
+        <!-- Medidores circulares (gauges) -->
+        <div class="row g-2 mb-1">
+          <div class="col-6">
+            <div class="cartao text-center mb-0">
+              <div class="donut" id="donutConfianca">
+                <div class="donut-buraco">
+                  <div class="donut-valor" id="donutConfiancaValor">0%</div>
+                  <div class="donut-rotulo">Confiança IA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="cartao text-center mb-0">
+              <div class="donut" id="donutProb">
+                <div class="donut-buraco">
+                  <div class="donut-valor" id="donutProbValor">0%</div>
+                  <div class="donut-rotulo">1ª resposta</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicadores -->
+        <div class="painel-grid">
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-emoji-smile"></i></div>
+            <div class="stat-rotulo">Sentimento</div>
+            <div id="statSentimento" class="stat-valor">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-rotulo">Espera na fila</div>
+            <div id="statEspera" class="stat-valor">—</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-lightning-charge"></i></div>
+            <div class="stat-rotulo">Prioridade</div>
+            <div id="statPrioridadeNivel" class="stat-valor">—</div>
+            <div class="nivel-barra mt-2" id="barraPrioridade"><span class="nivel-seg"></span><span class="nivel-seg"></span><span class="nivel-seg"></span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-speedometer"></i></div>
+            <div class="stat-rotulo">Complexidade</div>
+            <div id="statComplexidade" class="stat-valor">—</div>
+            <div class="nivel-barra mt-2" id="barraComplexidade"><span class="nivel-seg"></span><span class="nivel-seg"></span><span class="nivel-seg"></span></div>
+          </div>
+        </div>
+
+        <!-- SLA sugerido em destaque -->
+        <div class="cartao d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-stopwatch"></i> SLA sugerido</span>
+          <span id="statSla" class="fw-bold" style="color: var(--roxo);">—</span>
+        </div>
+
+        <!-- Categoria / Subcategoria -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-tag"></i> Categoria</div>
+          <div id="statCategoria" class="fw-semibold">—</div>
+        </div>
+
+        <!-- Dados detectados (aparece só se a IA encontrar algo) -->
+        <div class="cartao" id="cardDados" style="display:none;">
+          <div class="rotulo-pequeno"><i class="bi bi-search"></i> Dados detectados</div>
+          <div id="statDados"></div>
+        </div>
+
+        <!-- Palavras-chave (tags) -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-hash"></i> Palavras-chave</div>
+          <div id="statTags" class="chips"></div>
+        </div>
+
+        <!-- Próxima ação sugerida -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-arrow-right-circle"></i> Próxima ação sugerida</div>
+          <div id="statProximaAcao" class="text-secondary"></div>
+        </div>
+
+        <!-- Resposta sugerida pela IA (apoio ao operador) -->
+        <div class="cartao-roxo">
+          <div class="rotulo-pequeno" style="color: var(--roxo);"><i class="bi bi-reply"></i> Resposta sugerida pela IA</div>
+          <div id="statResposta" style="color: var(--texto-escuro);"></div>
+        </div>
+
+        <!-- Botões de ação (no final de tudo) -->
+        <hr class="my-3">
+
+        <button class="btn-roxo-claro mb-3" onclick="window.location.href='novo-atendimento.html'">
+          <i class="bi bi-pencil me-2"></i> Editar informações
+        </button>
+
+        <button id="btnConfirmar" class="btn-roxo" onclick="confirmarEnviar()">
+          Confirmar e Enviar
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/gemini.js"></script>
+
+  <script>
+    // Recupera a descrição que o cliente escreveu na tela anterior
+    const descricaoCliente = sessionStorage.getItem("nexatalk_descricao");
+
+    // Se não houver descrição, volta para o formulário
+    if (!descricaoCliente) {
+      window.location.href = "novo-atendimento.html";
+    }
+
+    // Mostra a mensagem original na tela
+    document.getElementById("mensagemOriginal").textContent = descricaoCliente;
+
+    // Controla qual estado aparece: carregando, erro ou resultado
+    function mostrarEstado(estado) {
+      document.getElementById("carregando").style.display = estado === "carregando" ? "block" : "none";
+      document.getElementById("erro").style.display = estado === "erro" ? "block" : "none";
+      document.getElementById("resultado").style.display = estado === "resultado" ? "block" : "none";
+    }
+
+    // Chama a IA e preenche a tela
+    async function iniciarAnalise() {
+      mostrarEstado("carregando");
+      try {
+        let analise;
+        const salva = sessionStorage.getItem("nexatalk_analise");
+        if (salva) {
+          // Reaproveita a análise já feita na triagem (evita nova chamada à IA)
+          analise = JSON.parse(salva);
+        } else {
+          analise = await analisarComIA(descricaoCliente);
+          sessionStorage.setItem("nexatalk_analise", JSON.stringify(analise));
+        }
+        preencherResultado(analise);
+        mostrarEstado("resultado");
+      } catch (e) {
+        console.error(e);
+        mostrarEstado("erro");
+      }
+    }
+
+    // Preenche os campos da tela com a resposta da IA
+    function preencherResultado(a) {
+      document.getElementById("observacao").textContent = a.observacao || "—";
+      document.getElementById("resumoIA").textContent = a.resumo || "—";
+      document.getElementById("intencao").textContent = a.intencao || "—";
+      document.getElementById("encaminhamento").textContent = a.encaminhamento || "—";
+      document.getElementById("prioridade").textContent = a.prioridade || "—";
+      document.getElementById("tempoEstimado").textContent = a.tempo_estimado || "—";
+
+      const confianca = normalizarPorcentagem(a.confianca);
+      document.getElementById("confiancaTexto").textContent = confianca + "%";
+      document.getElementById("confiancaBarra").style.width = confianca + "%";
+
+      // ===== Painel da Análise (dashboard) =====
+
+      // Medidor circular - Confiança da IA
+      pintarDonut("donutConfianca", confianca, "#6d28d9");
+      document.getElementById("donutConfiancaValor").textContent = confianca + "%";
+
+      // Medidor circular - Resolução na 1ª resposta
+      const prob = normalizarPorcentagem(a.probabilidade_primeira_resposta);
+      pintarDonut("donutProb", prob, "#16a34a");
+      document.getElementById("donutProbValor").textContent = prob + "%";
+
+      // Sentimento (com cor conforme o estado)
+      const sentimento = a.sentimento || "—";
+      const elSent = document.getElementById("statSentimento");
+      elSent.textContent = sentimento;
+      elSent.className = "stat-valor " + corDoSentimento(sentimento);
+
+      // Espera na fila e SLA
+      document.getElementById("statEspera").textContent = a.tempo_espera_fila || "—";
+      document.getElementById("statSla").textContent = a.sla_sugerido || "—";
+
+      // Prioridade e Complexidade (texto + barra de nível)
+      document.getElementById("statPrioridadeNivel").textContent = a.prioridade || "—";
+      document.getElementById("statComplexidade").textContent = a.complexidade || "—";
+      pintarNivel("barraPrioridade", a.prioridade);
+      pintarNivel("barraComplexidade", a.complexidade);
+
+      // Categoria / subcategoria
+      let categoria = a.categoria || "—";
+      if (a.subcategoria) categoria += " · " + a.subcategoria;
+      document.getElementById("statCategoria").textContent = categoria;
+
+      // Dados detectados (mostra o card só se houver algo)
+      if (a.dados_detectados && a.dados_detectados.trim() !== "") {
+        document.getElementById("statDados").textContent = a.dados_detectados;
+        document.getElementById("cardDados").style.display = "block";
+      }
+
+      // Tags (vira "chips")
+      const elTags = document.getElementById("statTags");
+      elTags.innerHTML = "";
+      (a.tags || []).forEach(function (tag) {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = tag;
+        elTags.appendChild(chip);
+      });
+
+      document.getElementById("statProximaAcao").textContent = a.proxima_acao || "—";
+      document.getElementById("statResposta").textContent = a.resposta_sugerida || "—";
+    }
+
+    // Converte porcentagem para inteiro 0-100 (aceita fração como 0.95)
+    function normalizarPorcentagem(valor) {
+      let n = parseFloat(valor) || 0;
+      if (n > 0 && n <= 1) n = n * 100;
+      return Math.round(n);
+    }
+
+    // Pinta o medidor circular (donut) com a porcentagem e a cor informadas
+    function pintarDonut(id, pct, cor) {
+      const graus = Math.round((pct / 100) * 360);
+      document.getElementById(id).style.background =
+        "conic-gradient(" + cor + " " + graus + "deg, #e5e7eb " + graus + "deg)";
+    }
+
+    // Pinta a barra de nível (3 segmentos) conforme Baixa / Média / Alta
+    function pintarNivel(id, nivel) {
+      const mapa = { baixa: 1, media: 2, "média": 2, medio: 2, "médio": 2, alta: 3 };
+      const n = mapa[(nivel || "").toLowerCase().trim()] || 0;
+      const classe = n === 3 ? "ativo-perigo" : (n === 2 ? "ativo-alerta" : "ativo");
+      const segmentos = document.getElementById(id).children;
+      for (let i = 0; i < segmentos.length; i++) {
+        segmentos[i].className = "nivel-seg" + (i < n ? " " + classe : "");
+      }
+    }
+
+    // Retorna a classe de cor de acordo com o sentimento
+    function corDoSentimento(sentimento) {
+      const s = (sentimento || "").toLowerCase();
+      if (s.includes("positiv")) return "sentimento-positivo";
+      if (s.includes("frustrad")) return "sentimento-frustrado";
+      if (s.includes("preocupad")) return "sentimento-preocupado";
+      return "sentimento-neutro";
+    }
+
+    // Confirma e vai para a tela de protocolo (salva no Firestore lá)
+    function confirmarEnviar() {
+      window.location.href = "atendimento-criado.html";
+    }
+
+    // Inicia a análise assim que a página carrega
+    iniciarAnalise();
+  </script>
+</body>
+</html>

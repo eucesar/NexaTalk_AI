@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Triagem Inteligente</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho -->
+    <div class="cabecalho">
+      <a class="voltar" href="novo-atendimento.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">Triagem Inteligente</span>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo">PASSO 2 · TRIAGEM</span>
+
+      <!-- ESTADO: Carregando -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-3" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="fw-semibold" style="color: var(--roxo);">A IA está verificando se consegue resolver agora...</p>
+        <p class="text-secondary" style="font-size: 0.9rem;">Analisando o tipo da sua solicitação.</p>
+      </div>
+
+      <!-- ESTADO: Erro -->
+      <div id="erro" class="cartao-aviso text-center" style="display: none;">
+        <p class="fw-semibold mb-2"><i class="bi bi-exclamation-triangle"></i> Não foi possível analisar agora.</p>
+        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Verifique sua conexão e tente novamente.</p>
+        <button class="btn-roxo" onclick="iniciarTriagem()">Tentar Novamente</button>
+      </div>
+
+      <!-- ESTADO: Resolvido automaticamente pela IA -->
+      <div id="resolvido" style="display: none;">
+
+        <div class="cartao-roxo text-center mb-3">
+          <div class="icone-central" style="width:64px; height:64px; font-size:1.7rem; margin:6px auto 12px auto;">
+            <i class="bi bi-check-lg"></i>
+          </div>
+          <h4 class="fw-bold" style="color: var(--roxo);">Resolvido pela IA!</h4>
+          <p class="text-secondary mb-0" style="font-size: 0.9rem;">
+            Identificamos que sua dúvida pode ser resolvida na hora.
+          </p>
+        </div>
+
+        <!-- Sua mensagem -->
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-card-text"></i> Sua mensagem</div>
+          <div id="msgOriginal" class="text-secondary"></div>
+        </div>
+
+        <!-- Resposta automática da IA -->
+        <div class="cartao">
+          <div class="rotulo-pequeno" style="color: var(--roxo);">
+            <i class="bi bi-robot"></i> Resposta da IA
+          </div>
+          <div id="respostaIA" style="color: var(--texto-escuro);"></div>
+        </div>
+
+        <div class="cartao-aviso">
+          <span class="fw-semibold" style="color:#15803d;"><i class="bi bi-check-circle"></i> Resolvido automaticamente · sem fila</span>
+        </div>
+
+        <!-- Botões -->
+        <button class="btn-roxo mb-3" onclick="resolveuProblema()">
+          <i class="bi bi-hand-thumbs-up me-2"></i> Isso resolveu meu problema
+        </button>
+
+        <button class="btn-roxo-claro" onclick="window.location.href='analise-ia.html'">
+          <i class="bi bi-headset me-2"></i> Ainda preciso falar com um atendente
+        </button>
+
+      </div>
+
+      <!-- ESTADO: Encaminhar para atendente (caso complexo) -->
+      <div id="encaminhar" style="display: none;">
+
+        <div class="cartao-roxo text-center mb-3">
+          <div class="icone-central" style="width:64px; height:64px; font-size:1.7rem; margin:6px auto 12px auto;">
+            <i class="bi bi-headset"></i>
+          </div>
+          <h4 class="fw-bold" style="color: var(--roxo);">Caso para especialista</h4>
+          <p class="text-secondary mb-0" style="font-size: 0.9rem;">
+            Sua solicitação precisa de uma análise mais detalhada da nossa equipe.
+          </p>
+        </div>
+
+        <div class="cartao-aviso">
+          <span class="fw-semibold" style="color:#b45309;">
+            <i class="bi bi-info-circle"></i> Vamos preparar a análise e o encaminhamento para você.
+          </span>
+        </div>
+
+        <button class="btn-roxo" onclick="window.location.href='analise-ia.html'">
+          Ver análise e encaminhamento <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+
+      </div>
+
+      <!-- ESTADO: Agradecimento (após confirmar que a IA resolveu) -->
+      <div id="agradecimento" class="text-center" style="display: none; padding: 30px 10px;">
+        <div class="icone-central" style="background: linear-gradient(135deg, #16a34a, #22c55e);">
+          <i class="bi bi-heart-fill"></i>
+        </div>
+        <h4 class="fw-bold" style="color: var(--roxo);">Que bom que ajudamos! 💜</h4>
+        <p class="text-secondary">Seu atendimento foi registrado como <b>Resolvido pela IA</b>.</p>
+        <p class="text-secondary" style="font-size: 0.85rem;">Redirecionando para seus atendimentos...</p>
+        <div class="spinner-border spinner-border-sm" role="status" style="color: var(--roxo);"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/gemini.js"></script>
+
+  <script>
+    // Recupera a descrição enviada na tela anterior
+    const descricaoCliente = sessionStorage.getItem("nexatalk_descricao");
+
+    if (!descricaoCliente) {
+      window.location.href = "novo-atendimento.html";
+    }
+
+    document.getElementById("msgOriginal").textContent = descricaoCliente;
+
+    let analiseAtual = null; // guarda a análise para usar ao confirmar
+
+    // Mostra um dos estados: carregando, erro, resolvido, encaminhar ou agradecimento
+    function mostrarEstado(estado) {
+      ["carregando", "erro", "resolvido", "encaminhar", "agradecimento"].forEach(function (id) {
+        document.getElementById(id).style.display = id === estado ? "block" : "none";
+      });
+    }
+
+    // Faz a triagem com a IA
+    async function iniciarTriagem() {
+      mostrarEstado("carregando");
+      try {
+        const analise = await analisarComIA(descricaoCliente);
+        analiseAtual = analise;
+
+        // Guarda a análise para reaproveitar na Tela 3 (sem chamar a IA de novo)
+        sessionStorage.setItem("nexatalk_analise", JSON.stringify(analise));
+
+        if (analise.auto_resolvivel === true && analise.resposta_automatica) {
+          // Caso simples: a IA resolve na hora
+          document.getElementById("respostaIA").textContent = analise.resposta_automatica;
+          mostrarEstado("resolvido");
+        } else {
+          // Caso complexo: encaminhar para a Tela 3 (análise + atendente)
+          mostrarEstado("encaminhar");
+        }
+      } catch (e) {
+        console.error(e);
+        mostrarEstado("erro");
+      }
+    }
+
+    // Cliente confirmou que a IA resolveu: salva no banco como "Resolvido pela IA"
+    async function resolveuProblema() {
+      mostrarEstado("agradecimento");
+      try {
+        const atendimento = montarAtendimento({
+          protocolo: gerarProtocolo(),
+          usuarioId: sessionStorage.getItem("nexatalk_usuario_id") || "",
+          nome: sessionStorage.getItem("nexatalk_nome") || "",
+          contato: sessionStorage.getItem("nexatalk_contato") || "",
+          descricao: descricaoCliente,
+          analise: analiseAtual || {},
+          status: "Resolvido pela IA",
+          dataTexto: new Date().toLocaleDateString("pt-BR") + " às " +
+            new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        });
+        await salvarAtendimento(atendimento);
+      } catch (e) {
+        console.error("Erro ao salvar atendimento resolvido pela IA:", e);
+      }
+      // Vai para a lista de atendimentos do cliente
+      setTimeout(function () {
+        window.location.href = "meus-atendimentos.html";
+      }, 1800);
+    }
+
+    iniciarTriagem();
+  </script>
+</body>
+</html>

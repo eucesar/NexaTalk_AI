@@ -1,0 +1,28 @@
+// ============================================================
+// Regras de segurança do Firestore - NexaTalk AI
+// ------------------------------------------------------------
+// REGRA DE PROTÓTIPO (Fase 4): libera leitura e escrita SEM data
+// de expiração, para o MVP funcionar durante o desenvolvimento.
+//
+// ATENÇÃO: isto é apropriado APENAS para o protótipo acadêmico.
+// Na evolução (com Firebase Authentication e área do operador),
+// estas regras serão restringidas para exigir login e validar
+// quem pode ler/escrever cada atendimento.
+// ============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Coleção de atendimentos (criada pelo cliente / lida pelo operador)
+    match /atendimentos/{id} {
+      allow read, write: if true;
+    }
+
+    // Demais coleções futuras (histórico, usuários da operação, etc.)
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

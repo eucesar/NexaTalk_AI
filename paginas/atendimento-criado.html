@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Atendimento Criado</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho simples -->
+    <div class="cabecalho">
+      <span class="titulo-topo">Atendimento Criado</span>
+    </div>
+
+    <!-- Faixa de sucesso (verde) -->
+    <div class="cabecalho-sucesso">
+      <div class="icone-sucesso"><i class="bi bi-check-lg"></i></div>
+      <h3 class="fw-bold mb-1">Atendimento Criado!</h3>
+      <p class="mb-0" style="opacity: 0.9;">Seu protocolo foi gerado com sucesso</p>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo" style="background-color:#dcfce7; color:#15803d;">PASSO 4 ✓ SUCESSO</span>
+
+      <!-- Número do protocolo -->
+      <div class="cartao">
+        <div class="rotulo-pequeno">Número do Protocolo</div>
+        <div id="protocolo" class="fw-bold" style="font-size: 1.4rem; color: var(--roxo);">#ATD-...</div>
+        <div id="dataCriacao" class="text-secondary" style="font-size: 0.85rem;"></div>
+      </div>
+
+      <!-- Resumo -->
+      <div class="cartao">
+        <div class="rotulo-pequeno"><i class="bi bi-card-text"></i> Resumo</div>
+        <div id="resumo" class="text-secondary"></div>
+      </div>
+
+      <!-- Status -->
+      <div class="cartao-aviso">
+        <span class="fw-semibold" style="color: #b45309;">
+          <i class="bi bi-arrow-repeat"></i> Status atual: Em análise
+        </span>
+      </div>
+
+      <!-- Indicador de salvamento na nuvem -->
+      <div id="statusSalvamento" class="text-center text-secondary mb-3" style="font-size: 0.82rem;">
+        <i class="bi bi-cloud-arrow-up"></i> Salvando na nuvem...
+      </div>
+
+      <!-- Botões -->
+      <button class="btn-roxo mb-3" onclick="window.location.href='meus-atendimentos.html'">
+        <i class="bi bi-eye me-2"></i> Acompanhar Atendimento
+      </button>
+
+      <button class="btn-roxo-claro" onclick="voltarInicio()">
+        Voltar ao Início
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/firebase.js"></script>
+
+  <script>
+    // Recupera os dados das telas anteriores
+    const nome = sessionStorage.getItem("nexatalk_nome");
+    const contato = sessionStorage.getItem("nexatalk_contato");
+    const descricao = sessionStorage.getItem("nexatalk_descricao");
+    const analise = JSON.parse(sessionStorage.getItem("nexatalk_analise") || "{}");
+
+    // Se faltar dado essencial, volta para o início
+    if (!descricao) {
+      window.location.href = "../index.html";
+    }
+
+    // Gera o protocolo e a data/hora atual
+    const protocolo = gerarProtocolo();
+    const agora = new Date();
+    const dataTexto = agora.toLocaleDateString("pt-BR") + " às " +
+      agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    // Preenche a tela
+    document.getElementById("protocolo").textContent = protocolo;
+    document.getElementById("dataCriacao").textContent = "Criado em " + dataTexto;
+    document.getElementById("resumo").textContent = analise.resumo || descricao;
+
+    // Monta o documento padronizado (mesma estrutura usada na triagem),
+    // garantindo consistência no banco para as telas do operador.
+    const atendimento = montarAtendimento({
+      protocolo: protocolo,
+      usuarioId: sessionStorage.getItem("nexatalk_usuario_id") || "",
+      nome: nome,
+      contato: contato,
+      descricao: descricao,
+      analise: analise,
+      status: "Em análise",
+      dataTexto: dataTexto,
+    });
+
+    // Salva no Firestore
+    async function salvarNaNuvem() {
+      const status = document.getElementById("statusSalvamento");
+      try {
+        await salvarAtendimento(atendimento);
+        status.innerHTML = '<i class="bi bi-cloud-check" style="color:#16a34a;"></i> Atendimento salvo na nuvem com sucesso.';
+        status.style.color = "#16a34a";
+      } catch (e) {
+        console.error("Erro ao salvar no Firestore:", e);
+        status.innerHTML = '<i class="bi bi-cloud-slash"></i> Não foi possível salvar na nuvem (verifique o Firestore).';
+      }
+    }
+
+    // Limpa os dados temporários e volta ao início
+    function voltarInicio() {
+      sessionStorage.clear();
+      window.location.href = "../index.html";
+    }
+
+    salvarNaNuvem();
+  </script>
+</body>
+</html>

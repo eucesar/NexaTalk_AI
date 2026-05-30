@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Novo Atendimento</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho com botão voltar -->
+    <div class="cabecalho">
+      <a class="voltar" href="../index.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">Novo Atendimento</span>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo">PASSO 2</span>
+
+      <!-- Formulário de abertura -->
+      <form id="formAtendimento" novalidate>
+
+        <div class="mb-3">
+          <label class="form-label" for="nome">Nome</label>
+          <input type="text" class="form-control" id="nome" placeholder="Ex: João Silva" required>
+          <div class="invalid-feedback">Por favor, informe seu nome.</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="contato">E-mail ou Telefone</label>
+          <input type="text" class="form-control" id="contato" placeholder="Ex: joao@email.com" required>
+          <div class="invalid-feedback">Por favor, informe um e-mail ou telefone.</div>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label" for="descricao">O que você precisa resolver?</label>
+          <textarea class="form-control" id="descricao" rows="5" maxlength="500"
+            placeholder="Descreva sua necessidade com suas próprias palavras..." required></textarea>
+          <div class="invalid-feedback">Por favor, descreva o que você precisa.</div>
+          <div class="text-end text-secondary mt-1" style="font-size: 0.8rem;">
+            <span id="contador">0</span>/500
+          </div>
+        </div>
+
+        <!-- Dica -->
+        <div class="cartao-roxo text-center" style="color: var(--roxo);">
+          <i class="bi bi-lightbulb"></i> Fale naturalmente. Nossa IA entende o contexto.
+        </div>
+
+        <!-- Botão analisar com IA -->
+        <button type="submit" class="btn-roxo mt-2">
+          <i class="bi bi-stars me-2"></i> Analisar com IA
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/firebase.js"></script>
+
+  <script>
+    // Exige login: se não estiver logado, volta para a tela inicial.
+    // Se estiver, pré-preenche o nome e o contato com os dados da conta.
+    auth.onAuthStateChanged(function (usuario) {
+      if (!usuario) {
+        window.location.href = "../index.html";
+        return;
+      }
+      sessionStorage.setItem("nexatalk_usuario_id", usuario.uid);
+      const campoNome = document.getElementById("nome");
+      const campoContato = document.getElementById("contato");
+      if (!campoNome.value) campoNome.value = usuario.displayName || "";
+      if (!campoContato.value) campoContato.value = usuario.email || "";
+    });
+
+    // Contador de caracteres da descrição
+    const descricao = document.getElementById("descricao");
+    const contador = document.getElementById("contador");
+    descricao.addEventListener("input", function () {
+      contador.textContent = descricao.value.length;
+    });
+
+    // Validação + envio do formulário
+    const form = document.getElementById("formAtendimento");
+    form.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+
+      const nome = document.getElementById("nome").value.trim();
+      const contato = document.getElementById("contato").value.trim();
+      const texto = descricao.value.trim();
+
+      // Marca os campos vazios como inválidos
+      let valido = true;
+      document.querySelectorAll("#formAtendimento [required]").forEach(function (campo) {
+        if (campo.value.trim() === "") {
+          campo.classList.add("is-invalid");
+          valido = false;
+        } else {
+          campo.classList.remove("is-invalid");
+        }
+      });
+
+      if (!valido) return;
+
+      // Guarda os dados para a próxima tela (Análise da IA)
+      sessionStorage.setItem("nexatalk_nome", nome);
+      sessionStorage.setItem("nexatalk_contato", contato);
+      sessionStorage.setItem("nexatalk_descricao", texto);
+
+      window.location.href = "triagem-ia.html";
+    });
+  </script>
+</body>
+</html>
