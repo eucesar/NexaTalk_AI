@@ -22,13 +22,15 @@ O cliente faz login, abre um chamado, passa pela triagem da IA, vê a análise e
 
 Acesse: https://eucesar.github.io/NexaTalk_AI/
 
-Crie uma conta na Tela 1 (senha com no mínimo 6 caracteres) e siga o fluxo.
+**Login e banco funcionam** (Firebase já está no `js/config.example.js`).
 
-### Opção 2 — Clonando o repositório
+A **IA (triagem/análise) não funciona só pelo link**, porque a chave da Gemini não pode ficar no GitHub — ela está no **PDF FIAP ON**. Para testar a IA, use a Opção 2 abaixo.
+
+### Opção 2 — Clonando o repositório (recomendado — fluxo completo com IA)
 
 1. Baixe ou clone este repo
-2. Siga os passos de configuração abaixo (só precisa colar a chave da IA)
-3. Abra o `index.html` com **Live Server** no VS Code (use `http://localhost`, não abra como arquivo direto)
+2. Cole a chave da Gemini em `js/config.example.js` (passo abaixo) **ou** crie um `js/config.js` local com as chaves (não sobe pro Git)
+3. Abra o `index.html` com **Live Server** no VS Code (`http://localhost`)
 
 ---
 
@@ -55,11 +57,13 @@ apiKey: "SUA_CHAVE_GEMINI_AQUI",
 ```
 
 3. Substitua `SUA_CHAVE_GEMINI_AQUI` pela chave que deixamos no **PDF de entrega FIAP ON** (começa com `AQ.`)
-4. Salve o arquivo e abra o `index.html`
+4. Salve e abra o `index.html` com Live Server. Crie conta na Tela 1 (senha com 6+ caracteres).
 
-> **Obs.:** Não conseguimos subir a chave da Gemini direto no GitHub porque o site bloqueia. Por isso ela está no PDF de entrega.
+> **Obs.:** Não conseguimos subir a chave da Gemini no GitHub (o site bloqueia). Por isso ela está no PDF de entrega.
 
-> **Obs. 2:** Se for testar pelo link da GitHub Pages, o domínio `eucesar.github.io` precisa estar em **Firebase Console → Authentication → Authorized domains**. Nós já configuramos, mas vale conferir se o login der erro.
+> **Obs. 2 — GitHub Pages:** o site online carrega `js/config.example.js` automaticamente (o `config.js` não sobe pro Git). Login funciona; IA só após colar a chave e rodar localmente.
+
+> **Obs. 3:** Se o login der erro no link, confira se `eucesar.github.io` está em **Firebase Console → Authentication → Authorized domains**.
 
 ---
 
