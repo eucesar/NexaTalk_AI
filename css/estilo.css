@@ -1079,16 +1079,6 @@ html::after {
   display: inline-block;
 }
 
-/* Cursor "digitando" no título da tela inicial */
-.corpo h2::after {
-  content: "|";
-  font-weight: 400;
-  color: #c4b5fd;
-  -webkit-text-fill-color: #c4b5fd;
-  margin-left: 3px;
-  animation: caret-piscar 1.1s steps(2, start) infinite;
-}
-
 /* Faíscas na faixa verde de sucesso */
 .cabecalho-sucesso {
   position: relative;
@@ -1229,11 +1219,6 @@ html::after {
   50% {
     box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
   }
-}
-
-@keyframes caret-piscar {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
 }
 
 @keyframes girar {
