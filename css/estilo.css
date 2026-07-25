@@ -1010,8 +1010,325 @@ hr {
 }
 
 /* ============================================================
+   Ícones vivos + decorações piscando (aplicado via classes
+   dos ícones Bootstrap — anima em todas as telas de uma vez)
+   ============================================================ */
+
+/* Céu estrelado cintilando atrás do app (duas camadas) */
+html::before,
+html::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 8% 18%, rgba(255, 255, 255, 0.6), transparent 60%),
+    radial-gradient(1.6px 1.6px at 22% 74%, rgba(196, 181, 253, 0.7), transparent 60%),
+    radial-gradient(2px 2px at 37% 32%, rgba(255, 255, 255, 0.4), transparent 60%),
+    radial-gradient(1.4px 1.4px at 54% 82%, rgba(232, 121, 249, 0.55), transparent 60%),
+    radial-gradient(2.2px 2.2px at 68% 12%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(1.6px 1.6px at 81% 55%, rgba(196, 181, 253, 0.6), transparent 60%),
+    radial-gradient(2px 2px at 93% 28%, rgba(255, 255, 255, 0.45), transparent 60%);
+  animation: cintilar-estrelas 5s ease-in-out infinite;
+}
+
+html::after {
+  background-image:
+    radial-gradient(1.6px 1.6px at 14% 48%, rgba(255, 255, 255, 0.5), transparent 60%),
+    radial-gradient(2px 2px at 29% 8%, rgba(196, 181, 253, 0.55), transparent 60%),
+    radial-gradient(1.4px 1.4px at 46% 62%, rgba(255, 255, 255, 0.4), transparent 60%),
+    radial-gradient(2px 2px at 61% 40%, rgba(232, 121, 249, 0.5), transparent 60%),
+    radial-gradient(1.6px 1.6px at 76% 88%, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(2.2px 2.2px at 90% 68%, rgba(196, 181, 253, 0.5), transparent 60%);
+  animation: cintilar-estrelas 7s ease-in-out infinite reverse;
+}
+
+/* Base para animar os ícones */
+.bi {
+  display: inline-block;
+  transform-origin: center;
+}
+
+/* Bolinha verde "IA online" pulsando no robô do topo e na NexaIA */
+.cabecalho .icone-topo,
+.nexaia-avatar {
+  position: relative;
+}
+
+.cabecalho .icone-topo::after,
+.nexaia-avatar::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4ade80;
+  border: 2px solid #171029;
+  animation: ponto-online 2s ease-in-out infinite;
+}
+
+/* Estrelinha piscando ao lado do título de todas as telas */
+.cabecalho .titulo-topo::after {
+  content: " ✦";
+  font-size: 0.8em;
+  color: rgba(255, 255, 255, 0.85);
+  animation: cintilar 2.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Cursor "digitando" no título da tela inicial */
+.corpo h2::after {
+  content: "|";
+  font-weight: 400;
+  color: #c4b5fd;
+  -webkit-text-fill-color: #c4b5fd;
+  margin-left: 3px;
+  animation: caret-piscar 1.1s steps(2, start) infinite;
+}
+
+/* Faíscas na faixa verde de sucesso */
+.cabecalho-sucesso {
+  position: relative;
+  overflow: hidden;
+}
+
+.cabecalho-sucesso::before,
+.cabecalho-sucesso::after {
+  content: "✦";
+  position: absolute;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.05rem;
+  animation: cintilar 2.2s ease-in-out infinite;
+}
+
+.cabecalho-sucesso::before {
+  left: 16%;
+  top: 26%;
+}
+
+.cabecalho-sucesso::after {
+  content: "✧";
+  right: 14%;
+  bottom: 22%;
+  animation-delay: 1.1s;
+}
+
+/* Número do protocolo com brilho deslizante */
+.card-atendimento .protocolo {
+  background: linear-gradient(90deg, #a78bfa, #ede9fe 50%, #a78bfa);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradiente-vivo 3.2s linear infinite;
+}
+
+/* --- Ícones com vida própria (movimentos contínuos) --- */
+
+/* setas girando (status "Em análise") */
+.bi-arrow-repeat { animation: girar 2.6s linear infinite; }
+
+/* estrelas e varinha mágica cintilando */
+.bi-stars,
+.bi-magic { animation: cintilar 2s ease-in-out infinite; }
+
+/* robô acena de tempos em tempos */
+.bi-robot { animation: acenar 3.6s ease-in-out infinite; }
+
+/* lâmpada piscando */
+.bi-lightbulb { animation: piscar-lampada 2.8s ease-in-out infinite; }
+
+/* coração batendo */
+.bi-heart-fill { animation: batimento 1.6s ease-in-out infinite; }
+
+/* raio relampejando */
+.bi-lightning-charge { animation: relampejo 2.4s ease-in-out infinite; }
+
+/* ampulheta virando */
+.bi-hourglass-split { animation: ampulheta 3.2s ease-in-out infinite; }
+
+/* relógios balançando como pêndulo */
+.bi-clock,
+.bi-stopwatch { animation: pendulo 2.2s ease-in-out infinite; }
+
+/* olho piscando (Acompanhar Atendimento) */
+.bi-eye { animation: piscar-olho 4s ease-in-out infinite; }
+
+/* nuvem subindo (salvando na nuvem) */
+.bi-cloud-arrow-up { animation: subir-nuvem 1.8s ease-in-out infinite; }
+
+/* pin do mapa quicando */
+.bi-geo-alt { animation: quicar 2s ease-in-out infinite; }
+
+/* alvo pulsando */
+.bi-bullseye { animation: pulso-icone 2s ease-in-out infinite; }
+
+/* carinha simpática balançando */
+.bi-emoji-smile { animation: acenar 3s ease-in-out infinite; }
+
+/* balãozinho de conversa chamando atenção */
+.bi-chat-dots { animation: acenar 3.2s ease-in-out infinite; }
+
+/* joinha comemorando */
+.bi-hand-thumbs-up { animation: quicar 2.4s ease-in-out infinite; }
+
+/* headset chamando o atendente */
+.bi-headset { animation: acenar 3.4s ease-in-out infinite; }
+
+/* escudo protegendo (rodapé da home) */
+.bi-shield-lock { animation: pulso-icone 2.6s ease-in-out infinite; }
+
+/* alertas e avisos piscando */
+.bi-exclamation-triangle,
+.bi-info-circle { animation: piscar-alerta 2s ease-in-out infinite; }
+
+/* seta convidando a avançar */
+.bi-arrow-right { animation: cutucar-direita 1.6s ease-in-out infinite; }
+
+/* check confirmando com orgulho */
+.bi-check-circle,
+.bi-check-lg { animation: pulso-icone 2.2s ease-in-out infinite; }
+
+/* lupa procurando */
+.bi-search { animation: procurar 3s ease-in-out infinite; }
+
+/* caixinha de entrada balançando (lista vazia) */
+.bi-inbox { animation: quicar 2.6s ease-in-out infinite; }
+
+/* --- Ícones que reagem ao passar o mouse --- */
+.btn-apagar:hover .bi-trash,
+.btn-apagar-modal:hover .bi-trash { animation: tremer 0.5s ease-in-out; }
+
+.btn-roxo:hover .bi-plus-circle,
+.btn-roxo-claro:hover .bi-plus-circle { animation: girar 0.6s ease; }
+
+.btn-roxo:hover .bi-arrow-clockwise,
+.btn-roxo-claro:hover .bi-arrow-clockwise { animation: girar 0.7s ease; }
+
+.btn-roxo-claro:hover .bi-pencil { animation: acenar 0.6s ease-in-out; }
+
+.btn-roxo:hover .bi-box-arrow-in-right,
+.btn-roxo-claro:hover .bi-box-arrow-right { animation: cutucar-direita 0.7s ease-in-out; }
+
+/* ============================================================
    Animações (keyframes)
    ============================================================ */
+
+@keyframes cintilar-estrelas {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+@keyframes ponto-online {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(74, 222, 128, 0);
+  }
+}
+
+@keyframes caret-piscar {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes cintilar {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  50% { opacity: 0.45; transform: scale(0.82) rotate(12deg); }
+}
+
+@keyframes acenar {
+  0%, 70%, 100% { transform: rotate(0deg); }
+  76% { transform: rotate(-14deg); }
+  82% { transform: rotate(12deg); }
+  88% { transform: rotate(-8deg); }
+  94% { transform: rotate(6deg); }
+}
+
+@keyframes piscar-lampada {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8)); }
+  8% { opacity: 0.4; filter: none; }
+  12% { opacity: 1; }
+  16% { opacity: 0.55; }
+  20%, 90% { opacity: 1; filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8)); }
+}
+
+@keyframes batimento {
+  0%, 100% { transform: scale(1); }
+  12% { transform: scale(1.25); }
+  24% { transform: scale(1); }
+  36% { transform: scale(1.18); }
+  48% { transform: scale(1); }
+}
+
+@keyframes relampejo {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.9)); }
+  45% { opacity: 1; }
+  50% { opacity: 0.25; filter: none; }
+  55% { opacity: 1; }
+  60% { opacity: 0.4; }
+  65% { opacity: 1; }
+}
+
+@keyframes ampulheta {
+  0%, 55% { transform: rotate(0deg); }
+  70%, 100% { transform: rotate(180deg); }
+}
+
+@keyframes pendulo {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-13deg); }
+  75% { transform: rotate(13deg); }
+}
+
+@keyframes piscar-olho {
+  0%, 88%, 100% { transform: scaleY(1); }
+  93% { transform: scaleY(0.12); }
+}
+
+@keyframes subir-nuvem {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-4px); opacity: 0.75; }
+}
+
+@keyframes quicar {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+  50% { transform: translateY(0); }
+  62% { transform: translateY(-2px); }
+  72% { transform: translateY(0); }
+}
+
+@keyframes pulso-icone {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.85; }
+}
+
+@keyframes piscar-alerta {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes cutucar-direita {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+@keyframes procurar {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(2px, -2px) rotate(8deg); }
+  50% { transform: translate(-2px, 1px) rotate(-6deg); }
+  75% { transform: translate(1px, 2px) rotate(4deg); }
+}
 
 @keyframes entrar {
   from {
