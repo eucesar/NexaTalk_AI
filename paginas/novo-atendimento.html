@@ -49,13 +49,17 @@
           </div>
         </div>
 
-        <!-- Dica -->
-        <div class="cartao-roxo text-center" style="color: var(--roxo);">
-          <i class="bi bi-lightbulb"></i> Fale naturalmente. Nossa IA entende o contexto.
-        </div>
+        <!-- Melhorar texto com a IA (sob demanda) -->
+        <button type="button" id="btnMelhorar" class="btn-roxo-claro" style="padding: 11px; font-size: 0.92rem;" onclick="melhorarDescricao()">
+          <i class="bi bi-magic me-2"></i> Melhorar descrição com IA
+        </button>
+        <div id="msgMelhorar" class="text-center text-secondary mt-2 mb-1" style="font-size: 0.8rem; display: none;"></div>
+
+        <!-- Assistente NexaIA -->
+        <div id="nexaia" class="mt-3"></div>
 
         <!-- Botão analisar com IA -->
-        <button type="submit" class="btn-roxo mt-2">
+        <button type="submit" class="btn-roxo mt-1">
           <i class="bi bi-stars me-2"></i> Analisar com IA
         </button>
 
@@ -77,8 +81,13 @@
     }
   </script>
   <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
 
   <script>
+    // NexaIA orienta o preenchimento
+    nexaiaMostrar("nexaia",
+      "Fale naturalmente — eu entendo o contexto. Se quiser, escreva um rascunho e toque em \"Melhorar descrição com IA\" que eu deixo o texto mais claro antes da análise.");
+
     // Exige login: se não estiver logado, volta para a tela inicial.
     // Se estiver, pré-preenche o nome e o contato com os dados da conta.
     auth.onAuthStateChanged(function (usuario) {
@@ -99,6 +108,55 @@
     descricao.addEventListener("input", function () {
       contador.textContent = descricao.value.length;
     });
+
+    // ===== Melhorar a descrição com a IA (Gemini, sob demanda) =====
+    let descricaoOriginal = "";
+
+    async function melhorarDescricao() {
+      const texto = descricao.value.trim();
+      const btn = document.getElementById("btnMelhorar");
+      const msg = document.getElementById("msgMelhorar");
+      msg.style.display = "none";
+
+      if (texto.length < 10) {
+        msg.textContent = "Escreva um pouco mais sobre o problema para eu conseguir melhorar o texto.";
+        msg.style.display = "block";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> A NexaIA está reescrevendo...';
+
+      try {
+        const melhorado = await nexaiaPerguntar(
+          "Você é a NexaIA, assistente de atendimento da NexaTalk AI. " +
+          "Reescreva a mensagem do cliente abaixo deixando-a mais clara, completa e educada para a triagem do atendimento. " +
+          "Mantenha todas as informações citadas (números de pedido, valores, datas), escreva em primeira pessoa e NÃO invente dados. " +
+          "Máximo de 500 caracteres. Responda APENAS com o texto reescrito, sem aspas.\n\n" +
+          'Mensagem: "' + texto + '"'
+        );
+        descricaoOriginal = texto;
+        descricao.value = melhorado.slice(0, 500);
+        contador.textContent = descricao.value.length;
+        msg.innerHTML = 'Texto aprimorado pela IA. <a href="#" onclick="desfazerMelhoria(); return false;" style="color: var(--roxo); font-weight: 600;">Desfazer</a>';
+        msg.style.display = "block";
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Não consegui melhorar agora (verifique a chave Gemini ou a cota do dia). Pode enviar do seu jeito!";
+        msg.style.display = "block";
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-magic me-2"></i> Melhorar descrição com IA';
+    }
+
+    // Restaura o texto original digitado pelo cliente
+    function desfazerMelhoria() {
+      if (!descricaoOriginal) return;
+      descricao.value = descricaoOriginal;
+      contador.textContent = descricao.value.length;
+      document.getElementById("msgMelhorar").style.display = "none";
+    }
 
     // Validação + envio do formulário
     const form = document.getElementById("formAtendimento");

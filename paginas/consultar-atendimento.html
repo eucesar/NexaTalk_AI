@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Consultar Atendimento</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho -->
+    <div class="cabecalho">
+      <a class="voltar" href="meus-atendimentos.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">Consultar Atendimento</span>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo">PASSO 7</span>
+
+      <h5 class="fw-bold text-center mb-1 mt-2">Localizar Atendimento</h5>
+      <p class="text-secondary text-center mb-3" style="font-size: 0.9rem;">
+        Informe o protocolo ou e-mail para encontrar seu atendimento.
+      </p>
+
+      <!-- Assistente NexaIA -->
+      <div id="nexaia"></div>
+
+      <!-- Protocolo -->
+      <label class="form-label" for="campoProtocolo">Número do Protocolo</label>
+      <input id="campoProtocolo" type="text" class="form-control" placeholder="# Ex: ATD-2026-00847">
+
+      <div class="divisor-ou"><span>ou</span></div>
+
+      <!-- E-mail -->
+      <label class="form-label" for="campoEmail">E-mail cadastrado</label>
+      <input id="campoEmail" type="email" class="form-control mb-4" placeholder="@ Ex: joao@email.com">
+
+      <!-- Buscar -->
+      <button id="btnBuscar" class="btn-roxo" onclick="buscarAtendimento()">
+        <i class="bi bi-search me-2"></i> Buscar Atendimento
+      </button>
+
+      <div id="msgErro" class="text-danger text-center mt-3" style="font-size: 0.85rem; display: none;"></div>
+
+      <!-- Resultados (quando o e-mail tem mais de um atendimento) -->
+      <div id="resultados" class="mt-4"></div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+
+  <script>
+    // NexaIA orienta a busca
+    nexaiaMostrar("nexaia",
+      "O protocolo tem o formato ATD-ANO-NÚMERO (ex: ATD-2026-00847) e aparece na confirmação e em Meus Atendimentos. Sem o número? Busque pelo e-mail usado na abertura.");
+
+    // Preenche os campos ao voltar da tela de erro ("Tentar Novamente")
+    const parametros = new URLSearchParams(window.location.search);
+    if (parametros.get("p")) document.getElementById("campoProtocolo").value = parametros.get("p");
+    if (parametros.get("e")) document.getElementById("campoEmail").value = parametros.get("e");
+
+    // Monta o selo de status conforme o texto (mesmo padrão da lista)
+    function badgeStatus(status) {
+      const s = (status || "").toLowerCase();
+      if (s.includes("conclu")) return '<span class="status-badge status-concluido"><i class="bi bi-check-circle"></i> Concluído</span>';
+      if (s.includes("resolvido")) return '<span class="status-badge status-ia"><i class="bi bi-robot"></i> Resolvido pela IA</span>';
+      if (s.includes("recebido")) return '<span class="status-badge status-recebido"><i class="bi bi-inbox"></i> Recebido</span>';
+      return '<span class="status-badge status-analise"><i class="bi bi-arrow-repeat"></i> Em análise</span>';
+    }
+
+    function mostrarErro(texto) {
+      const el = document.getElementById("msgErro");
+      el.textContent = texto;
+      el.style.display = "block";
+    }
+
+    // Busca por protocolo (prioridade) e depois por e-mail
+    async function buscarAtendimento() {
+      const protocolo = document.getElementById("campoProtocolo").value.trim();
+      const email = document.getElementById("campoEmail").value.trim();
+
+      document.getElementById("msgErro").style.display = "none";
+      document.getElementById("resultados").innerHTML = "";
+
+      if (!protocolo && !email) {
+        mostrarErro("Informe o número do protocolo ou o e-mail cadastrado.");
+        return;
+      }
+
+      const btn = document.getElementById("btnBuscar");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Buscando...';
+
+      try {
+        let lista = [];
+        if (protocolo) lista = await buscarPorProtocolo(protocolo);
+        if (lista.length === 0 && email) lista = await buscarPorEmail(email);
+
+        // Nada encontrado: vai para a tela 404 levando o que foi digitado
+        if (lista.length === 0) {
+          const query = new URLSearchParams();
+          if (protocolo) query.set("p", protocolo);
+          if (email) query.set("e", email);
+          window.location.href = "resultado-consulta.html?" + query.toString();
+          return;
+        }
+
+        // Um resultado: abre direto os detalhes
+        if (lista.length === 1) {
+          window.location.href = "detalhe-atendimento.html?id=" + lista[0].id + "&de=consulta";
+          return;
+        }
+
+        mostrarResultados(lista);
+      } catch (e) {
+        console.error(e);
+        mostrarErro("Não foi possível buscar agora. Verifique sua conexão e tente novamente.");
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-search me-2"></i> Buscar Atendimento';
+    }
+
+    // Vários resultados (mesmo e-mail): lista para o usuário escolher
+    function mostrarResultados(lista) {
+      const area = document.getElementById("resultados");
+      area.innerHTML =
+        '<p class="fw-semibold mb-2" style="font-size: 0.9rem;">' +
+        "Encontramos " + lista.length + " atendimentos. Toque para abrir:</p>";
+
+      lista.forEach(function (a) {
+        const card = document.createElement("div");
+        card.className = "card-atendimento";
+        card.innerHTML =
+          '<div class="d-flex justify-content-between align-items-center mb-1">' +
+            '<span class="protocolo">' + (a.protocolo || "—") + "</span>" +
+            badgeStatus(a.status) +
+          "</div>" +
+          '<div class="text-secondary" style="font-size:0.9rem;">' + (a.descricao_original || "") + "</div>" +
+          '<div class="text-secondary mt-1" style="font-size:0.78rem;"><i class="bi bi-clock"></i> ' + (a.data_criacao || "") + "</div>";
+        card.addEventListener("click", function () {
+          window.location.href = "detalhe-atendimento.html?id=" + a.id + "&de=consulta";
+        });
+        area.appendChild(card);
+      });
+    }
+
+    // Enter em qualquer campo dispara a busca
+    ["campoProtocolo", "campoEmail"].forEach(function (id) {
+      document.getElementById(id).addEventListener("keydown", function (e) {
+        if (e.key === "Enter") buscarAtendimento();
+      });
+    });
+  </script>
+</body>
+</html>

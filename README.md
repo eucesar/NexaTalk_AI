@@ -13,7 +13,7 @@ Deixamos aqui um resumo do nosso projeto e como testar.
 
 Desenvolvemos um app mobile (HTML/CSS/JS) de atendimento ao cliente. O fluxo usa **IA do Google Gemini** para triagem e análise, e **Firebase** para login e salvar os chamados no Firestore.
 
-O cliente faz login, abre um chamado, passa pela triagem da IA, vê a análise e acompanha tudo em "Meus Atendimentos".
+O cliente faz login, abre um chamado, passa pela triagem da IA, vê a análise e acompanha tudo em "Meus Atendimentos". A assistente **NexaIA** acompanha o usuário em todas as telas com dicas contextuais e ações de IA sob demanda (melhorar a descrição do chamado, resumir os atendimentos).
 
 ---
 
@@ -23,8 +23,11 @@ O cliente faz login, abre um chamado, passa pela triagem da IA, vê a análise e
 
 1. Baixe ou clone este repo
 2. Cole a chave da Gemini em `js/config.example.js` (passo abaixo)
-3. Abra o `index.html` com **Live Server** no VS Code (`http://localhost`)
-4. Crie conta na Tela 1 (senha com 6+ caracteres) e teste o fluxo
+3. No VS Code/Cursor, instale a extensão **Live Server** (já sugerida em `.vscode/extensions.json`)
+4. Abra `index.html` e clique em **Go Live** (porta **5500**, já configurada em `.vscode/settings.json`)
+5. Crie conta na Tela 1 (senha com 6+ caracteres) e teste o fluxo
+
+> **Não precisa de Node/npm.** O app é HTML/CSS/JS puro; Firebase e Gemini rodam no navegador. O **Go Live** já é o servidor local.
 
 ---
 
@@ -59,7 +62,7 @@ apiKey: "SUA_CHAVE_GEMINI_AQUI",
 
 ## Fluxo das telas
 
-Login → Novo Atendimento → Triagem IA → Análise → Protocolo → Meus Atendimentos
+Login → Novo Atendimento → Triagem IA → Análise → Protocolo → Meus Atendimentos → Detalhes do Atendimento → Consulta por protocolo/e-mail (404 se não encontrar)
 
 ---
 

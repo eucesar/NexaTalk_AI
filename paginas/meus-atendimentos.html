@@ -18,6 +18,7 @@
     <div class="cabecalho">
       <a class="voltar" href="../index.html"><i class="bi bi-arrow-left"></i></a>
       <span class="titulo-topo">Meus Atendimentos</span>
+      <a class="acao-topo" href="consultar-atendimento.html" title="Consultar por protocolo ou e-mail"><i class="bi bi-search"></i></a>
     </div>
 
     <div class="corpo">
@@ -35,6 +36,9 @@
         <span class="pill" data-filtro="análise" onclick="selecionarFiltro(this)">Em análise</span>
         <span class="pill" data-filtro="concluído" onclick="selecionarFiltro(this)">Concluído</span>
       </div>
+
+      <!-- Assistente NexaIA -->
+      <div id="nexaia"></div>
 
       <!-- Carregando -->
       <div id="carregando" class="carregando-ia">
@@ -105,6 +109,7 @@
     }
   </script>
   <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
 
   <script>
     let todosAtendimentos = [];   // tudo que veio do banco
@@ -127,12 +132,62 @@
       try {
         todosAtendimentos = await listarMeusAtendimentos(usuario.uid);
         renderizar();
+        montarResumoNexaia(usuario);
       } catch (e) {
         console.error(e);
         document.getElementById("carregando").innerHTML =
           '<p class="text-danger">Não foi possível carregar seus atendimentos.</p>';
       }
     });
+
+    // NexaIA resume a situação dos atendimentos (contagem local)
+    function montarResumoNexaia(usuario) {
+      const nome = nexaiaPrimeiroNome(usuario.displayName || "");
+      const saudacao = nexaiaSaudacao() + (nome ? ", " + nome : "") + "! ";
+
+      if (todosAtendimentos.length === 0) {
+        nexaiaMostrar("nexaia", saudacao +
+          "Você ainda não tem atendimentos. Toque em Abrir Novo Atendimento que eu faço a triagem para você.");
+        return;
+      }
+
+      const finalizados = todosAtendimentos.filter(function (a) {
+        return atendimentoFinalizadoParaCliente(a.status);
+      }).length;
+      const emAndamento = todosAtendimentos.length - finalizados;
+
+      nexaiaMostrar("nexaia",
+        saudacao + "Você tem " + todosAtendimentos.length + " atendimento(s): " +
+        emAndamento + " em andamento e " + finalizados + " finalizado(s). Toque em um card para ver os detalhes.",
+        { acaoTexto: "✨ Resumir com IA", aoClicar: resumirComIA });
+    }
+
+    // Resumo inteligente sob demanda (Gemini)
+    async function resumirComIA() {
+      const btn = document.getElementById("nexaiaAcao");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Resumindo...';
+
+      try {
+        const linhas = todosAtendimentos.slice(0, 10).map(function (a) {
+          const assunto = ((a.ia && a.ia.resumo) || a.descricao_original || "").slice(0, 120);
+          return "- " + (a.protocolo || "?") + " | status: " + (a.status || "?") + " | assunto: " + assunto;
+        }).join("\n");
+
+        const resumo = await nexaiaPerguntar(
+          "Você é a NexaIA, assistente da NexaTalk AI. Resuma para o cliente, em no máximo 2 frases simpáticas em português, " +
+          "a situação geral dos atendimentos dele (o que está andando, o que já foi resolvido e se algo precisa de atenção). " +
+          "Responda apenas com o resumo, sem listas.\n\nAtendimentos:\n" + linhas
+        );
+        nexaiaTexto("nexaia", resumo);
+        btn.style.display = "none";
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Resumir com IA";
+        nexaiaTexto("nexaia", "Não consegui gerar o resumo agora (verifique a chave Gemini ou a cota do dia). Tente novamente mais tarde.");
+      }
+    }
 
     // Monta o selo de status conforme o texto
     function badgeStatus(status) {
@@ -183,18 +238,11 @@
             badgeStatus(a.status) +
           "</div>" +
           '<div class="text-secondary" style="font-size:0.9rem;">' + (a.descricao_original || "") + "</div>" +
-          '<div class="text-secondary mt-1" style="font-size:0.78rem;"><i class="bi bi-clock"></i> ' + (a.data_criacao || "") + "</div>" +
-          '<div class="card-proxima-entrega">' +
-            '<i class="bi bi-info-circle me-1"></i> Será implementado na próxima entrega.' +
-          "</div>";
+          '<div class="text-secondary mt-1" style="font-size:0.78rem;"><i class="bi bi-clock"></i> ' + (a.data_criacao || "") + "</div>";
 
-        // Ao clicar, abre/fecha o aviso (só um card aberto por vez)
+        // Ao clicar, abre a tela de detalhes do atendimento (PASSO 6)
         card.addEventListener("click", function () {
-          const jaAberto = card.classList.contains("aberto");
-          document.querySelectorAll(".card-atendimento.aberto").forEach(function (c) {
-            c.classList.remove("aberto");
-          });
-          if (!jaAberto) card.classList.add("aberto");
+          window.location.href = "detalhe-atendimento.html?id=" + a.id;
         });
 
         lista.appendChild(card);
@@ -213,7 +261,7 @@
       }).length;
 
       if (qtdParaApagar === 0) {
-        mostrarMsgApagar("Nenhum atendimento concluído para apagar (Resolvido pela IA ou Concluído).", "#6b7280");
+        mostrarMsgApagar("Nenhum atendimento concluído para apagar (Resolvido pela IA ou Concluído).", "#a29db8");
         return;
       }
 
@@ -237,10 +285,11 @@
         const apagados = await apagarAtendimentosFinalizados(usuarioAtual.uid);
         todosAtendimentos = await listarMeusAtendimentos(usuarioAtual.uid);
         renderizar();
-        mostrarMsgApagar(apagados + " atendimento(s) concluído(s) apagado(s) do banco.", "#16a34a");
+        montarResumoNexaia(usuarioAtual);
+        mostrarMsgApagar(apagados + " atendimento(s) concluído(s) apagado(s) do banco.", "#4ade80");
       } catch (e) {
         console.error(e);
-        mostrarMsgApagar("Não foi possível apagar. Tente novamente.", "#dc2626");
+        mostrarMsgApagar("Não foi possível apagar. Tente novamente.", "#f87171");
       }
 
       btn.disabled = false;

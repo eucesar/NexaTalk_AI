@@ -79,14 +79,72 @@ async function listarMeusAtendimentos(usuarioId) {
     lista.push(Object.assign({ id: doc.id }, doc.data()));
   });
 
-  // Ordena pela data de criação (mais recentes primeiro)
+  return ordenarPorMaisRecente(lista);
+}
+
+// Ordena pela data de criação (mais recentes primeiro)
+function ordenarPorMaisRecente(lista) {
   lista.sort(function (a, b) {
     const ta = a.data_criacao_ts ? a.data_criacao_ts.seconds : 0;
     const tb = b.data_criacao_ts ? b.data_criacao_ts.seconds : 0;
     return tb - ta;
   });
-
   return lista;
+}
+
+// Busca um atendimento pelo ID do documento (tela de Detalhes)
+async function buscarAtendimentoPorId(atendimentoId) {
+  const doc = await db.collection("atendimentos").doc(atendimentoId).get();
+  if (!doc.exists) return null;
+  return Object.assign({ id: doc.id }, doc.data());
+}
+
+// Consulta pelo número de protocolo (aceita com ou sem "#")
+async function buscarPorProtocolo(protocolo) {
+  let valor = (protocolo || "").trim().toUpperCase().replace(/\s+/g, "");
+  if (valor.startsWith("#")) valor = valor.slice(1);
+  if (!valor) return [];
+
+  // No banco o protocolo é salvo com "#" na frente (ex: #ATD-2026-12345)
+  const tentativas = ["#" + valor, valor];
+  for (let i = 0; i < tentativas.length; i++) {
+    const consulta = await db
+      .collection("atendimentos")
+      .where("protocolo", "==", tentativas[i])
+      .get();
+
+    if (!consulta.empty) {
+      const lista = [];
+      consulta.forEach(function (doc) {
+        lista.push(Object.assign({ id: doc.id }, doc.data()));
+      });
+      return ordenarPorMaisRecente(lista);
+    }
+  }
+  return [];
+}
+
+// Consulta pelo e-mail cadastrado no atendimento
+async function buscarPorEmail(email) {
+  const digitado = (email || "").trim();
+  if (!digitado) return [];
+
+  // Tenta como foi digitado e também tudo em minúsculas
+  const variantes = digitado === digitado.toLowerCase()
+    ? [digitado]
+    : [digitado, digitado.toLowerCase()];
+
+  const porId = {};
+  for (let i = 0; i < variantes.length; i++) {
+    const consulta = await db
+      .collection("atendimentos")
+      .where("cliente.email", "==", variantes[i])
+      .get();
+    consulta.forEach(function (doc) {
+      porId[doc.id] = Object.assign({ id: doc.id }, doc.data());
+    });
+  }
+  return ordenarPorMaisRecente(Object.values(porId));
 }
 
 // Status padronizados (cliente + operador na próxima entrega)

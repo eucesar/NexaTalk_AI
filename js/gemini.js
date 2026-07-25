@@ -35,9 +35,28 @@ sem texto antes ou depois, exatamente neste formato:
   "tempo_espera_fila": "estimativa de espera na fila até iniciar o atendimento (ex: ~5 min, ~15 min, ~30 min)",
   "sla_sugerido": "prazo limite sugerido para resolução (ex: 24 horas, 48 horas)",
   "probabilidade_primeira_resposta": número inteiro de 0 a 100 (sem fração, ex: 95) indicando a chance de resolver já na primeira resposta,
-  "auto_resolvivel": true ou false (use true APENAS se for uma dúvida simples, informativa ou de baixo risco que possa ser resolvida na hora com uma resposta direta, sem precisar de atendente humano. Use false para casos sensíveis como cobranças, cancelamentos, reclamações, problemas financeiros, jurídicos ou que exijam acesso a sistemas internos),
-  "resposta_automatica": "se auto_resolvivel for true, escreva aqui a solução/resposta direta, clara e cordial para o cliente; se for false, deixe string vazia"
+  "auto_resolvivel": true ou false (siga a POLÍTICA DE AUTO-RESOLUÇÃO abaixo),
+  "resposta_automatica": "se auto_resolvivel for true, escreva aqui a resposta COMPLETA para o cliente: cordial, objetiva, com passos numerados quando for orientação (1. 2. 3.), e termine avisando que, se não resolver, ele pode falar com um atendente; se auto_resolvivel for false, deixe string vazia"
 }
+
+POLÍTICA DE AUTO-RESOLUÇÃO (objetivo: a IA resolve o máximo possível; o operador é exceção):
+
+Use auto_resolvivel = true SEMPRE que conseguir dar uma resposta útil e completa sem acessar sistemas internos, por exemplo:
+- Dúvidas e informações: horários, prazos, políticas, funcionamento de produtos/serviços, planos e diferenças entre eles;
+- Orientações passo a passo: segunda via de boleto/fatura, trocar senha, recuperar acesso, atualizar cadastro, rastrear/consultar status de pedido, configurar app ou serviço;
+- Problemas técnicos simples com solução conhecida: reiniciar, reconectar, limpar cache, atualizar aplicativo, verificar conexão;
+- Cliente só quer ENTENDER uma cobrança ou fatura (explique os itens e cenários comuns e como conferir);
+- Elogios, sugestões e feedbacks (agradeça e registre).
+
+Use auto_resolvivel = false APENAS quando a resolução exigir ação humana ou envolver risco, por exemplo:
+- Ações que alteram conta, contrato ou pedido: cancelamento, estorno, reembolso, troca, devolução, mudança de plano ou titularidade;
+- CONTESTAÇÃO ou disputa de cobrança (cliente afirma cobrança indevida/duplicada e quer devolução);
+- Fraude, acesso indevido, segurança da conta, vazamento de dados;
+- Assuntos jurídicos, LGPD, Procon, ameaças ou reclamações formais;
+- Negociação de dívidas ou valores;
+- Cliente pede explicitamente para falar com um humano.
+
+Regra de ouro: na dúvida, prefira true com uma resposta_automatica completa. Só use false se a solução exigir mexer em sistemas internos ou houver risco financeiro, legal ou de segurança.
 
 Importante: "confianca" e "probabilidade_primeira_resposta" devem ser números inteiros de 0 a 100 (ex: 95), nunca frações como 0.95.
 

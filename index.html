@@ -38,6 +38,9 @@
       <!-- ===== ÁREA DESLOGADO: login / cadastro ===== -->
       <div id="areaDeslogado" class="text-start">
 
+        <!-- Assistente NexaIA -->
+        <div id="nexaiaDeslogado"></div>
+
         <!-- Formulário de LOGIN -->
         <div id="boxLogin" class="cartao">
           <h5 class="fw-bold mb-3 text-center">Entrar</h5>
@@ -69,6 +72,11 @@
           </p>
         </div>
 
+        <!-- Consulta pública (não precisa de login) -->
+        <button class="btn-roxo-claro" onclick="window.location.href='paginas/consultar-atendimento.html'">
+          <i class="bi bi-search me-2"></i> Consultar Atendimento
+        </button>
+
       </div>
 
       <!-- ===== ÁREA LOGADO: ações ===== -->
@@ -79,12 +87,19 @@
           Olá, <span id="nomeUsuario" class="fw-bold">cliente</span>! 👋
         </div>
 
+        <!-- Assistente NexaIA -->
+        <div id="nexaiaLogado"></div>
+
         <button class="btn-roxo mb-3" onclick="window.location.href='paginas/novo-atendimento.html'">
           <i class="bi bi-chat-dots me-2"></i> Iniciar Atendimento
         </button>
 
         <button class="btn-roxo-claro mb-3" onclick="window.location.href='paginas/meus-atendimentos.html'">
           <i class="bi bi-list-ul me-2"></i> Ver Meus Atendimentos
+        </button>
+
+        <button class="btn-roxo-claro mb-3" onclick="window.location.href='paginas/consultar-atendimento.html'">
+          <i class="bi bi-search me-2"></i> Consultar Atendimento
         </button>
 
         <button class="btn btn-link" onclick="fazerLogout()" style="color: var(--texto-cinza); text-decoration: none;">
@@ -115,6 +130,7 @@
     }
   </script>
   <script src="js/firebase.js"></script>
+  <script src="js/nexaia.js"></script>
 
   <script>
     // Alterna a tela conforme o usuário está logado ou não
@@ -123,9 +139,18 @@
         document.getElementById("areaDeslogado").style.display = "none";
         document.getElementById("areaLogado").style.display = "block";
         document.getElementById("nomeUsuario").textContent = usuario.displayName || usuario.email;
+
+        // NexaIA dá as boas-vindas e orienta o próximo passo
+        const nome = nexaiaPrimeiroNome(usuario.displayName || usuario.email);
+        nexaiaMostrar("nexaiaLogado",
+          nexaiaSaudacao() + (nome ? ", " + nome : "") +
+          "! Me conte seu problema em \"Iniciar Atendimento\": eu analiso na hora, encaminho para a área certa e, se der, já resolvo sozinha.");
       } else {
         document.getElementById("areaDeslogado").style.display = "block";
         document.getElementById("areaLogado").style.display = "none";
+
+        nexaiaMostrar("nexaiaDeslogado",
+          "Oi! Eu sou a NexaIA, a inteligência artificial que cuida do seu atendimento. Entre ou crie sua conta que eu faço a triagem da sua solicitação em segundos.");
       }
     });
 

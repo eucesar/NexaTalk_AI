@@ -106,7 +106,7 @@
 
         <!-- O que acontece agora -->
         <div class="cartao-aviso">
-          <div class="fw-semibold mb-1" style="color: #b45309;">
+          <div class="fw-semibold mb-1" style="color: #fbbf24;">
             <i class="bi bi-lightbulb"></i> O que acontece agora?
           </div>
           <div class="text-secondary" style="font-size: 0.9rem;">
@@ -286,12 +286,12 @@
       // ===== Painel da Análise (dashboard) =====
 
       // Medidor circular - Confiança da IA
-      pintarDonut("donutConfianca", confianca, "#6d28d9");
+      pintarDonut("donutConfianca", confianca, "#8b5cf6");
       document.getElementById("donutConfiancaValor").textContent = confianca + "%";
 
       // Medidor circular - Resolução na 1ª resposta
       const prob = normalizarPorcentagem(a.probabilidade_primeira_resposta);
-      pintarDonut("donutProb", prob, "#16a34a");
+      pintarDonut("donutProb", prob, "#34d399");
       document.getElementById("donutProbValor").textContent = prob + "%";
 
       // Sentimento (com cor conforme o estado)
@@ -346,7 +346,7 @@
     function pintarDonut(id, pct, cor) {
       const graus = Math.round((pct / 100) * 360);
       document.getElementById(id).style.background =
-        "conic-gradient(" + cor + " " + graus + "deg, #e5e7eb " + graus + "deg)";
+        "conic-gradient(" + cor + " " + graus + "deg, rgba(255,255,255,0.08) " + graus + "deg)";
     }
 
     // Pinta a barra de nível (3 segmentos) conforme Baixa / Média / Alta

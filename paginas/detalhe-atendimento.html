@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Detalhes do Atendimento</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho -->
+    <div class="cabecalho">
+      <a id="linkVoltar" class="voltar" href="meus-atendimentos.html"><i class="bi bi-arrow-left"></i></a>
+      <span id="tituloTopo" class="titulo-topo">Atendimento</span>
+      <a class="acao-topo" href="consultar-atendimento.html" title="Consultar por protocolo ou e-mail"><i class="bi bi-search"></i></a>
+    </div>
+
+    <div class="corpo">
+
+      <span class="etiqueta-passo">PASSO 6</span>
+
+      <!-- Carregando -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-secondary">Carregando detalhes do atendimento...</p>
+      </div>
+
+      <!-- Conteúdo -->
+      <div id="conteudo" style="display: none;">
+
+        <!-- Data + Status -->
+        <div class="cartao">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="rotulo-pequeno mb-0">Data de abertura</span>
+            <span id="dataAbertura" class="fw-semibold" style="font-size: 0.88rem;"></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="rotulo-pequeno mb-0">Status</span>
+            <span id="statusBadge"></span>
+          </div>
+        </div>
+
+        <!-- Descrição original -->
+        <div class="cartao">
+          <div class="rotulo-pequeno">Descrição original</div>
+          <div id="descricao" class="text-secondary" style="font-size: 0.92rem;"></div>
+        </div>
+
+        <!-- Resumo da IA -->
+        <div class="cartao-roxo">
+          <div class="rotulo-pequeno" style="color: var(--roxo);"><i class="bi bi-stars"></i> Resumo da IA</div>
+          <div id="resumoIa" class="text-secondary" style="font-size: 0.92rem;"></div>
+        </div>
+
+        <!-- Intenção -->
+        <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+          <span class="text-secondary" style="font-size: 0.9rem;">Intenção:</span>
+          <span id="intencao" class="badge-intencao"></span>
+        </div>
+
+        <!-- Mensagem da operação -->
+        <div class="cartao-aviso">
+          <div class="fw-semibold mb-1" style="color: #fbbf24; font-size: 0.9rem;">
+            <i class="bi bi-chat-left-text"></i> Mensagem da operação
+          </div>
+          <div id="mensagemOperacao" style="font-size: 0.9rem; color: #fde68a;"></div>
+        </div>
+
+        <!-- Assistente NexaIA -->
+        <div id="nexaia"></div>
+
+        <!-- Novo atendimento -->
+        <button class="btn-roxo mt-2" onclick="window.location.href='novo-atendimento.html'">
+          <i class="bi bi-plus-circle me-2"></i> Abrir Novo Atendimento
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+
+  <script>
+    // Lê o id do atendimento na URL (?id=...) e de onde o usuário veio
+    const parametros = new URLSearchParams(window.location.search);
+    const atendimentoId = parametros.get("id");
+    const veioDaConsulta = parametros.get("de") === "consulta";
+
+    // Se chegou pela consulta de protocolo, o voltar retorna para lá
+    if (veioDaConsulta) {
+      document.getElementById("linkVoltar").href = "consultar-atendimento.html";
+    }
+
+    // Monta o selo de status conforme o texto (mesmo padrão da lista)
+    function badgeStatus(status) {
+      const s = (status || "").toLowerCase();
+      if (s.includes("conclu")) return '<span class="status-badge status-concluido"><i class="bi bi-check-circle"></i> Concluído</span>';
+      if (s.includes("resolvido")) return '<span class="status-badge status-ia"><i class="bi bi-robot"></i> Resolvido pela IA</span>';
+      if (s.includes("recebido")) return '<span class="status-badge status-recebido"><i class="bi bi-inbox"></i> Recebido</span>';
+      return '<span class="status-badge status-analise"><i class="bi bi-arrow-repeat"></i> Em análise</span>';
+    }
+
+    // Define a mensagem da operação conforme o andamento
+    function mensagemDaOperacao(a) {
+      if (a.mensagem_operacao) return a.mensagem_operacao;
+      const s = (a.status || "").toLowerCase();
+      if (s.includes("resolvido")) {
+        return (a.ia && a.ia.resposta_automatica) ||
+          "Este atendimento foi resolvido automaticamente pela nossa IA.";
+      }
+      if (s.includes("conclu")) {
+        return "Atendimento concluído pela nossa equipe. Qualquer dúvida, abra um novo atendimento.";
+      }
+      return "Seu atendimento está sendo avaliado pela equipe responsável. Em breve retornaremos.";
+    }
+
+    // Dica da NexaIA usando a análise salva pela IA na abertura
+    function dicaNexaia(a) {
+      const s = (a.status || "").toLowerCase();
+      if (s.includes("resolvido")) {
+        return "Eu mesma resolvi este atendimento de forma automática. Se a resposta não ajudou, abra um novo atendimento que eu encaminho para a equipe humana.";
+      }
+      if (s.includes("conclu")) {
+        return "Este atendimento foi encerrado pela equipe. Precisa de mais alguma coisa? É só abrir um novo atendimento.";
+      }
+
+      let msg = "Já analisei seu caso e encaminhei para a área certa.";
+      if (a.ia && a.ia.prioridade) msg = "Classifiquei seu caso como prioridade " + a.ia.prioridade.toLowerCase() + ".";
+      if (a.ia && a.ia.tempo_estimado) msg += " Tempo estimado de resolução: " + a.ia.tempo_estimado + ".";
+      return msg + " Qualquer novidade aparece nesta tela.";
+    }
+
+    // Carrega o atendimento do Firestore e preenche a tela
+    async function carregarDetalhes() {
+      if (!atendimentoId) {
+        window.location.href = "resultado-consulta.html";
+        return;
+      }
+      try {
+        const a = await buscarAtendimentoPorId(atendimentoId);
+        if (!a) {
+          window.location.href = "resultado-consulta.html";
+          return;
+        }
+
+        document.getElementById("tituloTopo").textContent =
+          "Atendimento " + (a.protocolo || "").replace("#", "");
+        document.getElementById("dataAbertura").textContent = a.data_criacao || "—";
+        document.getElementById("statusBadge").innerHTML = badgeStatus(a.status);
+        document.getElementById("descricao").textContent = a.descricao_original || "—";
+        document.getElementById("resumoIa").textContent = (a.ia && a.ia.resumo) || "—";
+        document.getElementById("intencao").textContent =
+          a.intencao || (a.ia && a.ia.intencao) || "Não identificada";
+        document.getElementById("mensagemOperacao").textContent = mensagemDaOperacao(a);
+        nexaiaMostrar("nexaia", dicaNexaia(a));
+
+        document.getElementById("carregando").style.display = "none";
+        document.getElementById("conteudo").style.display = "block";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("carregando").innerHTML =
+          '<p class="text-danger">Não foi possível carregar os detalhes do atendimento.</p>';
+      }
+    }
+
+    carregarDetalhes();
+  </script>
+</body>
+</html>
