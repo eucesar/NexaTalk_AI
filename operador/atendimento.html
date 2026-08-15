@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Detalhes do Atendimento</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <!-- Carregando -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-secondary">Carregando o atendimento...</p>
+      </div>
+
+      <div id="conteudo" style="display:none;">
+
+        <!-- Cabeçalho do caso -->
+        <div class="ops-header">
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <a href="fila.html" class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.85rem; text-decoration:none;">
+                <i class="bi bi-arrow-left"></i>
+              </a>
+              <h1 id="tituloProtocolo" style="margin:0;">Atendimento</h1>
+              <span id="badgeStatus"></span>
+              <span id="badgePrioridade"></span>
+            </div>
+            <div class="subtitulo" id="subinfo"></div>
+          </div>
+          <a id="linkHistorico" href="#" class="btn-roxo-claro" style="width:auto; padding: 11px 18px; text-decoration:none;">
+            <i class="bi bi-clock-history me-2"></i> Ver Histórico →
+          </a>
+        </div>
+
+        <div class="ops-detalhe">
+
+          <!-- ================= COLUNA ESQUERDA: o caso ================= -->
+          <div class="ops-coluna">
+
+            <!-- Dados do cliente -->
+            <div class="cartao">
+              <div class="titulo-secao"><i class="bi bi-person-circle"></i> Dados do Cliente</div>
+              <div class="d-flex flex-wrap gap-4">
+                <div>
+                  <div class="rotulo-pequeno">Nome</div>
+                  <div id="cliNome" class="fw-semibold">—</div>
+                </div>
+                <div>
+                  <div class="rotulo-pequeno">Contato</div>
+                  <div id="cliContato" class="fw-semibold">—</div>
+                </div>
+                <div>
+                  <div class="rotulo-pequeno">Canal</div>
+                  <div id="cliCanal" class="fw-semibold">—</div>
+                </div>
+                <div>
+                  <div class="rotulo-pequeno">Aberto em</div>
+                  <div id="cliData" class="fw-semibold">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Descrição do cliente -->
+            <div class="cartao">
+              <div class="rotulo-pequeno"><i class="bi bi-card-text"></i> Descrição do Cliente</div>
+              <div id="descricao" class="text-secondary" style="font-size: 0.94rem;"></div>
+            </div>
+
+            <!-- Resumo gerado pela IA -->
+            <div class="cartao-roxo">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <div class="rotulo-pequeno mb-0" style="color: var(--roxo);"><i class="bi bi-robot"></i> Resumo gerado pela IA</div>
+                <span id="confiancaTexto" class="fw-bold" style="color: var(--roxo); font-size: 0.85rem;">—</span>
+              </div>
+              <div id="resumoIA" class="mb-2" style="font-size: 0.94rem;"></div>
+              <div class="barra-confianca mb-3">
+                <div id="confiancaBarra" class="barra-confianca-preenchida" style="width: 0%;"></div>
+              </div>
+              <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                <span class="rotulo-pequeno mb-0">Intenção:</span>
+                <span id="intencao" class="badge-intencao">—</span>
+                <span class="rotulo-pequeno mb-0 ms-2">Encaminhamento sugerido:</span>
+                <span id="encaminhamento" class="fw-bold" style="color: var(--roxo);">—</span>
+              </div>
+              <div id="chipsTags" class="chips mb-2"></div>
+              <div id="cardDados" style="display:none;">
+                <div class="rotulo-pequeno"><i class="bi bi-search"></i> Dados detectados pela IA</div>
+                <div id="dadosDetectados" class="text-secondary" style="font-size: 0.88rem;"></div>
+              </div>
+            </div>
+
+            <!-- Validação de área pelo operador -->
+            <div class="cartao" id="cardValidacao">
+              <div class="titulo-secao"><i class="bi bi-signpost-split"></i> Validação de Área pelo Operador</div>
+              <p class="text-secondary" style="font-size: 0.88rem;">
+                A IA atribuiu automaticamente esta solicitação para <b id="areaAtualTexto" style="color: var(--roxo);">—</b>.
+                Confirme se o encaminhamento está correto ou redirecione para a área responsável.
+              </p>
+
+              <div id="areaJaValidada" class="alerta-risco ok" style="display:none;">
+                <i class="bi bi-patch-check-fill"></i> Área já validada pelo operador.
+              </div>
+
+              <div id="blocoValidacao">
+                <div class="escolha-area">
+                  <button type="button" id="btnAreaCorreta" onclick="escolherArea(true)">
+                    <i class="bi bi-check-lg me-1"></i> Área correta
+                  </button>
+                  <button type="button" id="btnAreaIncorreta" onclick="escolherArea(false)">
+                    <i class="bi bi-x-lg me-1"></i> Área incorreta
+                  </button>
+                </div>
+
+                <div id="blocoRedirecionar" style="display:none;">
+                  <label class="form-label" for="selectArea" style="font-size: 0.86rem;">Redirecionar para:</label>
+                  <select id="selectArea" class="form-select mb-2">
+                    <option value="">Selecionar área...</option>
+                    <option>Financeiro</option>
+                    <option>Suporte Técnico</option>
+                    <option>Logística e Pedidos</option>
+                    <option>Comercial</option>
+                    <option>Cadastro e Contas</option>
+                    <option>Jurídico</option>
+                  </select>
+                  <input id="justificativa" type="text" class="form-control mb-2" placeholder="Justificativa do redirecionamento (opcional)">
+                </div>
+
+                <button id="btnConfirmarArea" class="btn-roxo-claro" onclick="confirmarArea()" disabled>
+                  Confirmar Atribuição de Área
+                </button>
+              </div>
+            </div>
+
+            <!-- Ações do atendimento -->
+            <div class="cartao">
+              <div class="titulo-secao"><i class="bi bi-gear"></i> Ações do Atendimento</div>
+              <div class="d-flex flex-wrap gap-4 mb-3">
+                <div>
+                  <div class="rotulo-pequeno">Status atual</div>
+                  <div id="statusAtualTexto"></div>
+                </div>
+                <div>
+                  <div class="rotulo-pequeno">Tratado por</div>
+                  <div id="tratadoPor"></div>
+                </div>
+                <div style="flex:1; min-width: 200px;">
+                  <div class="rotulo-pequeno">Atribuído a</div>
+                  <input id="atribuidoA" type="text" class="form-control" placeholder="Ninguém ainda — a NexaIA está de olho 🤖">
+                </div>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button id="btnAtribuirMim" class="btn-ia" style="width:auto; flex:1; margin-bottom:0;" onclick="atribuirAMim()">
+                  <i class="bi bi-person-check"></i> Atribuir a mim
+                </button>
+                <button class="btn-roxo-claro" style="width:auto; flex:1;" onclick="salvarAtualizacao()">
+                  <i class="bi bi-save me-2"></i> Salvar Atualização
+                </button>
+                <button class="btn-roxo" style="width:auto; flex:1;" onclick="abrirModalConcluir()">
+                  <i class="bi bi-check-circle me-2"></i> Marcar como Concluído
+                </button>
+              </div>
+            </div>
+
+            <!-- Responder ao cliente -->
+            <div class="cartao">
+              <div class="titulo-secao"><i class="bi bi-chat-left-text"></i> Responder ao Cliente</div>
+
+              <div id="respostaAnterior" class="cartao-aviso" style="display:none;">
+                <div class="fw-semibold mb-1" style="color:#fbbf24; font-size: 0.85rem;">
+                  <i class="bi bi-clock-history"></i> Última resposta enviada
+                </div>
+                <div id="respostaAnteriorTexto" style="font-size: 0.88rem; color: #fde68a;"></div>
+              </div>
+
+              <textarea id="resposta" class="form-control mb-2" rows="5" placeholder="Digite sua mensagem para o cliente... (ou peça para a NexaIA escrever por você →)"></textarea>
+              <div class="d-flex flex-wrap gap-2">
+                <button id="btnMelhorar" class="btn-ia" style="width:auto; flex:1; margin-bottom:0;" onclick="melhorarResposta()">
+                  <i class="bi bi-magic"></i> Melhorar com IA
+                </button>
+                <button id="btnEnviar" class="btn-roxo" style="width:auto; flex:1;" onclick="enviarResposta()">
+                  <i class="bi bi-send me-2"></i> Enviar Mensagem
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ================= COLUNA DIREITA: Copiloto NexaIA ================= -->
+          <div class="copiloto">
+            <div class="copiloto-header">
+              <div class="avatar"><i class="bi bi-robot"></i></div>
+              <div>
+                <div class="nome">NexaIA</div>
+                <div class="funcao">Copiloto do Operador</div>
+              </div>
+            </div>
+
+            <!-- Comentário da IA sobre o caso (local, instantâneo) -->
+            <div id="nexaiaCaso"></div>
+
+            <!-- Medidores -->
+            <div class="par-donuts">
+              <div class="mini-cartao">
+                <div class="donut" id="donutConfianca" style="width:96px; height:96px;">
+                  <div class="donut-buraco" style="width:70px; height:70px;">
+                    <div class="donut-valor" id="donutConfiancaValor" style="font-size:1.05rem;">0%</div>
+                    <div class="donut-rotulo">Confiança</div>
+                  </div>
+                </div>
+              </div>
+              <div class="mini-cartao">
+                <div class="donut" id="donutProb" style="width:96px; height:96px;">
+                  <div class="donut-buraco" style="width:70px; height:70px;">
+                    <div class="donut-valor" id="donutProbValor" style="font-size:1.05rem;">0%</div>
+                    <div class="donut-rotulo">1ª resposta</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="par-donuts">
+              <div class="mini-cartao">
+                <div class="stat-rotulo">Sentimento</div>
+                <div id="miniSentimento" class="stat-valor">—</div>
+              </div>
+              <div class="mini-cartao">
+                <div class="stat-rotulo">Complexidade</div>
+                <div id="miniComplexidade" class="stat-valor">—</div>
+              </div>
+            </div>
+            <div class="par-donuts">
+              <div class="mini-cartao">
+                <div class="stat-rotulo">SLA sugerido</div>
+                <div id="miniSla" class="stat-valor" style="font-size:0.9rem;">—</div>
+              </div>
+              <div class="mini-cartao">
+                <div class="stat-rotulo">Tempo estimado</div>
+                <div id="miniTempo" class="stat-valor" style="font-size:0.9rem;">—</div>
+              </div>
+            </div>
+
+            <!-- Radar de riscos -->
+            <div class="titulo-secao mt-2"><i class="bi bi-shield-exclamation"></i> Radar de Riscos</div>
+            <div id="listaRiscos"></div>
+
+            <!-- Plano de ação -->
+            <div class="titulo-secao mt-3"><i class="bi bi-list-check"></i> Plano de Ação</div>
+            <div id="areaPlano">
+              <button id="btnPlano" class="btn-ia" onclick="gerarPlano()">
+                <i class="bi bi-stars"></i> Gerar plano de ação com IA
+              </button>
+            </div>
+
+            <!-- Resposta pronta -->
+            <div class="titulo-secao mt-3"><i class="bi bi-chat-square-quote"></i> Resposta pronta da IA</div>
+            <div class="mini-cartao mb-2" style="text-align:left;">
+              <div id="respostaProntaTexto" class="text-secondary" style="font-size: 0.85rem;">—</div>
+            </div>
+            <button class="btn-ia" onclick="usarRespostaPronta()">
+              <i class="bi bi-arrow-down-square"></i> Usar no campo de resposta
+            </button>
+            <button id="btnGerarResposta" class="btn-ia" onclick="gerarNovaResposta()">
+              <i class="bi bi-arrow-clockwise"></i> Gerar nova versão com IA
+            </button>
+
+            <hr style="margin: 16px 0;">
+
+            <!-- O botão que faz o operador não fazer quase nada -->
+            <button id="btnMagico" class="btn-magico" onclick="abrirModalMagico()">
+              ✨ Resolver com IA em 1 clique
+            </button>
+            <p class="text-secondary text-center mt-2 mb-0" style="font-size: 0.74rem;">
+              A NexaIA escreve a resposta final, envia ao cliente e conclui o atendimento.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: concluir manualmente -->
+  <div class="modal fade modal-nexatalk" id="modalConcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4 pb-2">
+          <div class="icone-modal-concluir mb-3"><i class="bi bi-check-lg"></i></div>
+          <h5 class="mb-2">Concluir atendimento?</h5>
+          <p id="modalConcluirTexto" class="text-secondary mb-0" style="font-size: 0.9rem;"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4 flex-column gap-2">
+          <button type="button" class="btn-concluir-modal" id="btnModalConcluir">Sim, concluir</button>
+          <button type="button" class="btn-roxo-claro" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: resolver com IA em 1 clique -->
+  <div class="modal fade modal-nexatalk" id="modalMagico" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4 pb-2">
+          <div class="icone-modal-concluir mb-3" style="background: rgba(139,92,246,0.14); border-color: rgba(167,139,250,0.4); color: var(--roxo);">
+            <i class="bi bi-stars"></i>
+          </div>
+          <h5 class="mb-2">Deixar a NexaIA resolver?</h5>
+          <p class="text-secondary mb-0" style="font-size: 0.9rem;">
+            Ela vai escrever a resposta final, enviar ao cliente e marcar o atendimento como
+            <b>Concluído</b> — tudo em um clique. Você continua como responsável pelo caso.
+          </p>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4 flex-column gap-2">
+          <button type="button" class="btn-magico" id="btnModalMagico">✨ Sim, resolver com IA</button>
+          <button type="button" class="btn-roxo-claro" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("fila"));
+
+    const atendimentoId = new URLSearchParams(window.location.search).get("id");
+    if (!atendimentoId) window.location.href = "fila.html";
+
+    let caso = null;            // atendimento carregado
+    let areaCorreta = null;     // escolha na validação de área
+    let respostaGerada = "";    // última resposta gerada pela IA
+
+    const modalConcluir = new bootstrap.Modal(document.getElementById("modalConcluir"));
+    const modalMagico = new bootstrap.Modal(document.getElementById("modalMagico"));
+    document.getElementById("btnModalConcluir").addEventListener("click", executarConcluir);
+    document.getElementById("btnModalMagico").addEventListener("click", executarMagico);
+
+    // ============ Carregamento e renderização ============
+    async function carregar() {
+      try {
+        caso = await buscarAtendimentoPorId(atendimentoId);
+        if (!caso) {
+          window.location.href = "fila.html";
+          return;
+        }
+        preencher(caso);
+        document.getElementById("carregando").style.display = "none";
+        document.getElementById("conteudo").style.display = "block";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("carregando").innerHTML =
+          '<p class="text-danger">Não foi possível carregar o atendimento.</p>';
+      }
+    }
+
+    function preencher(a) {
+      const ia = a.ia || {};
+
+      // Cabeçalho
+      document.getElementById("tituloProtocolo").textContent = "Atendimento " + (a.protocolo || "");
+      document.getElementById("badgeStatus").innerHTML = opsBadgeStatus(a.status);
+      document.getElementById("badgePrioridade").innerHTML = opsBadgePrioridade(a.prioridade);
+      document.getElementById("subinfo").textContent =
+        (a.canal || "Portal Web") + " · aberto em " + (a.data_criacao || "—") +
+        (a.atribuido_a ? " · responsável: " + a.atribuido_a : " · ainda sem responsável");
+      document.getElementById("linkHistorico").href = "historico.html?id=" + atendimentoId;
+
+      // Cliente
+      document.getElementById("cliNome").textContent = (a.cliente && a.cliente.nome) || "—";
+      document.getElementById("cliContato").textContent = (a.cliente && a.cliente.contato) || "—";
+      document.getElementById("cliCanal").textContent = a.canal || "Portal Web";
+      document.getElementById("cliData").textContent = a.data_criacao || "—";
+
+      // Caso
+      document.getElementById("descricao").textContent = a.descricao_original || "—";
+      document.getElementById("resumoIA").textContent = ia.resumo || "—";
+      const confianca = opsPorcentagem(ia.confianca);
+      document.getElementById("confiancaTexto").textContent = "Confiança: " + confianca + "%";
+      document.getElementById("confiancaBarra").style.width = confianca + "%";
+      document.getElementById("intencao").textContent = a.intencao || ia.intencao || "—";
+      document.getElementById("encaminhamento").textContent = a.area_atual || ia.encaminhamento_sugerido || "—";
+
+      const chips = document.getElementById("chipsTags");
+      chips.innerHTML = "";
+      (ia.tags || []).forEach(function (tag) {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = tag;
+        chips.appendChild(chip);
+      });
+
+      if (ia.dados_detectados && ia.dados_detectados.trim() !== "") {
+        document.getElementById("dadosDetectados").textContent = ia.dados_detectados;
+        document.getElementById("cardDados").style.display = "block";
+      }
+
+      // Validação de área
+      document.getElementById("areaAtualTexto").textContent = a.area_atual || ia.encaminhamento_sugerido || "—";
+      if (a.area_validada) {
+        document.getElementById("areaJaValidada").style.display = "flex";
+        document.getElementById("blocoValidacao").style.display = "none";
+      }
+
+      // Ações: quem está tratando o caso (IA até um humano assumir)
+      document.getElementById("statusAtualTexto").innerHTML = opsBadgeStatus(a.status);
+      document.getElementById("atribuidoA").value = a.atribuido_a || "";
+
+      const tratadoPor = document.getElementById("tratadoPor");
+      const btnMim = document.getElementById("btnAtribuirMim");
+      if (a.atribuido_a) {
+        tratadoPor.innerHTML = '<span class="chip"><i class="bi bi-person-fill me-1"></i>' + a.atribuido_a + "</span>";
+        if (a.atribuido_a === operador.nome) {
+          btnMim.disabled = true;
+          btnMim.innerHTML = '<i class="bi bi-person-check-fill"></i> O caso é seu';
+        } else {
+          btnMim.disabled = false;
+          btnMim.innerHTML = '<i class="bi bi-person-check"></i> Atribuir a mim';
+        }
+      } else {
+        tratadoPor.innerHTML = '<span class="chip"><i class="bi bi-robot me-1"></i>NexaIA (automático)</span>';
+        btnMim.disabled = false;
+        btnMim.innerHTML = '<i class="bi bi-person-check"></i> Atribuir a mim';
+      }
+
+      // Resposta anterior (se já respondeu antes)
+      if (a.mensagem_operacao) {
+        document.getElementById("respostaAnteriorTexto").textContent = a.mensagem_operacao;
+        document.getElementById("respostaAnterior").style.display = "block";
+      }
+
+      // ===== Copiloto =====
+      nexaiaMostrar("nexaiaCaso", comentarioDoCaso(a));
+
+      opsPintarDonut("donutConfianca", confianca, "#8b5cf6");
+      document.getElementById("donutConfiancaValor").textContent = confianca + "%";
+      const prob = opsPorcentagem(ia.probabilidade_primeira_resposta);
+      opsPintarDonut("donutProb", prob, "#34d399");
+      document.getElementById("donutProbValor").textContent = prob + "%";
+
+      document.getElementById("miniSentimento").innerHTML = opsIconeSentimento(a) + " " + (ia.sentimento || "—");
+      document.getElementById("miniComplexidade").textContent = ia.complexidade || "—";
+      document.getElementById("miniSla").textContent = ia.sla_sugerido || "—";
+      document.getElementById("miniTempo").textContent = ia.tempo_estimado || "—";
+
+      // Radar de riscos (análise local, sem custo de API)
+      const riscos = document.getElementById("listaRiscos");
+      riscos.innerHTML = "";
+      opsRiscos(a).forEach(function (r) {
+        const div = document.createElement("div");
+        div.className = "alerta-risco " + r.nivel;
+        div.innerHTML = '<i class="bi ' +
+          (r.nivel === "alto" ? "bi-exclamation-triangle" : r.nivel === "medio" ? "bi-info-circle" : "bi-check-circle") +
+          '"></i> ' + r.texto;
+        riscos.appendChild(div);
+      });
+
+      // Resposta pronta: aproveita a sugestão salva na triagem (custo zero)
+      const pronta = ia.resposta_sugerida || ia.resposta_automatica || "";
+      respostaGerada = pronta;
+      document.getElementById("respostaProntaTexto").textContent =
+        pronta || "Nenhuma sugestão salva — toque em \"Gerar nova versão com IA\".";
+
+      // Caso já finalizado: desativa ações de conclusão
+      if (atendimentoFinalizadoParaCliente(a.status)) {
+        document.getElementById("btnMagico").disabled = true;
+        document.getElementById("btnMagico").textContent = "✔ Atendimento finalizado";
+      }
+    }
+
+    // Comentário instantâneo da NexaIA sobre o caso (sem chamar API)
+    function comentarioDoCaso(a) {
+      const ia = a.ia || {};
+      if (atendimentoFinalizadoParaCliente(a.status)) {
+        return "Este caso já está finalizado. Se o cliente voltar a falar do assunto, ele abrirá um novo protocolo.";
+      }
+      let msg = "Já fiz a triagem deste caso: classifiquei como " + (a.intencao || "atendimento geral").toLowerCase() +
+        ", prioridade " + (a.prioridade || "média").toLowerCase() + ".";
+      if (ia.proxima_acao) msg += " Minha recomendação: " + ia.proxima_acao;
+      msg += " Se quiser, resolvo tudo com 1 clique. 😉";
+      return msg;
+    }
+
+    // ============ Validação de área ============
+    function escolherArea(correta) {
+      areaCorreta = correta;
+      document.getElementById("btnAreaCorreta").className = correta ? "selecionada-ok" : "";
+      document.getElementById("btnAreaIncorreta").className = correta ? "" : "selecionada-erro";
+      document.getElementById("blocoRedirecionar").style.display = correta ? "none" : "block";
+      document.getElementById("btnConfirmarArea").disabled = false;
+    }
+
+    async function confirmarArea() {
+      const btn = document.getElementById("btnConfirmarArea");
+      const novaArea = document.getElementById("selectArea").value;
+      const justificativa = document.getElementById("justificativa").value.trim();
+
+      if (areaCorreta === false && !novaArea) {
+        opsToast("Selecione a área para o redirecionamento.", true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Salvando...';
+      try {
+        await opsValidarArea(atendimentoId, {
+          correta: areaCorreta === true,
+          novaArea: novaArea,
+          justificativa: justificativa,
+          operador: operador.nome,
+        });
+        jogoDarXp({
+          id: jogoIdOperador(operador.email), tipo: "operador", nome: operador.nome, cargo: operador.cargo,
+          xp: 10,
+          acao: areaCorreta
+            ? "Validou o encaminhamento da IA em " + (caso.protocolo || "")
+            : "Redirecionou " + (caso.protocolo || "") + " para " + novaArea,
+          icone: "bi-signpost-split", contadores: { areas_validadas: 1 },
+        });
+        opsToast((areaCorreta ? "Área validada — a IA acertou!" : "Atendimento redirecionado para " + novaArea + ".") + " +10 XP 🎮");
+        await carregar();
+      } catch (e) {
+        console.error(e);
+        opsToast("Não foi possível salvar a validação.", true);
+        btn.disabled = false;
+        btn.textContent = "Confirmar Atribuição de Área";
+      }
+    }
+
+    // ============ Ações ============
+
+    // "Atribuir a mim": o caso sai da NexaIA e passa para o operador
+    async function atribuirAMim() {
+      const btn = document.getElementById("btnAtribuirMim");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Assumindo...';
+      try {
+        await opsAtribuir(atendimentoId, operador.nome,
+          "Operador assumiu o caso — a NexaIA passou o bastão");
+        jogoDarXp({
+          id: jogoIdOperador(operador.email), tipo: "operador", nome: operador.nome, cargo: operador.cargo,
+          xp: 10, acao: "Assumiu o caso " + (caso.protocolo || "") + " da NexaIA",
+          icone: "bi-person-check", contadores: { casos_assumidos: 1 },
+        });
+        opsToast("Caso agora é seu! A NexaIA vira copilota. +10 XP 🎮");
+        await carregar();
+      } catch (e) {
+        console.error(e);
+        opsToast("Não foi possível assumir o caso.", true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-check"></i> Atribuir a mim';
+      }
+    }
+
+    async function salvarAtualizacao() {
+      const nome = document.getElementById("atribuidoA").value.trim() || operador.nome;
+      try {
+        await opsAtribuir(atendimentoId, nome);
+        opsToast("Atualização salva — caso atribuído a " + nome + ".");
+        await carregar();
+      } catch (e) {
+        console.error(e);
+        opsToast("Não foi possível salvar.", true);
+      }
+    }
+
+    async function enviarResposta() {
+      const texto = document.getElementById("resposta").value.trim();
+      if (!texto) {
+        opsToast("Escreva a mensagem (ou use a resposta pronta da NexaIA).", true);
+        return;
+      }
+      const btn = document.getElementById("btnEnviar");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Enviando...';
+      try {
+        await opsResponderCliente(atendimentoId, texto, operador.nome);
+        jogoDarXp({
+          id: jogoIdOperador(operador.email), tipo: "operador", nome: operador.nome, cargo: operador.cargo,
+          xp: 15, acao: "Respondeu o cliente do caso " + (caso.protocolo || ""),
+          icone: "bi-send", contadores: { respostas_enviadas: 1 },
+        });
+        opsToast("Mensagem enviada — o cliente já vê a resposta no app. +15 XP 🎮");
+        document.getElementById("resposta").value = "";
+        await carregar();
+      } catch (e) {
+        console.error(e);
+        opsToast("Não foi possível enviar a mensagem.", true);
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send me-2"></i> Enviar Mensagem';
+    }
+
+    // ============ IA: plano de ação ============
+    async function gerarPlano() {
+      const btn = document.getElementById("btnPlano");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> A NexaIA está montando o plano...';
+      try {
+        const plano = await opsPlanoDeAcao(caso);
+        const area = document.getElementById("areaPlano");
+        let html = '<ul class="plano-passos">';
+        (plano.passos || []).forEach(function (p, i) {
+          html += '<li onclick="this.classList.toggle(\'feito\')"><span class="num">' + (i + 1) + "</span><span>" + p + "</span></li>";
+        });
+        html += "</ul>";
+        if (plano.tom) html += '<div class="alerta-risco ok"><i class="bi bi-chat-heart"></i> Tom recomendado: ' + plano.tom + "</div>";
+        area.innerHTML = html;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-stars"></i> Gerar plano de ação com IA';
+        opsToast("Não consegui gerar o plano (verifique a chave Gemini ou a cota).", true);
+      }
+    }
+
+    // ============ IA: respostas ============
+    function usarRespostaPronta() {
+      if (!respostaGerada) {
+        opsToast("Nenhuma resposta pronta — gere uma nova versão com IA.", true);
+        return;
+      }
+      document.getElementById("resposta").value = respostaGerada;
+      document.getElementById("resposta").scrollIntoView({ behavior: "smooth", block: "center" });
+      opsToast("Resposta da NexaIA copiada para o campo — revise e envie.");
+    }
+
+    async function gerarNovaResposta() {
+      const btn = document.getElementById("btnGerarResposta");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Escrevendo...';
+      try {
+        respostaGerada = await opsGerarResposta(caso, operador.nome);
+        document.getElementById("respostaProntaTexto").textContent = respostaGerada;
+        opsToast("Nova resposta gerada pela NexaIA.");
+      } catch (e) {
+        console.error(e);
+        opsToast("Não consegui gerar agora (chave Gemini ou cota do dia).", true);
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Gerar nova versão com IA';
+    }
+
+    async function melhorarResposta() {
+      const campo = document.getElementById("resposta");
+      const rascunho = campo.value.trim();
+      if (rascunho.length < 5) {
+        opsToast("Escreva um rascunho primeiro para eu melhorar.", true);
+        return;
+      }
+      const btn = document.getElementById("btnMelhorar");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Melhorando...';
+      try {
+        campo.value = await opsMelhorarResposta(caso, rascunho);
+        opsToast("Rascunho aprimorado pela NexaIA.");
+      } catch (e) {
+        console.error(e);
+        opsToast("Não consegui melhorar agora (chave Gemini ou cota).", true);
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-magic"></i> Melhorar com IA';
+    }
+
+    // ============ Concluir (manual) ============
+    function abrirModalConcluir() {
+      const texto = document.getElementById("resposta").value.trim();
+      document.getElementById("modalConcluirTexto").textContent = texto
+        ? "A mensagem do campo \"Responder ao Cliente\" será enviada como resposta final e o atendimento será marcado como Concluído."
+        : "Nenhuma mensagem digitada — será usada a resposta pronta da NexaIA como mensagem final.";
+      modalConcluir.show();
+    }
+
+    async function executarConcluir() {
+      modalConcluir.hide();
+      const mensagem = document.getElementById("resposta").value.trim() ||
+        respostaGerada ||
+        "Atendimento concluído pela nossa equipe. Qualquer dúvida, abra um novo atendimento.";
+      try {
+        await concluirAtendimentoPeloOperador(atendimentoId, {
+          mensagem: mensagem,
+          operador: document.getElementById("atribuidoA").value.trim() || operador.nome,
+        });
+        opsToast("Concluído! A NexaIA está avaliando a qualidade da tratativa... 🧠");
+        await pontuarConclusao(mensagem, false);
+        setTimeout(function () { window.location.href = "fila.html"; }, 2200);
+      } catch (e) {
+        console.error(e);
+        opsToast("Não foi possível concluir.", true);
+      }
+    }
+
+    // A NexaIA audita a resposta final (empatia/clareza/detalhe),
+    // grava a nota no atendimento e converte qualidade em XP.
+    async function pontuarConclusao(mensagem, foiMagico) {
+      try {
+        const av = await jogoAvaliarTratativa(caso, mensagem);
+        try {
+          await db.collection("atendimentos").doc(atendimentoId).update({ avaliacao_ia: av });
+        } catch (e) { console.error(e); }
+
+        const qualidade = Math.round((av.empatia + av.clareza + av.detalhe) / 3);
+        const bonus = Math.round(qualidade / 10); // até +10 XP de bônus
+        const xpBase = foiMagico ? 35 : 50;
+
+        await jogoDarXp({
+          id: jogoIdOperador(operador.email), tipo: "operador", nome: operador.nome, cargo: operador.cargo,
+          xp: xpBase + bonus,
+          acao: foiMagico
+            ? "Resolveu " + (caso.protocolo || "") + " com a NexaIA em 1 clique"
+            : "Concluiu o caso " + (caso.protocolo || "") + " (qualidade " + qualidade + "%)",
+          icone: foiMagico ? "bi-stars" : "bi-check-circle",
+          contadores: foiMagico ? { casos_concluidos: 1, magicos: 1 } : { casos_concluidos: 1 },
+        });
+        await jogoRegistrarAvaliacao(jogoIdOperador(operador.email), av, caso.protocolo);
+
+        opsToast("Qualidade IA: " + qualidade + "% · +" + (xpBase + bonus) + " XP 🎮 " +
+          (av.comentario ? "· " + av.comentario : ""));
+      } catch (e) {
+        console.error("Pontuação da conclusão:", e);
+      }
+    }
+
+    // ============ Resolver com IA em 1 clique ============
+    function abrirModalMagico() {
+      modalMagico.show();
+    }
+
+    async function executarMagico() {
+      const btn = document.getElementById("btnModalMagico");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> A NexaIA está resolvendo...';
+      try {
+        // 1. Garante uma resposta final (usa a pronta ou gera na hora)
+        let mensagem = respostaGerada;
+        if (!mensagem) mensagem = await opsGerarResposta(caso, operador.nome);
+
+        // 2. Envia ao cliente e conclui o atendimento
+        await concluirAtendimentoPeloOperador(atendimentoId, {
+          mensagem: mensagem,
+          operador: operador.nome + " (com NexaIA)",
+        });
+
+        modalMagico.hide();
+        opsToast("✨ Caso resolvido pela NexaIA e enviado ao cliente!");
+        await pontuarConclusao(mensagem, true);
+        setTimeout(function () { window.location.href = "fila.html"; }, 2200);
+      } catch (e) {
+        console.error(e);
+        modalMagico.hide();
+        opsToast("A mágica falhou (verifique a chave Gemini ou a cota do dia).", true);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Sim, resolver com IA";
+      }
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

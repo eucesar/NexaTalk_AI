@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Meu Perfil Nexa</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body>
+
+  <div class="celular">
+
+    <!-- Cabeçalho -->
+    <div class="cabecalho">
+      <a class="voltar" href="../index.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">Meu Perfil Nexa</span>
+    </div>
+
+    <div class="corpo text-center">
+
+      <span class="etiqueta-passo">🎮 MODO JOGO</span>
+
+      <!-- Carregando -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-secondary">Carregando seu perfil...</p>
+      </div>
+
+      <div id="conteudo" style="display:none;">
+
+        <!-- Nível -->
+        <div class="cartao-roxo">
+          <div class="donut" id="ringNivel" style="width: 118px; height: 118px; margin: 6px auto;">
+            <div class="donut-buraco">
+              <div class="donut-valor" id="ringNumero">Nv 1</div>
+              <div class="donut-rotulo" id="ringProgresso">0%</div>
+            </div>
+          </div>
+          <h5 class="fw-bold mb-1" id="nomePerfil">—</h5>
+          <span class="titulo-nivel" id="tituloNivel">—</span>
+
+          <div class="xp-barra mt-3 mb-1"><div class="xp-preenchida" id="xpBarra" style="width:0%;"></div></div>
+          <div class="text-secondary" style="font-size: 0.8rem;" id="xpTexto">0 XP</div>
+        </div>
+
+        <!-- Assistente NexaIA -->
+        <div id="nexaia"></div>
+
+        <!-- Estatísticas -->
+        <div class="painel-grid">
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-lightning-charge"></i></div>
+            <div class="stat-rotulo">XP total</div>
+            <div id="statXp" class="stat-valor">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-chat-dots"></i></div>
+            <div class="stat-rotulo">Chamados abertos</div>
+            <div id="statChamados" class="stat-valor">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-robot"></i></div>
+            <div class="stat-rotulo">Resolvidos com IA</div>
+            <div id="statIA" class="stat-valor">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icone"><i class="bi bi-award"></i></div>
+            <div class="stat-rotulo">Conquistas</div>
+            <div id="statConquistas" class="stat-valor">0</div>
+          </div>
+        </div>
+
+        <!-- Como ganhar XP -->
+        <div class="cartao text-start">
+          <div class="rotulo-pequeno"><i class="bi bi-controller"></i> Como ganhar XP</div>
+          <div class="text-secondary" style="font-size: 0.85rem; line-height: 1.7;">
+            <i class="bi bi-plus-circle" style="color: var(--roxo);"></i> Abrir um chamado: <b>+20 XP</b><br>
+            <i class="bi bi-robot" style="color: var(--roxo);"></i> Resolver na hora com a NexaIA: <b>+30 XP</b>
+          </div>
+        </div>
+
+        <!-- Conquistas -->
+        <div class="text-start">
+          <div class="rotulo-pequeno mb-2"><i class="bi bi-award"></i> Suas conquistas</div>
+          <div id="listaConquistas"></div>
+        </div>
+
+        <!-- Ações -->
+        <button class="btn-roxo mt-3 mb-3" onclick="window.location.href='novo-atendimento.html'">
+          <i class="bi bi-plus-circle me-2"></i> Ganhar XP: abrir atendimento
+        </button>
+
+        <button class="btn-roxo-claro" onclick="window.location.href='meus-atendimentos.html'">
+          <i class="bi bi-list-ul me-2"></i> Ver Meus Atendimentos
+        </button>
+
+      </div>
+
+      <hr>
+      <p class="rodape-mini">© NexaTalk AI · Modo Jogo</p>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    // Exige login e assina o perfil de jogo em tempo real
+    auth.onAuthStateChanged(function (usuario) {
+      if (!usuario) {
+        window.location.href = "../index.html";
+        return;
+      }
+
+      jogoAssinarPerfil(usuario.uid, function (p) {
+        renderizar(usuario, p || {});
+        document.getElementById("carregando").style.display = "none";
+        document.getElementById("conteudo").style.display = "block";
+      });
+    });
+
+    function renderizar(usuario, p) {
+      const nomeUsuario = usuario.displayName || usuario.email;
+      const nivel = jogoNivel(p.xp || 0, "cliente");
+
+      document.getElementById("nomePerfil").textContent = nomeUsuario;
+      document.getElementById("tituloNivel").textContent = "Nv " + nivel.numero + " · " + nivel.titulo;
+      document.getElementById("ringNumero").textContent = "Nv " + nivel.numero;
+      document.getElementById("ringProgresso").textContent = nivel.maximo ? "MÁX" : nivel.progresso + "%";
+      jogoPintarDonut("ringNivel", nivel.progresso, "#8b5cf6");
+      document.getElementById("xpBarra").style.width = nivel.progresso + "%";
+      document.getElementById("xpTexto").textContent = (p.xp || 0) + " XP" +
+        (nivel.maximo ? " · nível máximo! 👑" : " · faltam " + (nivel.xpProximo - (p.xp || 0)) + " XP para o Nv " + (nivel.numero + 1));
+
+      document.getElementById("statXp").textContent = p.xp || 0;
+      document.getElementById("statChamados").textContent = p.chamados_abertos || 0;
+      document.getElementById("statIA").textContent = p.resolvidos_ia || 0;
+
+      // Conquistas
+      const conquistas = jogoConquistasCliente(p);
+      const desbloqueadas = conquistas.filter(function (c) { return c.ok; }).length;
+      document.getElementById("statConquistas").textContent = desbloqueadas + "/" + conquistas.length;
+
+      const lista = document.getElementById("listaConquistas");
+      lista.innerHTML = "";
+      conquistas.forEach(function (c) {
+        const div = document.createElement("div");
+        div.className = "conquista" + (c.ok ? "" : " bloqueada");
+        div.innerHTML =
+          '<span class="emoji">' + c.emoji + "</span>" +
+          "<div><div class=\"nome\">" + c.nome + "</div><div class=\"desc\">" + c.desc + "</div></div>" +
+          (c.ok ? '<span class="selo"><i class="bi bi-check-circle-fill"></i></span>' : '<span class="selo" style="color: var(--texto-cinza);"><i class="bi bi-lock"></i></span>');
+        lista.appendChild(div);
+      });
+
+      // NexaIA comenta o progresso
+      const nome = nexaiaPrimeiroNome(nomeUsuario);
+      let msg;
+      if ((p.xp || 0) === 0) {
+        msg = nexaiaSaudacao() + (nome ? ", " + nome : "") +
+          "! Seu perfil Nexa começou. Abra seu primeiro atendimento que eu cuido da triagem — e você já ganha +20 XP. 🎮";
+      } else if (nivel.maximo) {
+        msg = "Uau, " + nome + "! Você é uma Lenda Nexa — nível máximo alcançado. Obrigada por resolver tudo comigo! 👑";
+      } else {
+        msg = "Você está indo muito bem" + (nome ? ", " + nome : "") + "! Faltam só " +
+          (nivel.xpProximo - (p.xp || 0)) + " XP para virar " + JOGO_TITULOS_CLIENTE[nivel.numero] + ". Dica: chamados resolvidos na hora comigo valem +30 XP. 😉";
+      }
+      nexaiaMostrar("nexaia", msg);
+    }
+  </script>
+</body>
+</html>

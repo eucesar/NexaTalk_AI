@@ -135,6 +135,8 @@
   </script>
   <script src="../js/firebase.js"></script>
   <script src="../js/gemini.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/jogo.js"></script>
 
   <script>
     // Recupera a descrição enviada na tela anterior
@@ -208,6 +210,17 @@
             new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
         });
         await salvarAtendimento(atendimento);
+
+        // Modo Jogo: resolver com a IA na hora vale +30 XP no Perfil Nexa
+        await jogoDarXp({
+          id: sessionStorage.getItem("nexatalk_usuario_id") || "",
+          tipo: "cliente",
+          nome: sessionStorage.getItem("nexatalk_nome") || "Cliente",
+          xp: 30,
+          acao: "Resolveu um chamado na hora com a NexaIA ⚡",
+          icone: "bi-robot",
+          contadores: { chamados_abertos: 1, resolvidos_ia: 1 },
+        });
       } catch (e) {
         console.error("Erro ao salvar atendimento resolvido pela IA:", e);
       }

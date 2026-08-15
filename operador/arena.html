@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Arena ao Vivo</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>🏆 Arena ao Vivo</h1>
+          <div class="subtitulo">
+            <i class="bi bi-broadcast" style="color:#4ade80;"></i>
+            Todo o time em tempo real — cada tratativa vira XP na hora, e todo mundo vê todo mundo.
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas do time -->
+      <div class="ops-stats">
+        <div class="ops-stat">
+          <div class="icone roxo"><i class="bi bi-lightning-charge"></i></div>
+          <div><div class="valor" id="statXpTime">0</div><div class="rotulo">XP total do time</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone verde"><i class="bi bi-check-circle"></i></div>
+          <div><div class="valor" id="statCasosTime">0</div><div class="rotulo">Casos concluídos</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-people"></i></div>
+          <div><div class="valor" id="statJogadores">0</div><div class="rotulo">Operadores no jogo</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone rosa"><i class="bi bi-heart-pulse"></i></div>
+          <div><div class="valor" id="statQualidade">—</div><div class="rotulo">Qualidade média (IA)</div></div>
+        </div>
+      </div>
+
+      <!-- NexaIA analisa o time -->
+      <div id="nexaia"></div>
+
+      <div class="arena-grid">
+
+        <!-- ============ RANKING ============ -->
+        <div>
+          <div class="titulo-secao"><i class="bi bi-trophy"></i> Ranking do Time</div>
+
+          <!-- Pódio top 3 -->
+          <div class="podium" id="podium" style="display:none;"></div>
+
+          <!-- Lista completa -->
+          <div id="listaRanking"></div>
+
+          <div id="rankingVazio" class="cartao text-center text-secondary" style="display:none; padding: 34px 16px;">
+            <i class="bi bi-controller" style="font-size: 2.2rem;"></i>
+            <p class="mt-2 mb-0">Ninguém pontuou ainda. Trate um chamado na fila para inaugurar a Arena! 🎮</p>
+          </div>
+        </div>
+
+        <!-- ============ FEED AO VIVO ============ -->
+        <div>
+          <div class="titulo-secao"><i class="bi bi-lightning"></i> Acontecendo Agora</div>
+          <div class="tabela-envelope" style="padding: 14px;">
+            <div id="feed"></div>
+            <div id="feedVazio" class="text-center text-secondary" style="display:none; padding: 24px 10px;">
+              <i class="bi bi-hourglass-split" style="font-size: 1.8rem;"></i>
+              <p class="mt-2 mb-0" style="font-size: 0.85rem;">O feed acende assim que alguém pontuar — clientes abrindo chamados e operadores resolvendo.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("arena"));
+
+    let ranking = [];
+    let analisou = false;
+
+    // Ranking em tempo real
+    jogoAssinarRanking(function (lista) {
+      ranking = lista;
+      renderizarStats();
+      renderizarRanking();
+      if (!analisou) montarBalao();
+    });
+
+    // Feed em tempo real
+    jogoAssinarFeed(function (eventos) {
+      const feed = document.getElementById("feed");
+      const vazio = document.getElementById("feedVazio");
+      feed.innerHTML = "";
+
+      if (eventos.length === 0) {
+        vazio.style.display = "block";
+        return;
+      }
+      vazio.style.display = "none";
+
+      eventos.forEach(function (ev) {
+        const div = document.createElement("div");
+        div.className = "feed-item";
+        div.innerHTML =
+          '<div class="icone ' + (ev.tipo === "cliente" ? "cliente" : "") + '"><i class="bi ' + (ev.icone || "bi-stars") + '"></i></div>' +
+          '<div class="texto"><span class="quem">' + (ev.nome || "?") + "</span> " + (ev.texto || "") +
+            '<div class="tempo">' + jogoTempoRelativo(ev.criado_em) + "</div></div>" +
+          '<span class="chip-xp">+' + (ev.xp || 0) + " XP</span>";
+        feed.appendChild(div);
+      });
+    });
+
+    function renderizarStats() {
+      let xpTotal = 0, casos = 0, somaQualidade = 0, comQualidade = 0;
+      ranking.forEach(function (p) {
+        xpTotal += p.xp || 0;
+        casos += p.casos_concluidos || 0;
+        const m = jogoMedias(p);
+        if (m) { somaQualidade += m.geral; comQualidade++; }
+      });
+      document.getElementById("statXpTime").textContent = xpTotal;
+      document.getElementById("statCasosTime").textContent = casos;
+      document.getElementById("statJogadores").textContent = ranking.length;
+      document.getElementById("statQualidade").textContent =
+        comQualidade > 0 ? Math.round(somaQualidade / comQualidade) + "%" : "—";
+    }
+
+    function renderizarRanking() {
+      const podium = document.getElementById("podium");
+      const lista = document.getElementById("listaRanking");
+      const vazio = document.getElementById("rankingVazio");
+      podium.innerHTML = "";
+      lista.innerHTML = "";
+
+      if (ranking.length === 0) {
+        podium.style.display = "none";
+        vazio.style.display = "block";
+        return;
+      }
+      vazio.style.display = "none";
+
+      // Pódio: 2º | 1º | 3º (ouro no meio, mais alto)
+      if (ranking.length >= 2) {
+        podium.style.display = "grid";
+        const ordem = [ranking[1], ranking[0], ranking[2]].filter(Boolean);
+        const classes = ranking.length >= 3 ? ["prata", "ouro", "bronze"] : ["prata", "ouro"];
+        const medalhas = ranking.length >= 3 ? ["🥈", "🥇", "🥉"] : ["🥈", "🥇"];
+        ordem.forEach(function (p, i) {
+          const nivel = jogoNivel(p.xp, "operador");
+          const div = document.createElement("div");
+          div.className = "lugar " + classes[i];
+          div.innerHTML =
+            '<div class="medalha">' + medalhas[i] + "</div>" +
+            '<div class="avatar-jogo">' + jogoIniciais(p.nome) + "</div>" +
+            '<div class="fw-bold" style="font-size:0.92rem;">' + (p.nome || "?") + "</div>" +
+            '<div style="font-size:0.72rem; color: var(--roxo); font-weight:700;">' + nivel.titulo + "</div>" +
+            '<div class="fw-bold mt-1" style="color: var(--texto-escuro);">' + (p.xp || 0) + ' <span style="font-size:0.7rem; color: var(--texto-cinza);">XP</span></div>';
+          podium.appendChild(div);
+        });
+      } else {
+        podium.style.display = "none";
+      }
+
+      // Lista completa com barra de progresso do nível
+      ranking.forEach(function (p, i) {
+        const nivel = jogoNivel(p.xp, "operador");
+        const medias = jogoMedias(p);
+        const div = document.createElement("div");
+        div.className = "rank-item" + (p.id === jogoIdOperador(operador.email) ? " sou-eu" : "");
+        div.innerHTML =
+          '<div class="rank-pos">' + (i + 1) + "º</div>" +
+          '<div class="avatar-jogo">' + jogoIniciais(p.nome) + "</div>" +
+          '<div class="rank-info">' +
+            '<div class="nome">' + (p.nome || "?") + (p.id === jogoIdOperador(operador.email) ? " (você)" : "") + "</div>" +
+            '<div class="titulo">Nv ' + nivel.numero + " · " + nivel.titulo + "</div>" +
+            '<div class="xp-barra mt-1" style="height:8px;"><div class="xp-preenchida" style="width:' + nivel.progresso + '%;"></div></div>' +
+            '<div style="font-size:0.7rem; color: var(--texto-cinza); margin-top:3px;">' +
+              (p.xp || 0) + " XP" + (nivel.maximo ? " · nível máximo!" : " · faltam " + (nivel.xpProximo - (p.xp || 0)) + " XP para o próximo nível") +
+              (p.ultima_acao ? " · " + p.ultima_acao + " (" + jogoTempoRelativo(p.ultima_acao_ts) + ")" : "") +
+            "</div>" +
+          "</div>" +
+          '<div class="rank-chips">' +
+            '<span class="badge-nivel baixa">' + (p.casos_concluidos || 0) + " casos</span>" +
+            (medias ? '<span class="badge-nivel media">' + medias.geral + "% qualidade</span>" : "") +
+            ((p.magicos || 0) > 0 ? '<span class="badge-nivel alta" style="animation:none;">✨ ' + p.magicos + "</span>" : "") +
+          "</div>";
+        lista.appendChild(div);
+      });
+    }
+
+    // NexaIA comenta a arena + análise do time sob demanda
+    function montarBalao() {
+      let texto;
+      if (ranking.length === 0) {
+        texto = "A Arena está esperando o primeiro ponto! Cada resposta, validação de área e conclusão vira XP — e eu avalio a qualidade de cada tratativa (empatia, clareza e detalhe).";
+      } else {
+        const lider = ranking[0];
+        texto = "Placar ao vivo! " + (lider.nome || "?") + " lidera com " + (lider.xp || 0) +
+          " XP. Quer que eu analise o desempenho do time e aponte destaques e quem precisa de apoio?";
+      }
+      nexaiaMostrar("nexaia", texto,
+        ranking.length > 0 ? { acaoTexto: "✨ Analisar o time com IA", aoClicar: analisarTime } : undefined);
+    }
+
+    async function analisarTime() {
+      const btn = document.getElementById("nexaiaAcao");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Analisando o time...';
+      try {
+        const linhas = ranking.map(function (p, i) {
+          const m = jogoMedias(p);
+          return (i + 1) + "º " + p.nome + " | " + (p.xp || 0) + " XP | " +
+            (p.casos_concluidos || 0) + " casos concluídos | " +
+            (p.respostas_enviadas || 0) + " respostas | " +
+            (m ? "qualidade média " + m.geral + "% (empatia " + m.empatia + "%, clareza " + m.clareza + "%, detalhe " + m.detalhe + "%)" : "sem avaliações ainda");
+        }).join("\n");
+
+        const analise = await nexaiaPerguntar(
+          "Você é a NexaIA, coach do time de atendimento da NexaTalk AI. Analise o placar abaixo e devolva, " +
+          "em português, no máximo 4 linhas curtas no formato:\n" +
+          "🏆 Destaque: <quem e por quê>\n" +
+          "📈 Evolução: <quem está crescendo ou o que melhorou>\n" +
+          "🤝 Apoio: <quem precisa de ajuda e em qual critério, se houver>\n" +
+          "💡 Gestão: <uma dica prática para o time>\n" +
+          "Sem introdução nem despedida.\n\nPlacar:\n" + linhas
+        );
+        nexaiaTexto("nexaia", analise);
+        btn.style.display = "none";
+        analisou = true;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Analisar o time com IA";
+        nexaiaTexto("nexaia", "Não consegui analisar agora (verifique a chave Gemini ou a cota do dia). O placar continua ao vivo!");
+      }
+    }
+  </script>
+</body>
+</html>

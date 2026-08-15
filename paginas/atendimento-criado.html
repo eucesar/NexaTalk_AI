@@ -84,6 +84,7 @@
   </script>
   <script src="../js/firebase.js"></script>
   <script src="../js/nexaia.js"></script>
+  <script src="../js/jogo.js"></script>
 
   <script>
     // Recupera os dados das telas anteriores
@@ -133,8 +134,19 @@
       const status = document.getElementById("statusSalvamento");
       try {
         await salvarAtendimento(atendimento);
-        status.innerHTML = '<i class="bi bi-cloud-check" style="color:#4ade80;"></i> Atendimento salvo na nuvem com sucesso.';
+        status.innerHTML = '<i class="bi bi-cloud-check" style="color:#4ade80;"></i> Salvo na nuvem · <b>+20 XP</b> no seu Perfil Nexa 🎮';
         status.style.color = "#4ade80";
+
+        // Modo Jogo: abrir um chamado vale +20 XP no Perfil Nexa
+        await jogoDarXp({
+          id: sessionStorage.getItem("nexatalk_usuario_id") || "",
+          tipo: "cliente",
+          nome: nome || "Cliente",
+          xp: 20,
+          acao: "Abriu o chamado " + protocolo,
+          icone: "bi-plus-circle",
+          contadores: { chamados_abertos: 1 },
+        });
       } catch (e) {
         console.error("Erro ao salvar no Firestore:", e);
         status.innerHTML = '<i class="bi bi-cloud-slash"></i> Não foi possível salvar na nuvem (verifique o Firestore).';

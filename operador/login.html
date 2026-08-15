@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Login Operacional</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-login">
+    <div class="ops-login-card">
+
+      <!-- Lado esquerdo: apresentação (D1 do fluxo) -->
+      <div class="ops-login-brand">
+        <div class="d-flex align-items-center gap-2 mb-4">
+          <div style="width:44px; height:44px; border-radius:13px; background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+            <i class="bi bi-robot"></i>
+          </div>
+          <div class="fw-bold" style="font-size:1.05rem;">NexaTalk AI</div>
+        </div>
+
+        <h1>Parte Operacional</h1>
+        <p>Gerencie atendimentos, visualize resumos gerados por IA e responda clientes com agilidade.</p>
+
+        <div class="beneficio"><i class="bi bi-stars"></i> Copiloto NexaIA em cada atendimento</div>
+        <div class="beneficio"><i class="bi bi-lightning-charge"></i> Respostas prontas com sugestão da IA</div>
+        <div class="beneficio"><i class="bi bi-shield-lock"></i> Acesso restrito e seguro para operadores</div>
+      </div>
+
+      <!-- Lado direito: formulário de login -->
+      <div class="ops-login-form">
+        <h4 class="fw-bold mb-1">Bem-vindo de volta! 👋</h4>
+        <p class="text-secondary mb-4" style="font-size: 0.9rem;">Acesse sua conta para continuar.</p>
+
+        <label class="form-label" for="opEmail">E-mail</label>
+        <input id="opEmail" type="email" class="form-control mb-3" placeholder="operador@nexatalk.com" value="operador@nexatalk.com">
+
+        <label class="form-label" for="opSenha">Senha</label>
+        <input id="opSenha" type="password" class="form-control mb-3" placeholder="••••••••" value="nexa123">
+
+        <button class="btn-roxo mb-3" onclick="fazerLoginOperador()">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Entrar
+        </button>
+
+        <div id="loginErro" class="text-danger text-center mb-3" style="font-size: 0.85rem;"></div>
+
+        <div class="dica-demo mb-3">
+          <i class="bi bi-info-circle me-1"></i> Acesso de demonstração:
+          <b>operador@nexatalk.com</b> · senha <b>nexa123</b>
+        </div>
+
+        <p class="text-secondary text-center mb-3" style="font-size: 0.8rem;">
+          <i class="bi bi-shield-lock"></i> Acesso restrito à equipe operacional
+        </p>
+
+        <a href="../index.html" class="btn-roxo-claro" style="display:block; text-align:center; text-decoration:none; padding: 11px;">
+          <i class="bi bi-phone me-2"></i> Voltar para o app do cliente
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/operador.js"></script>
+
+  <script>
+    // Já logado? Vai direto para a fila
+    if (opsOperadorAtual()) window.location.href = "fila.html";
+
+    function fazerLoginOperador() {
+      const email = document.getElementById("opEmail").value;
+      const senha = document.getElementById("opSenha").value;
+      const erro = document.getElementById("loginErro");
+      erro.textContent = "";
+
+      const op = opsEntrar(email, senha);
+      if (!op) {
+        erro.textContent = "E-mail ou senha incorretos. Use o acesso de demonstração abaixo.";
+        return;
+      }
+      window.location.href = "fila.html";
+    }
+
+    // Enter envia o formulário
+    ["opEmail", "opSenha"].forEach(function (id) {
+      document.getElementById(id).addEventListener("keydown", function (e) {
+        if (e.key === "Enter") fazerLoginOperador();
+      });
+    });
+  </script>
+</body>
+</html>

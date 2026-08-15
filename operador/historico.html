@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Histórico (D4 em construção)</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main" style="max-width: 980px;">
+
+      <div class="ops-header">
+        <div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a id="linkVoltar" href="fila.html" class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.85rem; text-decoration:none;">
+              <i class="bi bi-arrow-left"></i>
+            </a>
+            <h1>🚧 Histórico do Atendimento (D4)</h1>
+          </div>
+          <div class="subtitulo">
+            Tela em construção — e aqui estão TODAS as anotações dos próximos passos: o que já existe, o que falta e como continuar (handoff completo para qualquer pessoa ou chat novo de IA).
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= CONTEXTO RÁPIDO ================= -->
+      <div class="cartao-roxo">
+        <div class="titulo-secao"><i class="bi bi-info-circle"></i> Contexto em 30 segundos</div>
+        <p class="mb-2" style="font-size: 0.92rem;">
+          <b>NexaTalk AI</b> é um sistema de atendimento com IA (projeto acadêmico FIAP · Challenge):
+          o <b>cliente</b> abre chamados num app <b>mobile web</b> (moldura de celular), a <b>Gemini</b> faz a triagem
+          (resolve na hora ou encaminha) e o <b>operador</b> trata tudo numa central <b>desktop</b> com a NexaIA de copilota.
+          Tudo persiste no <b>Firebase</b> (Auth + Firestore). Sem Node/npm: HTML + CSS + JS puro com Bootstrap 5, rodando no Live Server.
+        </p>
+        <div class="d-flex flex-wrap gap-2" style="font-size: 0.82rem;">
+          <span class="chip">Cliente: index.html + paginas/*.html</span>
+          <span class="chip">Operador: operador/*.html</span>
+          <span class="chip">Lógica: js/firebase.js · js/gemini.js · js/nexaia.js · js/operador.js · js/jogo.js</span>
+          <span class="chip">Estilo: css/estilo.css · css/operador.css</span>
+        </div>
+        <div class="alerta-risco ok mt-3 mb-0">
+          <i class="bi bi-key"></i> Login demo do operador: <b>&nbsp;operador@nexatalk.com&nbsp;</b> · senha <b>&nbsp;nexa123&nbsp;</b>
+          · Chave Gemini vai em <b>&nbsp;js/config.js&nbsp;</b> (copie de js/config.example.js)
+        </div>
+      </div>
+
+      <!-- ================= O QUE JÁ ESTÁ PRONTO ================= -->
+      <div class="cartao">
+        <div class="titulo-secao"><i class="bi bi-check-circle"></i> O que já está pronto (não refazer)</div>
+        <ul class="plano-passos">
+          <li><span class="num">✓</span><span><b>Jornada do cliente (8 telas):</b> login/cadastro, novo atendimento com "melhorar com IA", triagem que resolve na hora ou encaminha, análise completa, protocolo, meus atendimentos, consulta pública por protocolo/e-mail e 404.</span></li>
+          <li><span class="num">✓</span><span><b>Operador D1 (login.html):</b> login demo da equipe (sessionStorage, protótipo).</span></li>
+          <li><span class="num">✓</span><span><b>Operador D2 (fila.html):</b> fila em tempo real (onSnapshot), métricas, busca, filtros, "Priorizar com IA", insights da fila via Gemini, widget "Próximo melhor chamado" e "Pulso emocional".</span></li>
+          <li><span class="num">✓</span><span><b>Operador D3 (atendimento.html):</b> caso completo + validação de área da IA + "Atribuir a mim" (sai da IA, entra o humano) + responder/concluir + Copiloto NexaIA (radar de riscos, plano de ação, resposta pronta, melhorar rascunho e "Resolver com IA em 1 clique").</span></li>
+          <li><span class="num">✓</span><span><b>Modo Jogo completo:</b> XP e níveis para operador E cliente, conquistas, avaliação de qualidade da tratativa pela IA (empatia/clareza/detalhe), Arena ao Vivo (ranking + feed em tempo real + análise do time por IA), Meu Desempenho (Coach IA) e Perfil Nexa do cliente.</span></li>
+          <li><span class="num">✓</span><span><b>Centro de Comando (comando.html):</b> dashboard executivo ao vivo — KPIs, volume por dia, funil, intenções, carga por área, qualidade por operador e relatório executivo escrito pela Gemini.</span></li>
+          <li><span class="num">✓</span><span><b>Dojo de Treinamento (dojo.html):</b> a IA simula clientes (fácil/médio/difícil), o operador responde e a sensei NexaIA dá nota, feedback e resposta exemplar. Vale XP (contador <code>treinos</code>).</span></li>
+          <li><span class="num">✓</span><span><b>Base de Conhecimento Viva (conhecimento.html):</b> a IA minera temas recorrentes da fila e redige artigos; o operador aprova e publica (coleção <code>base_conhecimento</code>, contador <code>artigos_publicados</code>).</span></li>
+          <li><span class="num">✓</span><span><b>Ingestão de Dados demo (ingestao.html):</b> limpa e popula o Firebase com 18 chamados, 6 operadores, perfis, feed e artigos — com opção de vincular chamados ao cliente logado.</span></li>
+        </ul>
+      </div>
+
+      <!-- ================= A ÚNICA TELA PENDENTE ================= -->
+      <div class="cartao" style="border-color: rgba(251, 191, 36, 0.4);">
+        <div class="titulo-secao" style="color: #fcd34d;"><i class="bi bi-cone-striped"></i> ÚNICA TELA PENDENTE — D4: Histórico / Timeline (esta página é o placeholder dela)</div>
+        <p class="text-secondary" style="font-size: 0.9rem;">
+          Criar a linha do tempo completa do atendimento, no lugar desta página, mantendo o layout desktop
+          (sidebar via <code>opsMontarSidebar()</code>). Receve <code>?id=&lt;docId&gt;</code> na URL.
+        </p>
+        <ul class="plano-passos">
+          <li><span class="num">1</span><span>Carregar o atendimento com <code>buscarAtendimentoPorId(id)</code> (js/firebase.js) e ler o array <code>historico[]</code>.</span></li>
+          <li><span class="num">2</span><span>Renderizar timeline vertical: cada evento tem <code>evento</code>, <code>status</code>, <code>responsavel</code>, <code>mensagem</code> e <code>data</code>.</span></li>
+          <li><span class="num">3</span><span>Diferenciar autores por ícone/cor: 🧑 cliente (evento "aberto pelo cliente"), 🤖 IA (responsável começa com "IA"), 🎧 equipe (demais).</span></li>
+          <li><span class="num">4</span><span>Destacar marcos de status (Recebido → Em análise → Concluído) como divisores na linha.</span></li>
+          <li><span class="num">5</span><span>Mostrar card lateral "Informações" com protocolo, status atual, área, responsável e a <code>avaliacao_ia</code> (nota de qualidade) se existir.</span></li>
+          <li><span class="num">6</span><span>Bônus de IA: botão "Resumir histórico com a NexaIA" usando <code>nexaiaPerguntar()</code> com os eventos concatenados (3 linhas de resumo).</span></li>
+          <li><span class="num">7</span><span>Bônus de jogo: dar +5 XP ao operador ao usar o resumo (usar <code>jogoDarXp()</code> de js/jogo.js).</span></li>
+        </ul>
+        <div id="resumoDados" class="alerta-risco ok" style="display:none;"></div>
+      </div>
+
+      <!-- ================= CONTRATO DE DADOS ================= -->
+      <div class="cartao">
+        <div class="titulo-secao"><i class="bi bi-database"></i> Contrato de dados no Firestore (já em produção — não quebrar)</div>
+
+        <div class="mini-cartao mb-2" style="text-align:left;">
+          <b style="color: var(--roxo);">atendimentos/{docId}</b>
+          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
+            <code>protocolo</code> ("#ATD-ANO-12345") · <code>usuario_id</code> (uid do cliente) · <code>cliente</code> {nome, contato, email, telefone} ·
+            <code>descricao_original</code> · <code>ia</code> {resumo, intencao, prioridade, confianca, sentimento, tags[], resposta_sugerida, resposta_automatica, auto_resolvivel, sla_sugerido, complexidade, proxima_acao...} ·
+            <code>intencao</code> / <code>prioridade</code> / <code>status</code> (rasos, p/ lista) ·
+            <code>area_atual</code> · <code>area_validada</code> · <code>justificativa_redirecionamento</code> ·
+            <code>atribuido_a</code> · <code>tratado_por</code> · <code>mensagem_operacao</code> (resposta que o cliente vê) ·
+            <code>avaliacao_ia</code> {empatia, clareza, detalhe, comentario} ·
+            <code>historico[]</code> {evento, status, responsavel, mensagem, data} ·
+            <code>data_criacao</code> (texto) · <code>data_criacao_ts</code> / <code>ultima_atualizacao_ts</code> (timestamps).
+            Status possíveis: <b>"Em análise"</b>, <b>"Resolvido pela IA"</b>, <b>"Concluído"</b>.
+          </div>
+        </div>
+
+        <div class="mini-cartao mb-2" style="text-align:left;">
+          <b style="color: var(--roxo);">perfis_jogo/{id}</b> <span class="text-secondary" style="font-size:0.8rem;">(id: uid do cliente ou "op_" + e-mail normalizado do operador)</span>
+          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
+            <code>tipo</code> ("cliente"|"operador") · <code>nome</code> · <code>cargo</code> · <code>xp</code> ·
+            contadores: <code>casos_concluidos</code>, <code>respostas_enviadas</code>, <code>areas_validadas</code>, <code>casos_assumidos</code>, <code>magicos</code>, <code>treinos</code>, <code>artigos_publicados</code>, <code>chamados_abertos</code>, <code>resolvidos_ia</code> ·
+            qualidade: <code>soma_empatia</code>, <code>soma_clareza</code>, <code>soma_detalhe</code>, <code>avaliacoes</code>, <code>ultimas_avaliacoes[]</code> ·
+            <code>ultima_acao</code> + <code>ultima_acao_ts</code>.
+          </div>
+        </div>
+
+        <div class="mini-cartao mb-2" style="text-align:left;">
+          <b style="color: var(--roxo);">eventos_jogo</b> <span class="text-secondary" style="font-size:0.8rem;">(feed da Arena, ordenado por criado_em desc)</span>
+          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
+            <code>tipo</code> · <code>nome</code> · <code>texto</code> · <code>xp</code> · <code>icone</code> (classe bootstrap-icons) · <code>criado_em</code> (serverTimestamp).
+          </div>
+        </div>
+
+        <div class="mini-cartao" style="text-align:left;">
+          <b style="color: var(--roxo);">base_conhecimento</b> <span class="text-secondary" style="font-size:0.8rem;">(artigos da Base Viva, ordenado por criado_em desc)</span>
+          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
+            <code>titulo</code> · <code>problema</code> · <code>solucao</code> (passo a passo) · <code>tags[]</code> · <code>fonte</code> · <code>aprovado_por</code> · <code>criado_em</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= REGRAS DE XP ================= -->
+      <div class="cartao">
+        <div class="titulo-secao"><i class="bi bi-controller"></i> Regras de XP e níveis (js/jogo.js)</div>
+        <div class="d-flex flex-wrap gap-2 mb-3" style="font-size: 0.83rem;">
+          <span class="chip">Cliente: abrir chamado +20</span>
+          <span class="chip">Cliente: resolver com IA +30</span>
+          <span class="chip">Operador: assumir caso +10</span>
+          <span class="chip">Operador: validar área +10</span>
+          <span class="chip">Operador: responder +15</span>
+          <span class="chip">Operador: concluir +50 + bônus qualidade (até +10)</span>
+          <span class="chip">Operador: resolver ✨ 1 clique +35 + bônus</span>
+          <span class="chip">Operador: treino no Dojo +15/+20/+30 (+10 se nota ≥ 80)</span>
+          <span class="chip">Operador: publicar artigo na Base Viva +15</span>
+        </div>
+        <div class="text-secondary" style="font-size: 0.85rem;">
+          Níveis (XP): 0 → 100 → 300 → 700 → 1200 → 2000. A cada conclusão a NexaIA audita a resposta
+          (empatia/clareza/detalhe 0-100) via <code>jogoAvaliarTratativa()</code>; se a Gemini falhar, cai no
+          fallback local e a gamificação nunca trava.
+        </div>
+      </div>
+
+      <!-- ================= PRÓXIMA ENTREGA — FAZER ================= -->
+      <div class="cartao" style="border-color: rgba(167, 139, 250, 0.55);">
+        <div class="titulo-secao" style="color: #c4b5fd;"><i class="bi bi-lightning-charge"></i> Próxima entrega — FAZER estes pontos</div>
+        <p class="text-secondary" style="font-size: 0.9rem;">
+          Anotações da Fase 6 / próxima sprint. Prioridade sugerida: <b>1 → 2 → 4</b> (mais visíveis na banca). O restante entra se der tempo.
+        </p>
+        <ul class="plano-passos">
+          <li><span class="num">1</span><span><b>Histórico / timeline de verdade (esta tela D4):</b> sair deste placeholder e desenhar a linha do tempo do atendimento (aberto → triagem IA → encaminhado → operador → mensagem → concluído), com o card de informações e o resumo da NexaIA. É o gap mais óbvio hoje.</span></li>
+          <li><span class="num">2</span><span><b>Conversar com a NexaIA no app do cliente (ideia principal):</b> no lado do <b>usuário</b> (não na central do operador), colocar um campo / atalho visível (ex.: botão flutuante, item no menu ou card “Falar com a NexaIA”). Ao clicar, abre um chat para o cliente <b>trocar ideia com a IA</b> — dúvidas, status do chamado, orientação, “o que eu faço agora?”. A IA precisa estar <b>bem enriquecida</b>: prompt com contexto completo (quem é o cliente, perfil/XP, chamados abertos e concluídos, protocolo, status, área, última mensagem da operação, artigos da Base Viva, regras do app, o que a triagem já concluiu). Não é chat humano↔humano neste item; é copiloto do cliente, conversacional e informado sobre o sistema inteiro. Persistir o diálogo no Firestore (ex. coleção <code>chats_nexaia</code> ou subcoleção no usuário) para a conversa não sumir ao recarregar.</span></li>
+          <li><span class="num">3</span><span><b>Abrir chamado por voz:</b> no app do cliente, gravar áudio → transcrever (Gemini / speech) → preencher a descrição do chamado. Encaixa no Challenge (telecom, celular, acessibilidade) e impressiona na demo.</span></li>
+          <li><span class="num">4</span><span><b>SLA e alerta de estouro:</b> relógio no card da fila usando <code>ia.sla_sugerido</code> + <code>data_criacao_ts</code>. Amarelo / vermelho. A IA pode sugerir escalar. KPI de SLA no Centro de Comando.</span></li>
+          <li><span class="num">6</span><span><b>Avaliação do cliente + NPS:</b> depois de Concluído / Resolvido pela IA, 1–5 estrelas + “a IA resolveu?”. Gravar no atendimento e usar no relatório executivo. Fecha o ciclo: a IA não só atende, é medida.</span></li>
+          <li><span class="num">7</span><span><b>Radar de fraude / churn virar ação:</b> se sentimento + Procon + cobrança (o copiloto já tem radar de riscos), banner “risco de perda de cliente” e playbook curto (crédito, ligar em 1h, etc.). Bom slide de negócio Claro/retenção.</span></li>
+          <li><span class="num">8</span><span><b>Multilíngue / acessibilidade:</b> botões “simplificar linguagem” e “traduzir” (ex. espanhol) nas respostas da IA e na descrição do chamado. Uma chamada Gemini. Forte em inclusão, barato de fazer.</span></li>
+          <li><span class="num">9</span><span><b>PWA no celular:</b> manifesto + ícone + “Adicionar à tela inicial”. Lista de chamados com fallback se a rede oscilar. Sem virar app nativo; parece app da operadora.</span></li>
+        </ul>
+        <div class="alerta-risco ok mt-3 mb-0">
+          <i class="bi bi-stars"></i> O item <b>&nbsp;2&nbsp;</b> é o diferencial combinado: campo no app do usuário → conversa rica com a NexaIA (contexto total do cliente + sistema), não mais um balão estático.
+        </div>
+      </div>
+
+      <!-- ================= PRÓXIMA ENTREGA — NÃO COLOCAR ================= -->
+      <div class="cartao" style="border-color: rgba(248, 113, 113, 0.4);">
+        <div class="titulo-secao" style="color: #fca5a5;"><i class="bi bi-x-octagon"></i> Próxima entrega — NÃO colocar estes pontos</div>
+        <p class="text-secondary" style="font-size: 0.9rem;">
+          Ficam de fora de propósito. Não implementar agora (diluem a demo ou já estão saturados no protótipo).
+        </p>
+        <ul class="plano-passos">
+          <li><span class="num">✕</span><span><b>Modo supervisor (ideia 5):</b> tela só do supervisor (redistribuir fila, congelar auto-resolução). O login <code>supervisor@nexatalk.com</code> já existe; não criar um produto paralelo nesta entrega.</span></li>
+          <li><span class="num">✕</span><span><b>Auth real do operador + regras fechadas do Firestore (ideia 10):</b> Firebase Auth com papéis, custom claims, restringir <code>firestore.rules</code>. Importante no TCC longo, mas não entra nesta próxima entrega. Login demo (<code>operador@nexatalk.com</code> / <code>nexa123</code>) permanece.</span></li>
+          <li><span class="num">✕</span><span><b>Chat humano cliente ↔ operador:</b> mensagens bidirecionais com a equipe (estilo WhatsApp da operação). Nesta sprint o chat é <b>só cliente ↔ NexaIA</b> (item 2 acima).</span></li>
+          <li><span class="num">✕</span><span><b>Outro dashboard / mais gráficos no Centro de Comando:</b> já tem KPIs, velas, funil, filtros e relatório executivo. Não acrescentar mais tela de gráfico.</span></li>
+          <li><span class="num">✕</span><span><b>Mais gamificação:</b> missões diárias, novos níveis, novas conquistas, mais XP. Arena / Perfil / Dojo já estão completos — a banca acharia “mais do mesmo”.</span></li>
+          <li><span class="num">✕</span><span><b>Mais artigos / features na Base Viva:</b> mineração + aprovação já existem. Não expandir a Base nesta entrega (nem “sugerir artigo no D3” agora).</span></li>
+          <li><span class="num">✕</span><span><b>Notificações push / toasts de status</b> e <b>filtro extra de período no Comando</b> (itens velhos do backlog): não priorizar; o Comando já filtra período.</span></li>
+        </ul>
+      </div>
+
+      <!-- ================= COMO RODAR ================= -->
+      <div class="cartao">
+        <div class="titulo-secao"><i class="bi bi-play-circle"></i> Como rodar o projeto</div>
+        <ul class="plano-passos mb-0">
+          <li><span class="num">1</span><span>Copiar <code>js/config.example.js</code> para <code>js/config.js</code> e colar a chave Gemini (o Firebase já vem preenchido).</span></li>
+          <li><span class="num">2</span><span>Abrir com Live Server (porta 5500) a partir do <code>index.html</code>.</span></li>
+          <li><span class="num">3</span><span>Cliente: criar conta e abrir um chamado. Operador: "Acessar Central do Operador" na home → login demo → tratar o chamado.</span></li>
+        </ul>
+      </div>
+
+      <!-- NexaIA -->
+      <div id="nexaia"></div>
+
+      <a id="linkVoltarCaso" href="fila.html" class="btn-roxo" style="display:block; text-align:center; text-decoration:none;">
+        <i class="bi bi-arrow-left me-2"></i> Voltar
+      </a>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar(""));
+
+    const atendimentoId = new URLSearchParams(window.location.search).get("id");
+    if (atendimentoId) {
+      document.getElementById("linkVoltarCaso").href = "atendimento.html?id=" + atendimentoId;
+      document.getElementById("linkVoltar").href = "atendimento.html?id=" + atendimentoId;
+    }
+
+    nexaiaMostrar("nexaia",
+      "Anotação da próxima entrega: fazer a timeline D4, o chat do cliente comigo (NexaIA enriquecida), voz, SLA, NPS, churn, acessibilidade e PWA. " +
+      "Não fazer agora: modo supervisor, Auth do operador, chat humano, mais dashboard, mais jogo nem mais Base Viva. 😉");
+
+    // Prova viva: mostra quantos eventos o caso da URL já tem gravados
+    async function conferirDados() {
+      if (!atendimentoId) return;
+      try {
+        const a = await buscarAtendimentoPorId(atendimentoId);
+        if (a && a.historico) {
+          const el = document.getElementById("resumoDados");
+          el.style.display = "flex";
+          el.innerHTML = '<i class="bi bi-check-circle"></i> O caso ' + (a.protocolo || "") +
+            " já tem <b>&nbsp;" + a.historico.length + " evento(s)&nbsp;</b> gravados esperando esta timeline.";
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    conferirDados();
+  </script>
+</body>
+</html>

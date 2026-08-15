@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Fila de Atendimentos</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>Fila de Atendimentos</h1>
+          <div class="subtitulo">
+            <i class="bi bi-broadcast" style="color:#4ade80;"></i>
+            Atualização em tempo real — novos chamados do app do cliente aparecem aqui na hora.
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas -->
+      <div class="ops-stats">
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-arrow-repeat"></i></div>
+          <div><div class="valor" id="statAnalise">0</div><div class="rotulo">Em análise</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone roxo"><i class="bi bi-robot"></i></div>
+          <div><div class="valor" id="statIA">0</div><div class="rotulo">Resolvidos pela IA</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone verde"><i class="bi bi-check-circle"></i></div>
+          <div><div class="valor" id="statConcluido">0</div><div class="rotulo">Concluídos</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone rosa"><i class="bi bi-lightning-charge"></i></div>
+          <div><div class="valor" id="statAlta">0</div><div class="rotulo">Prioridade alta</div></div>
+        </div>
+      </div>
+
+      <!-- NexaIA: resumo local + insights sob demanda -->
+      <div id="nexaia"></div>
+
+      <!-- Widgets inteligentes: escolha da IA + termômetro de humor -->
+      <div class="fila-widgets">
+        <div class="cartao-roxo mb-0" id="cardDestaque" style="display:none;">
+          <div class="rotulo-pequeno" style="color: var(--roxo);">
+            <i class="bi bi-bullseye"></i> Próximo melhor chamado para você — escolha da NexaIA
+          </div>
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-1">
+            <div style="min-width: 0;">
+              <div class="fw-bold" style="font-size: 1.05rem;">
+                <span id="destaqueProtocolo" style="color: var(--roxo);">—</span> · <span id="destaqueCliente"></span>
+              </div>
+              <div id="destaqueMotivo" class="text-secondary" style="font-size: 0.85rem;"></div>
+            </div>
+            <button id="destaqueAbrir" class="btn-roxo" style="width:auto; padding: 10px 18px;">
+              Atender agora <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="cartao mb-0" id="cardPulso" style="display:none;">
+          <div class="rotulo-pequeno"><i class="bi bi-activity"></i> Pulso emocional da fila (tempo real)</div>
+          <div class="pulso-barra my-2" id="pulsoBarra"></div>
+          <div id="pulsoLegenda" class="d-flex flex-wrap gap-3" style="font-size: 0.78rem;"></div>
+        </div>
+      </div>
+
+      <!-- Busca + filtros -->
+      <div class="ops-toolbar">
+        <input id="busca" type="text" class="form-control" placeholder="Buscar por protocolo, cliente, assunto ou responsável...">
+        <div class="filtros" style="margin-bottom: 0;">
+          <span class="pill ativo" data-filtro="todos" onclick="selecionarFiltro(this)">Todos</span>
+          <span class="pill" data-filtro="análise" onclick="selecionarFiltro(this)">Em análise</span>
+          <span class="pill" data-filtro="resolvido" onclick="selecionarFiltro(this)">Resolvido pela IA</span>
+          <span class="pill" data-filtro="concluído" onclick="selecionarFiltro(this)">Concluído</span>
+          <span class="pill" id="pillUrgencia" onclick="alternarUrgencia()" title="A IA ordena a fila por prioridade e sentimento do cliente">
+            <i class="bi bi-stars"></i> Priorizar com IA
+          </span>
+        </div>
+        <select id="filtroTratando" class="form-select" title="Filtrar por quem está tratando o chamado"
+          style="width:auto; max-width: 250px; padding: 9px 34px 9px 12px; font-size: 0.85rem;">
+          <option value="">👥 Tratando: todos</option>
+        </select>
+      </div>
+
+      <!-- Tabela da fila -->
+      <div class="tabela-envelope">
+        <table class="tabela-ops">
+          <thead>
+            <tr>
+              <th>Protocolo</th>
+              <th>Cliente</th>
+              <th>Intenção</th>
+              <th>Prioridade</th>
+              <th style="text-align:center;">Humor</th>
+              <th>Área (IA)</th>
+              <th>Tratando</th>
+              <th>Status</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela"></tbody>
+        </table>
+
+        <!-- Carregando / vazio -->
+        <div id="carregando" class="carregando-ia">
+          <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          <p class="text-secondary">Conectando à fila em tempo real...</p>
+        </div>
+        <div id="vazio" class="text-center text-secondary" style="display:none; padding: 34px 10px;">
+          <i class="bi bi-inbox" style="font-size: 2.2rem;"></i>
+          <p class="mt-2 mb-0">Nenhum atendimento encontrado. Abra um chamado no app do cliente para vê-lo chegar aqui em tempo real.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("fila"));
+
+    let todosAtendimentos = [];
+    let filtroAtual = "todos";
+    let urgenciaLigada = false;
+    let insightsGerados = false;
+
+    // Fila em tempo real: o Firestore avisa a cada mudança
+    opsAssinarAtendimentos(function (lista) {
+      todosAtendimentos = lista;
+      document.getElementById("carregando").style.display = "none";
+      atualizarStats();
+      atualizarWidgets();
+      atualizarFiltroTratando();
+      renderizar();
+      if (!insightsGerados) montarBalaoNexaia();
+    }, function () {
+      document.getElementById("carregando").innerHTML =
+        '<p class="text-danger">Não foi possível conectar ao Firestore. Verifique a conexão.</p>';
+    });
+
+    function atualizarStats() {
+      let analise = 0, ia = 0, concluido = 0, alta = 0;
+      todosAtendimentos.forEach(function (a) {
+        const s = (a.status || "").toLowerCase();
+        if (s.indexOf("conclu") >= 0) concluido++;
+        else if (s.indexOf("resolvido") >= 0) ia++;
+        else analise++;
+        if ((a.prioridade || "").toLowerCase().indexOf("alta") >= 0 && s.indexOf("conclu") < 0) alta++;
+      });
+      document.getElementById("statAnalise").textContent = analise;
+      document.getElementById("statIA").textContent = ia;
+      document.getElementById("statConcluido").textContent = concluido;
+      document.getElementById("statAlta").textContent = alta;
+    }
+
+    // Widgets: "próximo melhor chamado" (escolha da IA por urgência,
+    // humor e espera) + pulso emocional da fila. Tudo local e ao vivo.
+    function atualizarWidgets() {
+      const abertos = todosAtendimentos.filter(function (a) {
+        return !atendimentoFinalizadoParaCliente(a.status);
+      });
+
+      // --- Próximo melhor chamado ---
+      const cardDestaque = document.getElementById("cardDestaque");
+      if (abertos.length === 0) {
+        cardDestaque.style.display = "none";
+      } else {
+        const melhor = opsOrdenarPorUrgencia(abertos)[0];
+        const motivos = [];
+        if ((melhor.prioridade || "").toLowerCase().indexOf("alta") >= 0) motivos.push("prioridade ALTA");
+        if (opsSentimentoNegativo(melhor)) motivos.push("cliente " + ((melhor.ia && melhor.ia.sentimento) || "insatisfeito").toLowerCase());
+        if (!melhor.atribuido_a) motivos.push("ninguém assumiu ainda");
+        if (melhor.ia && melhor.ia.sla_sugerido) motivos.push("SLA: " + melhor.ia.sla_sugerido);
+        if (motivos.length === 0) motivos.push("é o caso mais antigo aguardando");
+
+        document.getElementById("destaqueProtocolo").textContent = melhor.protocolo || "—";
+        document.getElementById("destaqueCliente").textContent = (melhor.cliente && melhor.cliente.nome) || "—";
+        document.getElementById("destaqueMotivo").textContent = "Por quê: " + motivos.join(" · ");
+        document.getElementById("destaqueAbrir").onclick = function () {
+          window.location.href = "atendimento.html?id=" + melhor.id;
+        };
+        cardDestaque.style.display = "block";
+      }
+
+      // --- Pulso emocional ---
+      const cardPulso = document.getElementById("cardPulso");
+      if (abertos.length === 0) {
+        cardPulso.style.display = "none";
+        return;
+      }
+      const contagem = { positivo: 0, neutro: 0, preocupado: 0, frustrado: 0 };
+      abertos.forEach(function (a) {
+        const s = ((a.ia && a.ia.sentimento) || "").toLowerCase();
+        if (s.indexOf("positiv") >= 0) contagem.positivo++;
+        else if (s.indexOf("frustrad") >= 0) contagem.frustrado++;
+        else if (s.indexOf("preocupad") >= 0) contagem.preocupado++;
+        else contagem.neutro++;
+      });
+
+      const total = abertos.length;
+      const barra = document.getElementById("pulsoBarra");
+      const legenda = document.getElementById("pulsoLegenda");
+      barra.innerHTML = "";
+      legenda.innerHTML = "";
+
+      [
+        { chave: "positivo", emoji: "😊", rotulo: "Positivos" },
+        { chave: "neutro", emoji: "😐", rotulo: "Neutros" },
+        { chave: "preocupado", emoji: "😟", rotulo: "Preocupados" },
+        { chave: "frustrado", emoji: "😡", rotulo: "Frustrados" },
+      ].forEach(function (item) {
+        const qtd = contagem[item.chave];
+        if (qtd > 0) {
+          const seg = document.createElement("div");
+          seg.className = "pulso-seg " + item.chave;
+          seg.style.width = Math.round((qtd / total) * 100) + "%";
+          seg.title = item.rotulo + ": " + qtd;
+          barra.appendChild(seg);
+        }
+        const leg = document.createElement("span");
+        leg.className = "text-secondary";
+        leg.textContent = item.emoji + " " + qtd + " " + item.rotulo.toLowerCase();
+        legenda.appendChild(leg);
+      });
+      cardPulso.style.display = "block";
+    }
+
+    // Balão da NexaIA: resumo local + botão de insights (Gemini)
+    function montarBalaoNexaia() {
+      const abertos = todosAtendimentos.filter(function (a) {
+        return !atendimentoFinalizadoParaCliente(a.status);
+      });
+      const altas = abertos.filter(function (a) {
+        return (a.prioridade || "").toLowerCase().indexOf("alta") >= 0;
+      });
+
+      let texto;
+      if (todosAtendimentos.length === 0) {
+        texto = nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) + "! Fila zerada por enquanto. Assim que um cliente abrir um chamado no app, ele aparece aqui em tempo real.";
+      } else if (abertos.length === 0) {
+        texto = nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) + "! Fila em dia: todos os " + todosAtendimentos.length + " atendimentos estão finalizados. 🎉";
+      } else {
+        texto = nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) + "! Você tem " + abertos.length + " caso(s) aguardando" +
+          (altas.length > 0 ? " — " + altas.length + " com prioridade ALTA (sugiro começar pelo " + (altas[0].protocolo || "mais recente") + ")." : ".") +
+          " Quer que eu analise a fila e diga por onde atacar?";
+      }
+
+      nexaiaMostrar("nexaia", texto,
+        todosAtendimentos.length > 0 ? { acaoTexto: "✨ Gerar insights da fila", aoClicar: gerarInsights } : undefined);
+    }
+
+    // Insights com IA (Gemini): o que atacar primeiro, padrões e dicas
+    async function gerarInsights() {
+      const btn = document.getElementById("nexaiaAcao");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Analisando a fila...';
+      try {
+        const insights = await opsInsightsFila(todosAtendimentos);
+        nexaiaTexto("nexaia", insights);
+        btn.style.display = "none";
+        insightsGerados = true;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Gerar insights da fila";
+        nexaiaTexto("nexaia", "Não consegui gerar os insights agora (verifique a chave Gemini ou a cota do dia). A fila continua funcionando normalmente.");
+      }
+    }
+
+    function selecionarFiltro(el) {
+      document.querySelectorAll(".pill[data-filtro]").forEach(function (p) { p.classList.remove("ativo"); });
+      el.classList.add("ativo");
+      filtroAtual = el.getAttribute("data-filtro");
+      renderizar();
+    }
+
+    // Preenche o seletor "Tratando" com quem aparece na fila (ao vivo),
+    // preservando a escolha atual do operador
+    function atualizarFiltroTratando() {
+      const sel = document.getElementById("filtroTratando");
+      const valorAtual = sel.value;
+
+      const nomes = {};
+      todosAtendimentos.forEach(function (a) {
+        if (a.atribuido_a) nomes[a.atribuido_a] = true;
+      });
+
+      let html =
+        '<option value="">👥 Tratando: todos</option>' +
+        '<option value="__ia__">🤖 NexaIA (sem operador)</option>';
+      Object.keys(nomes).sort().forEach(function (nome) {
+        html += '<option value="' + nome.replace(/"/g, "&quot;") + '">🎧 ' + nome +
+          (nome === operador.nome ? " (você)" : "") + "</option>";
+      });
+      sel.innerHTML = html;
+
+      // Mantém o filtro escolhido se o nome ainda existir na fila
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === valorAtual) { sel.value = valorAtual; break; }
+      }
+    }
+
+    // Chip de quem está tratando: operador (avatar) ou NexaIA (robô)
+    function chipTratando(a) {
+      if (a.atribuido_a) {
+        const ehVoce = a.atribuido_a === operador.nome;
+        return '<span class="chip-tratando' + (ehVoce ? " voce" : "") + '" title="' +
+          (ehVoce ? "Atribuído a você" : "Operador responsável pelo caso") + '">' +
+          '<span class="mini-avatar">' + opsIniciais(a.atribuido_a) + "</span>" +
+          a.atribuido_a + (ehVoce ? ' <b style="color:#4ade80;">· você</b>' : "") +
+          "</span>";
+      }
+      const resolvido = ((a.status || "").toLowerCase().indexOf("resolvido") >= 0);
+      return '<span class="chip-tratando ia" title="' +
+        (resolvido ? "Resolvido automaticamente pela NexaIA" : "Ninguém assumiu ainda — NexaIA acompanhando") + '">' +
+        '<span class="mini-avatar"><i class="bi bi-robot"></i></span> NexaIA' +
+        "</span>";
+    }
+
+    function alternarUrgencia() {
+      urgenciaLigada = !urgenciaLigada;
+      document.getElementById("pillUrgencia").classList.toggle("ativo", urgenciaLigada);
+      renderizar();
+    }
+
+    function renderizar() {
+      const termo = document.getElementById("busca").value.toLowerCase().trim();
+      const alvoTratando = document.getElementById("filtroTratando").value;
+
+      let filtrados = todosAtendimentos.filter(function (a) {
+        const status = (a.status || "").toLowerCase();
+        const passaFiltro = filtroAtual === "todos" || status.indexOf(filtroAtual) >= 0;
+        const texto = ((a.protocolo || "") + " " + ((a.cliente && a.cliente.nome) || "") + " " +
+          (a.intencao || "") + " " + (a.descricao_original || "") + " " + (a.atribuido_a || "")).toLowerCase();
+        const passaBusca = termo === "" || texto.indexOf(termo) >= 0;
+        const passaTratando = alvoTratando === "" ||
+          (alvoTratando === "__ia__" ? !a.atribuido_a : a.atribuido_a === alvoTratando);
+        return passaFiltro && passaBusca && passaTratando;
+      });
+
+      if (urgenciaLigada) filtrados = opsOrdenarPorUrgencia(filtrados);
+
+      const corpo = document.getElementById("corpoTabela");
+      const vazio = document.getElementById("vazio");
+      corpo.innerHTML = "";
+
+      if (filtrados.length === 0) {
+        vazio.style.display = "block";
+        return;
+      }
+      vazio.style.display = "none";
+
+      filtrados.forEach(function (a) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td class="protocolo-cel">' + (a.protocolo || "—") + "</td>" +
+          '<td class="cliente-cel">' + ((a.cliente && a.cliente.nome) || "—") + "</td>" +
+          "<td>" + (a.intencao || (a.ia && a.ia.intencao) || "—") + "</td>" +
+          "<td>" + opsBadgePrioridade(a.prioridade) + "</td>" +
+          '<td style="text-align:center;">' + opsIconeSentimento(a) + "</td>" +
+          "<td>" + (a.area_atual || "—") + (a.area_validada ? ' <i class="bi bi-patch-check-fill" style="color:#4ade80;" title="Área validada pelo operador"></i>' : "") + "</td>" +
+          "<td>" + chipTratando(a) + "</td>" +
+          "<td>" + opsBadgeStatus(a.status) + "</td>" +
+          '<td class="data-cel">' + (a.data_criacao || "—") + "</td>" +
+          '<td style="text-align:right;"><i class="bi bi-arrow-right" style="color: var(--roxo);"></i></td>';
+        tr.addEventListener("click", function () {
+          window.location.href = "atendimento.html?id=" + a.id;
+        });
+        corpo.appendChild(tr);
+      });
+    }
+
+    document.getElementById("busca").addEventListener("input", renderizar);
+    document.getElementById("filtroTratando").addEventListener("change", renderizar);
+  </script>
+</body>
+</html>

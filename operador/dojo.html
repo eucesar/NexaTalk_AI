@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Dojo de Treinamento</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>🥋 Dojo de Treinamento</h1>
+          <div class="subtitulo">
+            <i class="bi bi-robot" style="color: var(--roxo);"></i>
+            A NexaIA vira um cliente difícil, você responde — e ela avalia como uma sensei. Treino vale XP de verdade.
+          </div>
+        </div>
+      </div>
+
+      <div id="nexaia"></div>
+
+      <!-- ============ CONFIGURAR TREINO ============ -->
+      <div class="cartao">
+        <div class="titulo-secao"><i class="bi bi-sliders"></i> Monte seu treino</div>
+        <div class="rotulo-pequeno mb-2">Nível de dificuldade do cliente simulado</div>
+        <div class="d-flex flex-wrap gap-2 mb-3" id="pillsNivel">
+          <button class="chip chip-nivel ativo" data-nivel="facil" onclick="escolherNivel('facil')">🟢 Fácil · +15 XP</button>
+          <button class="chip chip-nivel" data-nivel="medio" onclick="escolherNivel('medio')">🟡 Médio · +20 XP</button>
+          <button class="chip chip-nivel" data-nivel="dificil" onclick="escolherNivel('dificil')">🔴 Difícil · +30 XP</button>
+        </div>
+        <button id="btnGerar" class="btn-magico" onclick="gerarCaso()">
+          <span class="texto"><i class="bi bi-stars"></i> Gerar cliente simulado</span>
+        </button>
+        <div class="text-secondary mt-2 mb-0" style="font-size: 0.78rem;">
+          Nota ≥ 80% ganha bônus de +10 XP. O treino <b>não</b> altera suas médias oficiais de qualidade — é ambiente seguro.
+        </div>
+      </div>
+
+      <!-- ============ O CASO ============ -->
+      <div id="areaCaso" style="display:none;">
+        <div class="titulo-secao"><i class="bi bi-person-exclamation"></i> Cliente na linha</div>
+
+        <div class="balao-cliente">
+          <div class="avatar"><i class="bi bi-person-fill"></i></div>
+          <div style="min-width:0;">
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+              <b id="casoNome">Cliente</b>
+              <span class="badge-nivel alta" id="casoHumor">—</span>
+              <span class="chip" id="casoNivelChip" style="font-size: 0.72rem;">—</span>
+            </div>
+            <div id="casoMensagem" style="font-size: 0.95rem; line-height: 1.6;"></div>
+          </div>
+        </div>
+
+        <div class="cartao" style="border-style: dashed;">
+          <div class="rotulo-pequeno"><i class="bi bi-incognito"></i> Contexto interno (só você vê — o cliente não sabe que você sabe)</div>
+          <div id="casoContexto" style="font-size: 0.88rem;"></div>
+        </div>
+
+        <!-- Resposta do operador -->
+        <div class="cartao">
+          <div class="titulo-secao"><i class="bi bi-chat-left-text"></i> Sua resposta ao cliente</div>
+          <textarea id="respostaTreino" class="form-control mb-3" rows="5"
+            placeholder="Escreva como responderia de verdade: acolha, explique e resolva..."></textarea>
+          <div class="d-flex flex-wrap gap-2">
+            <button id="btnAvaliar" class="btn-roxo" style="width:auto; flex:2;" onclick="avaliarResposta()">
+              <i class="bi bi-clipboard-check me-2"></i> Enviar para avaliação da sensei
+            </button>
+            <button class="btn-roxo-claro" style="width:auto; flex:1;" onclick="mostrarDica()">
+              <i class="bi bi-lightbulb me-2"></i> Pedir dica
+            </button>
+          </div>
+          <div id="dicaTreino" class="alerta-risco medio mt-3 mb-0" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- ============ RESULTADO ============ -->
+      <div id="areaResultado" style="display:none;">
+        <div class="titulo-secao"><i class="bi bi-clipboard-data"></i> Veredito da Sensei NexaIA</div>
+
+        <div class="comando-grid">
+          <div class="cartao-roxo mb-0 text-center">
+            <div class="rotulo-pequeno">Nota geral do treino</div>
+            <div class="nota-grande my-2" id="notaGeral">0%</div>
+            <div id="notaSelo" class="titulo-nivel"></div>
+            <div class="chip-xp mt-3" id="xpGanho" style="display:inline-flex;"></div>
+          </div>
+
+          <div class="cartao mb-0">
+            <div class="rotulo-pequeno mb-2">Critérios avaliados</div>
+            <div class="linha-h">
+              <div class="rotulo">💜 Empatia</div>
+              <div class="trilha"><div class="preencho" id="barraEmpatia" style="width:0%;"></div></div>
+              <div class="valor" id="valorEmpatia">0</div>
+            </div>
+            <div class="linha-h">
+              <div class="rotulo">💎 Clareza</div>
+              <div class="trilha"><div class="preencho" id="barraClareza" style="width:0%;"></div></div>
+              <div class="valor" id="valorClareza">0</div>
+            </div>
+            <div class="linha-h">
+              <div class="rotulo">🔍 Detalhe</div>
+              <div class="trilha"><div class="preencho" id="barraDetalhe" style="width:0%;"></div></div>
+              <div class="valor" id="valorDetalhe">0</div>
+            </div>
+            <div class="alerta-risco ok mt-3 mb-0" id="comentarioSensei"></div>
+          </div>
+        </div>
+
+        <div class="cartao">
+          <div class="rotulo-pequeno"><i class="bi bi-magic"></i> Como a NexaIA responderia (resposta exemplar para comparar)</div>
+          <div id="respostaExemplar" style="font-size: 0.9rem; white-space: pre-line; line-height: 1.65;"></div>
+        </div>
+
+        <button class="btn-magico" onclick="novoTreino()">
+          <span class="texto"><i class="bi bi-arrow-repeat"></i> Treinar de novo</span>
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("dojo"));
+
+    nexaiaMostrar("nexaia",
+      "Bem-vindo(a) ao Dojo, " + operador.nome.split(" ")[0] + "! 🥋 Aqui eu interpreto clientes de verdade — do tranquilo ao furioso — " +
+      "e avalio sua resposta com as mesmas notas da auditoria oficial. Errar aqui é de graça; acertar vale XP. Escolha o nível e vamos treinar!");
+
+    const DOJO_NIVEIS = {
+      facil:   { rotulo: "Fácil",   xp: 15, desc: "cliente educado com uma dúvida simples (prazo de entrega, segunda via de boleto, como funciona um plano)" },
+      medio:   { rotulo: "Médio",   xp: 20, desc: "cliente chateado com um problema real (cobrança duplicada, atraso na entrega, aplicativo com erro que impede o uso)" },
+      dificil: { rotulo: "Difícil", xp: 30, desc: "cliente muito irritado com caso sensível (ameaça de Procon, suspeita de fraude no cartão, cancelamento com multa contestada) e informações desencontradas" },
+    };
+
+    // Casos reserva para quando a Gemini estiver sem cota
+    const DOJO_CASOS_RESERVA = {
+      facil: { nome: "Paulo Mendes", humor: "Neutro", mensagem: "Oi, fiz um pedido na terça e queria saber quando chega. O número é #88231. Só isso mesmo, obrigado!", contexto: "O pedido #88231 saiu do centro de distribuição ontem e a previsão de entrega é daqui a 2 dias úteis. Está tudo dentro do prazo.", dica: "Cumprimente pelo nome, confirme o número do pedido e dê a data concreta de entrega. Simples e direto." },
+      medio: { nome: "Renata Alves", humor: "Frustrado", mensagem: "Vocês me cobraram DUAS vezes a mensalidade de R$ 89,90 esse mês! Já é a segunda vez que acontece. Quero meu dinheiro de volta hoje.", contexto: "Houve mesmo uma cobrança duplicada no dia 05 por falha no gateway de pagamento. O estorno pode ser feito na hora e cai em até 5 dias úteis no cartão.", dica: "Reconheça o erro sem rodeios, peça desculpas, confirme o estorno imediato e informe o prazo de 5 dias úteis. Ofereça acompanhar." },
+      dificil: { nome: "Marcos Teixeira", humor: "Irritado", mensagem: "Apareceram 3 compras que EU NÃO FIZ no meu cartão cadastrado aí, total de R$ 1.240! Se não resolverem HOJE eu vou no Procon e no meu advogado. Inaceitável!", contexto: "As 3 transações têm padrão de fraude (madrugada, outra cidade). O protocolo: bloquear o cartão na plataforma, abrir contestação (estorno em até 7 dias) e orientar contato com o banco emissor. O cliente não perde o dinheiro.", dica: "Mantenha calma e tom formal. Diga as ações concretas já tomadas (bloqueio + contestação), o prazo do estorno e que ele será ressarcido. Não prometa nada fora do protocolo." },
+    };
+
+    let nivelAtual = "facil";
+    let casoAtual = null;
+
+    function escolherNivel(nivel) {
+      nivelAtual = nivel;
+      document.querySelectorAll(".chip-nivel").forEach(function (el) {
+        el.classList.toggle("ativo", el.getAttribute("data-nivel") === nivel);
+      });
+    }
+
+    // ============ Gerar o cliente simulado ============
+    async function gerarCaso() {
+      const btn = document.getElementById("btnGerar");
+      const nivel = DOJO_NIVEIS[nivelAtual];
+      btn.disabled = true;
+      btn.querySelector(".texto").innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> A NexaIA está entrando no personagem...';
+
+      document.getElementById("areaResultado").style.display = "none";
+      document.getElementById("areaCaso").style.display = "none";
+
+      try {
+        const bruto = await nexaiaPerguntar(
+          "Você é a NexaIA criando um CLIENTE SIMULADO para treinar operadores de atendimento da NexaTalk AI (empresa de serviços digitais). " +
+          "Nível do treino: " + nivel.rotulo + " — " + nivel.desc + ". " +
+          "Invente um caso brasileiro realista, com nome completo, valores em reais, datas e números de pedido/protocolo específicos. " +
+          'Responda APENAS com JSON válido: {"nome": "nome completo", "humor": "Neutro, Preocupado, Frustrado ou Irritado", ' +
+          '"mensagem": "a reclamação do cliente em 1ª pessoa, 2 a 4 frases, com os detalhes específicos", ' +
+          '"contexto": "o que realmente aconteceu nos bastidores da empresa e qual é a solução correta (informação interna para o operador)", ' +
+          '"dica": "uma dica prática de como conduzir a resposta, máximo 140 caracteres"}'
+        );
+        const j = JSON.parse(bruto.replace(/```json/gi, "").replace(/```/g, "").trim());
+        casoAtual = { nome: j.nome || "Cliente", humor: j.humor || "Neutro", mensagem: j.mensagem || "", contexto: j.contexto || "", dica: j.dica || "" };
+      } catch (e) {
+        console.error("Gemini indisponível, usando caso reserva:", e);
+        casoAtual = Object.assign({}, DOJO_CASOS_RESERVA[nivelAtual]);
+        opsToast("IA sem cota agora — carreguei um caso do acervo do Dojo.", false);
+      }
+
+      casoAtual.nivel = nivelAtual;
+      document.getElementById("casoNome").textContent = casoAtual.nome;
+      document.getElementById("casoHumor").innerHTML = '<i class="bi bi-emoji-angry"></i> ' + casoAtual.humor;
+      document.getElementById("casoNivelChip").textContent = "Nível " + nivel.rotulo + " · vale +" + nivel.xp + " XP";
+      document.getElementById("casoMensagem").textContent = '"' + casoAtual.mensagem + '"';
+      document.getElementById("casoContexto").textContent = casoAtual.contexto;
+      document.getElementById("respostaTreino").value = "";
+      document.getElementById("dicaTreino").style.display = "none";
+
+      document.getElementById("areaCaso").style.display = "block";
+      btn.disabled = false;
+      btn.querySelector(".texto").innerHTML = '<i class="bi bi-stars"></i> Gerar outro cliente';
+      document.getElementById("areaCaso").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function mostrarDica() {
+      const dica = document.getElementById("dicaTreino");
+      dica.style.display = "flex";
+      dica.innerHTML = '<i class="bi bi-lightbulb"></i> Dica da sensei: ' + ((casoAtual && casoAtual.dica) || "Acolha, explique o que houve e feche com a solução concreta.");
+    }
+
+    // ============ Avaliar a resposta ============
+    async function avaliarResposta() {
+      const resposta = document.getElementById("respostaTreino").value.trim();
+      if (!casoAtual) return;
+      if (resposta.length < 20) {
+        opsToast("Escreva uma resposta mais completa antes de enviar (mínimo ~20 caracteres).", true);
+        return;
+      }
+
+      const btn = document.getElementById("btnAvaliar");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> A sensei está corrigindo...';
+
+      let av = null;
+      let exemplar = "";
+      try {
+        const bruto = await nexaiaPerguntar(
+          "Você é a NexaIA, sensei de treinamento de operadores da NexaTalk AI. Um operador respondeu a um cliente SIMULADO. " +
+          "Avalie a resposta em empatia (acolhimento), clareza (fácil de entender) e detalhe (resolve o caso com informações concretas do contexto). " +
+          'Responda APENAS com JSON válido: {"empatia": inteiro 0-100, "clareza": inteiro 0-100, "detalhe": inteiro 0-100, ' +
+          '"comentario": "feedback direto de sensei para o operador, máximo 130 caracteres", ' +
+          '"resposta_exemplar": "como VOCÊ responderia este cliente de forma exemplar, máximo 500 caracteres, assinando como Equipe NexaTalk AI"}\n\n' +
+          "Mensagem do cliente (" + casoAtual.humor + "): " + casoAtual.mensagem + "\n" +
+          "Contexto interno (a solução correta): " + casoAtual.contexto + "\n" +
+          'Resposta do operador: "' + resposta + '"'
+        );
+        const j = JSON.parse(bruto.replace(/```json/gi, "").replace(/```/g, "").trim());
+        av = { empatia: jogoClamp(j.empatia), clareza: jogoClamp(j.clareza), detalhe: jogoClamp(j.detalhe), comentario: (j.comentario || "").slice(0, 160) };
+        exemplar = j.resposta_exemplar || "";
+      } catch (e) {
+        console.error("Avaliação IA indisponível, usando estimativa local:", e);
+        av = jogoAvaliacaoLocal({ descricao_original: casoAtual.mensagem, cliente: { nome: casoAtual.nome } }, resposta);
+        exemplar = "Olá, " + casoAtual.nome.split(" ")[0] + "! Entendo perfeitamente sua situação e peço desculpas pelo transtorno. " +
+          "Já verifiquei aqui: " + casoAtual.contexto + " Qualquer dúvida, estou à disposição.\n\nEquipe NexaTalk AI";
+      }
+
+      const geral = Math.round((av.empatia + av.clareza + av.detalhe) / 3);
+      const nivel = DOJO_NIVEIS[casoAtual.nivel];
+      const bonus = geral >= 80 ? 10 : 0;
+      const xpTotal = nivel.xp + bonus;
+
+      // Pinta o resultado
+      document.getElementById("notaGeral").textContent = geral + "%";
+      document.getElementById("notaSelo").textContent =
+        geral >= 90 ? "🏅 Impecável" : geral >= 80 ? "🔥 Excelente" : geral >= 65 ? "👍 Bom caminho" : geral >= 45 ? "💪 Continue treinando" : "🌱 Todo mestre já foi iniciante";
+      document.getElementById("barraEmpatia").style.width = av.empatia + "%";
+      document.getElementById("barraClareza").style.width = av.clareza + "%";
+      document.getElementById("barraDetalhe").style.width = av.detalhe + "%";
+      document.getElementById("valorEmpatia").textContent = av.empatia;
+      document.getElementById("valorClareza").textContent = av.clareza;
+      document.getElementById("valorDetalhe").textContent = av.detalhe;
+      document.getElementById("comentarioSensei").innerHTML = '<i class="bi bi-chat-quote"></i> ' + (av.comentario || "Bom treino!");
+      document.getElementById("respostaExemplar").textContent = exemplar;
+      document.getElementById("xpGanho").innerHTML = '<i class="bi bi-lightning-charge-fill"></i> +' + xpTotal + " XP" + (bonus ? " (com bônus de excelência!)" : "");
+
+      document.getElementById("areaResultado").style.display = "block";
+      document.getElementById("areaResultado").scrollIntoView({ behavior: "smooth", block: "start" });
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-clipboard-check me-2"></i> Enviar para avaliação da sensei';
+
+      // XP real no perfil (treino não mexe nas médias oficiais de qualidade)
+      await jogoDarXp({
+        id: jogoIdOperador(operador.email),
+        tipo: "operador",
+        nome: operador.nome,
+        cargo: operador.cargo,
+        xp: xpTotal,
+        acao: "Treinou no Dojo — cliente " + nivel.rotulo.toLowerCase() + ", nota " + geral + "% 🥋",
+        icone: "bi-mortarboard",
+        contadores: { treinos: 1 },
+      });
+      opsToast("Treino registrado: +" + xpTotal + " XP no seu perfil! 🥋");
+    }
+
+    function novoTreino() {
+      document.getElementById("areaResultado").style.display = "none";
+      document.getElementById("areaCaso").style.display = "none";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>

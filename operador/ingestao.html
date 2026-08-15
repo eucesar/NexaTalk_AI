@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Ingestão de Dados (demo)</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>🗄️ Ingestão de Dados (demo)</h1>
+          <div class="subtitulo">
+            <i class="bi bi-database-down" style="color: var(--roxo);"></i>
+            Popula o Firebase com um cenário realista: chamados em várias contas, operadores pontuando, feed da Arena e artigos da base.
+          </div>
+        </div>
+      </div>
+
+      <div id="nexaia"></div>
+
+      <div class="comando-grid">
+        <!-- O que será criado -->
+        <div class="cartao mb-0">
+          <div class="titulo-secao"><i class="bi bi-box-seam"></i> O que a ingestão cria</div>
+          <ul class="mb-0" style="font-size: 0.88rem; line-height: 2;">
+            <li><b>Conta demo <code>cliente@nexatalk.com</code></b> com jornada completa: abertos na fila, em tratamento por operadores, resolvidos pela IA e concluídos</li>
+            <li><b>Demais atendimentos</b> de outros clientes — para a fila, o Centro de Comando e a Arena ficarem cheios na apresentação</li>
+            <li><b>6 perfis de operadores</b> com XP, níveis, contadores e avaliações</li>
+            <li><b>Perfil Nexa do cliente demo</b> com XP, conquistas e histórico de jogo</li>
+            <li><b>Feed da Arena</b> + <b>2 artigos</b> na Base de Conhecimento Viva</li>
+          </ul>
+        </div>
+
+        <!-- Opções -->
+        <div class="cartao mb-0">
+          <div class="titulo-secao"><i class="bi bi-gear"></i> Opções</div>
+
+          <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="chkLimpar" checked>
+            <label class="form-check-label" for="chkLimpar" style="font-size: 0.88rem;">
+              Limpar antes: apaga <b>atendimentos</b>, <b>perfis_jogo</b>, <b>eventos_jogo</b> e <b>base_conhecimento</b>
+            </label>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="chkUsuarios">
+            <label class="form-check-label" for="chkUsuarios" style="font-size: 0.88rem;">
+              Limpar também os cadastros da coleção <b>usuarios</b> (as contas do Firebase Auth continuam válidas)
+            </label>
+          </div>
+
+          <div class="alerta-risco ok mb-3" id="infoCliente">
+            <i class="bi bi-person-badge"></i> Verificando se há um cliente logado no app...
+          </div>
+
+          <button id="btnIngerir" class="btn-magico" onclick="abrirConfirmacao()">
+            <span class="texto"><i class="bi bi-rocket-takeoff"></i> Popular Firebase com dados demo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Log de execução -->
+      <div class="cartao" id="cartaoLog" style="display:none;">
+        <div class="titulo-secao"><i class="bi bi-terminal"></i> Execução</div>
+        <div class="log-ingestao" id="log"></div>
+        <div class="flex-wrap gap-2 mt-3" id="atalhosFinal" style="display:none;">
+          <a href="fila.html" class="btn-roxo" style="width:auto; flex:1; text-align:center; text-decoration:none;">
+            <i class="bi bi-list-task me-1"></i> Ver a Fila
+          </a>
+          <a href="arena.html" class="btn-roxo-claro" style="width:auto; flex:1; text-align:center; text-decoration:none;">
+            <i class="bi bi-trophy me-1"></i> Ver a Arena
+          </a>
+          <a href="comando.html" class="btn-roxo-claro" style="width:auto; flex:1; text-align:center; text-decoration:none;">
+            <i class="bi bi-graph-up-arrow me-1"></i> Centro de Comando
+          </a>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de confirmação -->
+  <div class="modal fade modal-nexatalk" id="modalConfirmar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body text-center p-4 pb-2">
+          <div class="icone-modal-concluir mb-3" style="background: rgba(139,92,246,0.14); border-color: rgba(167,139,250,0.4); color: var(--roxo);">
+            <i class="bi bi-database-down"></i>
+          </div>
+          <h5 class="fw-bold mb-2">Popular o Firebase?</h5>
+          <p id="modalTexto" class="text-secondary mb-0" style="font-size: 0.9rem;"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 px-4 pb-4 flex-column gap-2">
+          <button type="button" class="btn-magico" id="btnConfirmar"><span class="texto">🚀 Sim, popular agora</span></button>
+          <button type="button" class="btn-roxo-claro" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("ingestao"));
+
+    nexaiaMostrar("nexaia",
+      "Esta é a central de dados demo. Em um clique eu monto a jornada da conta cliente@nexatalk.com " +
+      "(chamados abertos, em tratamento e resolvidos) e ainda encho a fila, a Arena e o Centro de Comando.");
+
+    const EMAIL_DEMO_CLIENTE = "cliente@nexatalk.com";
+    const NOME_DEMO_CLIENTE = "Cliente Demo";
+
+    let clienteLogado = null;
+    auth.onAuthStateChanged(function (user) {
+      clienteLogado = user;
+      atualizarAvisoCliente();
+    });
+
+    async function buscarClienteDemo() {
+      if (clienteLogado && (clienteLogado.email || "").toLowerCase() === EMAIL_DEMO_CLIENTE) {
+        return {
+          uid: clienteLogado.uid,
+          nome: clienteLogado.displayName || NOME_DEMO_CLIENTE,
+          email: EMAIL_DEMO_CLIENTE,
+          telefone: "(11) 98888-0101",
+        };
+      }
+      try {
+        const snap = await db.collection("usuarios").where("email", "==", EMAIL_DEMO_CLIENTE).limit(1).get();
+        if (!snap.empty) {
+          const d = snap.docs[0];
+          const data = d.data() || {};
+          return {
+            uid: d.id,
+            nome: data.nome || NOME_DEMO_CLIENTE,
+            email: EMAIL_DEMO_CLIENTE,
+            telefone: data.telefone || "(11) 98888-0101",
+          };
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      return null;
+    }
+
+    async function atualizarAvisoCliente() {
+      const info = document.getElementById("infoCliente");
+      const demo = await buscarClienteDemo();
+      if (demo) {
+        info.className = "alerta-risco ok mb-3";
+        info.innerHTML = '<i class="bi bi-person-check"></i> Conta demo encontrada: <b>&nbsp;' + demo.nome +
+          " · " + demo.email + "&nbsp;</b> — a jornada completa (abertos, em tratamento e resolvidos) entra em \"Meus Atendimentos\" e na fila dos operadores.";
+      } else {
+        info.className = "alerta-risco medio mb-3";
+        info.innerHTML = '<i class="bi bi-person-dash"></i> Ainda não achei <b>&nbsp;cliente@nexatalk.com&nbsp;</b> no Firebase. ' +
+          "Crie a conta no app do cliente (senha <b>nexa123</b>) e rode a ingestão de novo — os demais dados da operação serão criados mesmo assim.";
+      }
+    }
+
+    // ===================== APOIO =====================
+    function intEntre(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+    function textoData(d) {
+      return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    }
+    function ts(d) { return firebase.firestore.Timestamp.fromDate(d); }
+    function diasAtras(dias) {
+      const d = new Date();
+      d.setDate(d.getDate() - dias);
+      d.setHours(intEntre(8, 19), intEntre(0, 59), 0, 0);
+      if (d > new Date()) d.setTime(Date.now() - intEntre(10, 120) * 60000);
+      return d;
+    }
+    function minAtras(min) { return new Date(Date.now() - min * 60000); }
+
+    const protocolosUsados = {};
+    function gerarProtocoloUnico() {
+      let p;
+      do { p = "#ATD-" + new Date().getFullYear() + "-" + intEntre(10000, 99999); } while (protocolosUsados[p]);
+      protocolosUsados[p] = true;
+      return p;
+    }
+
+    function log(texto, classe) {
+      const el = document.getElementById("log");
+      el.innerHTML += '<div class="' + (classe || "") + '">' + texto + "</div>";
+      el.scrollTop = el.scrollHeight;
+    }
+
+    // ===================== DADOS DEMO =====================
+    const CLIENTES = [
+      { nome: "Isabella Cunha", email: "isabella.cunha@gmail.com" },
+      { nome: "João Batista", email: "joao.batista@hotmail.com" },
+      { nome: "Fernanda Rocha", email: "fe.rocha@gmail.com" },
+      { nome: "Marcos Lima", email: "marcos.lima@outlook.com" },
+      { nome: "Camila Duarte", email: "camila.duarte@gmail.com" },
+      { nome: "Ricardo Nunes", email: "ricardo.nunes@yahoo.com" },
+      { nome: "Patrícia Gomes", email: "patricia.gomes@gmail.com" },
+      { nome: "Bruno Ferreira", email: "brunof@gmail.com" },
+      { nome: "Larissa Melo", email: "lari.melo@hotmail.com" },
+      { nome: "André Souza", email: "andre.souza@gmail.com" },
+      { nome: "Beatriz Campos", email: "bia.campos@gmail.com" },
+      { nome: "Felipe Torres", email: "felipe.torres@outlook.com" },
+    ];
+
+    const OPERADORES_POOL = ["Ana Operadora", "Carlos Supervisor", "Marina Duarte", "Rafael Costa", "Juliana Reis"];
+
+    const TEMPLATES = [
+      {
+        intencao: "Contestação de Cobrança", categoria: "Financeiro", subcategoria: "Cobrança duplicada",
+        area: "Financeiro", prioridade: "Alta", sentimento: "Frustrado", status: "Em análise",
+        tags: ["cobrança", "estorno", "fatura"],
+        descricao: "Fui cobrado duas vezes na fatura deste mês: aparecem dois lançamentos de R$ 89,90 no dia 05. Já é a segunda vez que isso acontece e ninguém resolve. Quero o estorno imediato!",
+        resumo: "Cliente relata cobrança duplicada de R$ 89,90 na fatura do mês e pede estorno imediato.",
+        resposta: "Confirmamos a cobrança duplicada de R$ 89,90 e já abrimos o estorno: o valor volta ao seu cartão em até 5 dias úteis. Pedimos desculpas pelo transtorno — ajustamos também a rotina de faturamento para não se repetir.",
+        proxima: "Confirmar a duplicidade no gateway e abrir o estorno de R$ 89,90.",
+        tempo: "1 dia útil", espera: "15 min", sla: "4 horas úteis", complexidade: "Média",
+        confianca: 94, prob: 78, obs: "Cliente menciona reincidência — tratar com prioridade e tom formal.",
+        dados: "Valor: R$ 89,90 · Data: dia 05 · Reincidência: sim",
+      },
+      {
+        intencao: "Solicitação de Documento", categoria: "Financeiro", subcategoria: "Segunda via de boleto",
+        area: "Financeiro", prioridade: "Baixa", sentimento: "Neutro", status: "Resolvido pela IA",
+        tags: ["boleto", "segunda via", "pagamento"],
+        descricao: "Perdi o boleto da mensalidade que vence amanhã. Como faço para emitir a segunda via? Pode me mandar por e-mail?",
+        resumo: "Cliente pede a segunda via do boleto da mensalidade com vencimento próximo.",
+        resposta: "Sua segunda via foi emitida e enviada para o seu e-mail cadastrado. Você também pode baixá-la a qualquer momento em Minha Conta > Pagamentos > Segunda via. O código de barras permanece o mesmo.",
+        proxima: "Nenhuma — resolvido automaticamente pela NexaIA.",
+        tempo: "Imediato", espera: "0 min", sla: "Resolvido", complexidade: "Baixa",
+        confianca: 98, prob: 97, obs: "Caso simples e recorrente, elegível para automação total.",
+        dados: "Vencimento: amanhã · Canal preferido: e-mail",
+      },
+      {
+        intencao: "Troca de Produto", categoria: "Logística", subcategoria: "Produto com defeito",
+        area: "Logística e Pedidos", prioridade: "Média", sentimento: "Preocupado", status: "Em análise",
+        tags: ["troca", "defeito", "garantia"],
+        descricao: "O fone de ouvido que comprei chegou com o lado esquerdo sem funcionar. Recebi há 4 dias, pedido #55871. Queria trocar por um novo, ainda está na garantia, certo?",
+        resumo: "Produto (fone de ouvido) chegou com defeito no lado esquerdo; cliente pede troca dentro da garantia.",
+        resposta: "Seu direito à troca está garantido (defeito relatado em até 7 dias). Já geramos a etiqueta de devolução — poste o produto em qualquer agência e o novo é enviado assim que o transporte for iniciado.",
+        proxima: "Gerar etiqueta reversa do pedido #55871 e acionar novo envio.",
+        tempo: "2 dias úteis", espera: "25 min", sla: "8 horas úteis", complexidade: "Média",
+        confianca: 92, prob: 84, obs: "Dentro do prazo legal de 7 dias — troca direta sem burocracia.",
+        dados: "Pedido: #55871 · Recebido: há 4 dias · Defeito: lado esquerdo",
+      },
+      {
+        intencao: "Cancelamento", categoria: "Financeiro", subcategoria: "Cancelamento de assinatura",
+        area: "Financeiro", prioridade: "Alta", sentimento: "Frustrado", status: "Concluído",
+        tags: ["cancelamento", "assinatura", "multa"],
+        descricao: "Quero cancelar minha assinatura do plano Premium hoje. Estão querendo me cobrar multa, mas o contrato de fidelidade já venceu em janeiro. Não aceito pagar nada a mais.",
+        resumo: "Cliente exige cancelamento do plano Premium sem multa, alegando fidelidade vencida em janeiro.",
+        resposta: "Você tem razão: sua fidelidade terminou em janeiro e nenhuma multa se aplica. O cancelamento foi concluído hoje, sem custos, e o acesso permanece ativo até o fim do ciclo vigente. Enviamos o comprovante por e-mail.",
+        proxima: "Validar data de fidelidade no contrato e concluir cancelamento sem multa.",
+        tempo: "1 dia útil", espera: "20 min", sla: "4 horas úteis", complexidade: "Média",
+        confianca: 91, prob: 72, obs: "Conferir contrato antes de responder — cliente irritado com a cobrança da multa.",
+        dados: "Plano: Premium · Fidelidade: venceu em janeiro",
+      },
+      {
+        intencao: "Informações Comerciais", categoria: "Comercial", subcategoria: "Dúvida sobre planos",
+        area: "Comercial", prioridade: "Baixa", sentimento: "Positivo", status: "Resolvido pela IA",
+        tags: ["planos", "preços", "contratação"],
+        descricao: "Olá! Estou pensando em assinar o serviço de vocês. Qual a diferença entre o plano Essencial e o Premium? Tem desconto no anual?",
+        resumo: "Interessado em assinar pergunta a diferença entre os planos Essencial e Premium e desconto anual.",
+        resposta: "Que ótimo ter você por aqui! O Essencial (R$ 49/mês) cobre 1 usuário e suporte em horário comercial; o Premium (R$ 89/mês) inclui 5 usuários, suporte 24/7 e a NexaIA ilimitada. No anual, ambos têm 20% de desconto.",
+        proxima: "Nenhuma — informações enviadas automaticamente pela NexaIA.",
+        tempo: "Imediato", espera: "0 min", sla: "Resolvido", complexidade: "Baixa",
+        confianca: 97, prob: 95, obs: "Lead quente — oportunidade comercial detectada.",
+        dados: "Interesse: planos Essencial x Premium · Pergunta sobre desconto anual",
+      },
+      {
+        intencao: "Suporte Técnico", categoria: "Técnico", subcategoria: "Erro no aplicativo",
+        area: "Suporte Técnico", prioridade: "Média", sentimento: "Preocupado", status: "Em análise",
+        tags: ["app", "erro", "login"],
+        descricao: "O aplicativo fecha sozinho toda vez que tento entrar na tela de pagamentos. Já reinstalei duas vezes e nada. Meu celular é um Android 13. Preciso pagar a fatura por lá!",
+        resumo: "App fecha ao abrir a tela de pagamentos em Android 13, mesmo após reinstalação; cliente precisa pagar fatura.",
+        resposta: "Identificamos o problema na versão 4.2.1 do app em Android 13 e a correção já está na versão 4.2.2, disponível na Play Store. Enquanto atualiza, você consegue pagar a fatura normalmente pelo site em Minha Conta > Pagamentos.",
+        proxima: "Confirmar versão do app com o cliente e orientar atualização para 4.2.2.",
+        tempo: "4 horas úteis", espera: "18 min", sla: "6 horas úteis", complexidade: "Média",
+        confianca: 89, prob: 82, obs: "Bug conhecido da versão 4.2.1 — correção já publicada.",
+        dados: "SO: Android 13 · Tela afetada: Pagamentos · Reinstalações: 2",
+      },
+      {
+        intencao: "Atualização Cadastral", categoria: "Cadastro", subcategoria: "Alteração de dados",
+        area: "Cadastro e Contas", prioridade: "Baixa", sentimento: "Neutro", status: "Resolvido pela IA",
+        tags: ["cadastro", "e-mail", "dados"],
+        descricao: "Troquei de e-mail e quero atualizar meu cadastro. O novo é meunovoemail@gmail.com. Aproveitando: como ativo a verificação em duas etapas?",
+        resumo: "Cliente pede atualização do e-mail cadastrado e orientação para ativar a verificação em duas etapas.",
+        resposta: "E-mail atualizado com sucesso! Enviamos uma confirmação para o novo endereço. Para ativar a verificação em duas etapas: Minha Conta > Segurança > Verificação em 2 etapas > seguir o passo a passo com seu celular.",
+        proxima: "Nenhuma — resolvido automaticamente pela NexaIA.",
+        tempo: "Imediato", espera: "0 min", sla: "Resolvido", complexidade: "Baixa",
+        confianca: 96, prob: 93, obs: "Autoatendimento concluído; cliente orientado sobre 2FA.",
+        dados: "Novo e-mail informado · Interesse em 2FA",
+      },
+      {
+        intencao: "Atraso de Entrega", categoria: "Logística", subcategoria: "Pedido não entregue",
+        area: "Logística e Pedidos", prioridade: "Alta", sentimento: "Frustrado", status: "Em análise",
+        tags: ["entrega", "atraso", "rastreio"],
+        descricao: "Meu pedido #77412 está com status 'saiu para entrega' há 6 dias e nada de chegar. Era um presente de aniversário que já passou! Ninguém responde no chat. Quero uma solução hoje.",
+        resumo: "Pedido #77412 parado em 'saiu para entrega' há 6 dias; presente perdeu a data e cliente exige solução imediata.",
+        resposta: "Rastreiamos seu pedido junto à transportadora: houve extravio confirmado. Já disparamos um novo envio com frete expresso, sem custo, com chegada em 2 dias úteis — e um cupom de desculpas foi adicionado à sua conta.",
+        proxima: "Abrir ocorrência com a transportadora e disparar reenvio expresso do pedido #77412.",
+        tempo: "1 dia útil", espera: "12 min", sla: "4 horas úteis", complexidade: "Alta",
+        confianca: 93, prob: 68, obs: "Cliente muito frustrado, presente perdeu a data — priorizar e compensar.",
+        dados: "Pedido: #77412 · Parado há: 6 dias · Motivo emocional: presente de aniversário",
+      },
+      {
+        intencao: "Segurança da Conta", categoria: "Financeiro", subcategoria: "Suspeita de fraude",
+        area: "Financeiro", prioridade: "Alta", sentimento: "Frustrado", status: "Em análise",
+        tags: ["fraude", "cartão", "segurança"],
+        descricao: "Apareceram 3 compras que eu não fiz no cartão que está cadastrado na plataforma, somando R$ 1.240. Foi de madrugada e em outra cidade. Bloqueiem tudo e me devolvam esse dinheiro!",
+        resumo: "Três transações suspeitas (R$ 1.240) em horário e cidade atípicos; cliente pede bloqueio e ressarcimento.",
+        resposta: "Sua segurança vem primeiro: o cartão foi bloqueado na plataforma e a contestação das 3 transações (R$ 1.240) foi aberta — o estorno ocorre em até 7 dias úteis. Recomendamos também avisar o banco emissor. Você não será prejudicado.",
+        proxima: "Bloquear cartão na plataforma, abrir contestação e orientar contato com o banco emissor.",
+        tempo: "1 dia útil", espera: "8 min", sla: "2 horas úteis", complexidade: "Alta",
+        confianca: 95, prob: 60, obs: "Padrão claro de fraude (madrugada + outra cidade). Seguir protocolo de segurança.",
+        dados: "Total: R$ 1.240 · Transações: 3 · Padrão: madrugada, outra cidade",
+      },
+      {
+        intencao: "Elogio", categoria: "Relacionamento", subcategoria: "Feedback positivo",
+        area: "Comercial", prioridade: "Baixa", sentimento: "Positivo", status: "Resolvido pela IA",
+        tags: ["elogio", "atendimento", "nps"],
+        descricao: "Só queria agradecer! Tive um problema semana passada e a atendente resolveu tudo em 10 minutos. Atendimento nota 10, parabéns ao time!",
+        resumo: "Cliente elogia a agilidade do atendimento anterior e parabeniza a equipe.",
+        resposta: "Uau, obrigado por dedicar um tempo para isso! 💜 Seu elogio já foi encaminhado à atendente e ao time todo. É esse tipo de mensagem que move a gente. Conte sempre com a NexaTalk!",
+        proxima: "Nenhuma — agradecimento enviado e elogio registrado para o time.",
+        tempo: "Imediato", espera: "0 min", sla: "Resolvido", complexidade: "Baixa",
+        confianca: 99, prob: 99, obs: "Feedback positivo — registrar para o painel de NPS.",
+        dados: "Elogio à atendente · Resolução anterior em 10 minutos",
+      },
+      {
+        intencao: "Reclamação Formal", categoria: "Jurídico", subcategoria: "Menção a órgão de defesa",
+        area: "Jurídico", prioridade: "Alta", sentimento: "Frustrado", status: "Concluído",
+        tags: ["procon", "reclamação", "prazo"],
+        descricao: "Já é a TERCEIRA vez que abro chamado pelo mesmo problema de cobrança e ninguém resolve. Se não resolverem essa semana, vou registrar queixa no Procon e procurar meu advogado.",
+        resumo: "Cliente reincidente ameaça registrar queixa no Procon por problema de cobrança não resolvido em 3 chamados.",
+        resposta: "Você tem toda razão em estar insatisfeito(a), e pedimos desculpas formais. Seu caso foi assumido pela supervisão: a cobrança indevida foi corrigida em definitivo, o valor estornado em dobro (art. 42 CDC) e você recebe o comprovante hoje por e-mail.",
+        proxima: "Escalar à supervisão, corrigir a cobrança em definitivo e aplicar estorno em dobro.",
+        tempo: "1 dia útil", espera: "5 min", sla: "2 horas úteis", complexidade: "Alta",
+        confianca: 92, prob: 55, obs: "Menção a Procon e advogado — tratamento formal, prioridade máxima.",
+        dados: "Reincidência: 3º chamado · Ameaça: Procon + advogado",
+      },
+      {
+        intencao: "Upgrade de Plano", categoria: "Comercial", subcategoria: "Mudança de plano",
+        area: "Comercial", prioridade: "Média", sentimento: "Positivo", status: "Concluído",
+        tags: ["upgrade", "plano", "premium"],
+        descricao: "Minha equipe cresceu e o plano Essencial ficou pequeno. Quero fazer upgrade para o Premium ainda este mês. Como funciona a cobrança proporcional?",
+        resumo: "Cliente satisfeito quer upgrade do Essencial para o Premium e pergunta sobre cobrança proporcional.",
+        resposta: "Upgrade realizado! 🎉 Seu plano Premium já está ativo com os 5 usuários liberados. A cobrança deste mês é proporcional aos dias restantes (R$ 26,40) e a mensalidade cheia começa no próximo ciclo. Bem-vindo ao Premium!",
+        proxima: "Ativar plano Premium com cobrança pro-rata no ciclo atual.",
+        tempo: "4 horas úteis", espera: "10 min", sla: "8 horas úteis", complexidade: "Baixa",
+        confianca: 96, prob: 90, obs: "Expansão de receita — cliente promotor.",
+        dados: "Plano atual: Essencial · Destino: Premium · Dúvida: pro-rata",
+      },
+    ];
+
+    // Jornada da conta de apresentação (cliente@nexatalk.com)
+    const JORNADA_DEMO = [
+      {
+        idx: 0, status: "Em análise", operador: "",
+        extras: {
+          dias: 0,
+          tratadoPor: "",
+          mensagem: "",
+        },
+      },
+      {
+        idx: 5, status: "Em análise", operador: "Ana Operadora",
+        extras: {
+          dias: 1,
+          areaValidada: true,
+          tratadoPor: "operador",
+          mensagem: "Olá! Já identifiquei o travamento na tela de Pagamentos no Android 13. Enquanto a correção 4.2.2 não instalar, pague a fatura pelo site em Minha Conta > Pagamentos. Qualquer dúvida, me responda neste chamado.\n\nAna Operadora · Equipe NexaTalk AI",
+        },
+      },
+      {
+        idx: 7, status: "Em análise", operador: "Marina Duarte",
+        extras: {
+          dias: 0,
+          areaValidada: true,
+          tratadoPor: "operador",
+          mensagem: "Estou com o seu pedido #77412 na transportadora agora. Confirmei atraso acima do prazo e já acionei reenvio expresso — te atualizo assim que o novo rastreio sair.\n\nMarina Duarte · Equipe NexaTalk AI",
+        },
+      },
+      { idx: 1, status: "Resolvido pela IA", operador: "", extras: { dias: 3 } },
+      { idx: 4, status: "Resolvido pela IA", operador: "", extras: { dias: 7 } },
+      { idx: 6, status: "Resolvido pela IA", operador: "", extras: { dias: 11 } },
+      { idx: 3, status: "Concluído", operador: "Carlos Supervisor", extras: { dias: 5, areaValidada: true } },
+    ];
+
+    // 12 chamados extras (outras contas) para a operação não ficar só com o cliente demo
+    const SEQUENCIA = [2, 8, 9, 10, 11, 0, 1, 3, 5, 7, 8, 11];
+
+    const OPERADORES_SEED = [
+      { id: "op_marina_nexatalk_com", nome: "Marina Duarte", cargo: "Atendimento N2", xp: 1350, casos: 24, respostas: 30, areas: 18, assumidos: 22, magicos: 8, treinos: 6, artigos: 4, aval: { n: 24, e: 90, c: 87, d: 85 }, acao: "Concluiu um caso com qualidade 92% ✨", min: 12 },
+      { id: "op_supervisor_nexatalk_com", nome: "Carlos Supervisor", cargo: "Supervisão", xp: 860, casos: 15, respostas: 21, areas: 12, assumidos: 14, magicos: 5, treinos: 3, artigos: 2, aval: { n: 15, e: 81, c: 85, d: 80 }, acao: "Resolveu um caso com IA em 1 clique ⚡", min: 45 },
+      { id: "op_operador_nexatalk_com", nome: "Ana Operadora", cargo: "Atendimento N1", xp: 645, casos: 12, respostas: 17, areas: 9, assumidos: 11, magicos: 3, treinos: 2, artigos: 1, aval: { n: 12, e: 84, c: 79, d: 76 }, acao: "Assumiu um caso de prioridade alta 🎯", min: 8 },
+      { id: "op_rafael_nexatalk_com", nome: "Rafael Costa", cargo: "Atendimento N1", xp: 430, casos: 8, respostas: 12, areas: 6, assumidos: 7, magicos: 2, treinos: 1, artigos: 0, aval: { n: 8, e: 74, c: 78, d: 70 }, acao: "Validou o encaminhamento da IA 🗺️", min: 90 },
+      { id: "op_juliana_nexatalk_com", nome: "Juliana Reis", cargo: "Atendimento N1", xp: 245, casos: 4, respostas: 7, areas: 4, assumidos: 5, magicos: 1, treinos: 2, artigos: 0, aval: { n: 4, e: 88, c: 76, d: 72 }, acao: "Concluiu um caso com qualidade 85% ✅", min: 130 },
+      { id: "op_pedro_nexatalk_com", nome: "Pedro Alves", cargo: "Estagiário", xp: 90, casos: 1, respostas: 3, areas: 1, assumidos: 2, magicos: 0, treinos: 1, artigos: 0, aval: { n: 1, e: 68, c: 72, d: 61 }, acao: "Treinou no Dojo — nota 74% 🥋", min: 240 },
+    ];
+
+    const EVENTOS_SEED = [
+      { tipo: "operador", nome: "Marina Duarte", texto: "Assumiu o chamado de atraso de entrega do Cliente Demo 🎯", xp: 10, icone: "bi-person-check", min: 18 },
+      { tipo: "operador", nome: "Ana Operadora", texto: "Enviou uma resposta ao Cliente Demo sobre o app 📨", xp: 15, icone: "bi-send", min: 40 },
+      { tipo: "cliente", nome: "Cliente Demo", texto: "Abriu um chamado sobre cobrança duplicada", xp: 20, icone: "bi-plus-circle", min: 25 },
+      { tipo: "operador", nome: "Carlos Supervisor", texto: "Concluiu o cancelamento do Cliente Demo — qualidade 91% ✨", xp: 40, icone: "bi-check-circle", min: 90 },
+      { tipo: "cliente", nome: "Cliente Demo", texto: "Resolveu um chamado na hora com a NexaIA ⚡", xp: 30, icone: "bi-robot", min: 180 },
+      { tipo: "operador", nome: "Marina Duarte", texto: "Concluiu um caso — qualidade 92% na auditoria da NexaIA ✨", xp: 40, icone: "bi-check-circle", min: 12 },
+      { tipo: "operador", nome: "Ana Operadora", texto: "Assumiu um caso de prioridade alta 🎯", xp: 10, icone: "bi-person-check", min: 8 },
+      { tipo: "operador", nome: "Carlos Supervisor", texto: "Resolveu um caso com IA em 1 clique ⚡", xp: 35, icone: "bi-magic", min: 45 },
+      { tipo: "operador", nome: "Rafael Costa", texto: "Validou o encaminhamento sugerido pela IA 🗺️", xp: 10, icone: "bi-signpost-split", min: 90 },
+      { tipo: "operador", nome: "Juliana Reis", texto: "Enviou uma resposta ao cliente 📨", xp: 15, icone: "bi-send", min: 110 },
+      { tipo: "operador", nome: "Marina Duarte", texto: 'Publicou o artigo "Pedido não entregue: checklist de rastreio" 📚', xp: 15, icone: "bi-journal-bookmark", min: 150 },
+      { tipo: "operador", nome: "Pedro Alves", texto: "Treinou no Dojo — cliente difícil, nota 74% 🥋", xp: 30, icone: "bi-mortarboard", min: 240 },
+      { tipo: "cliente", nome: "Fernanda Rocha", texto: "Resolveu um chamado na hora com a NexaIA ⚡", xp: 30, icone: "bi-robot", min: 300 },
+      { tipo: "operador", nome: "Juliana Reis", texto: "Concluiu um caso — qualidade 85% na auditoria ✅", xp: 40, icone: "bi-check-circle", min: 720 },
+    ];
+
+    const CLIENTES_JOGO_SEED = [
+      { id: "cli_demo_isabella", nome: "Isabella Cunha", xp: 140, chamados: 5, ia: 2, acao: "Abriu um chamado sobre cobrança duplicada", min: 25 },
+      { id: "cli_demo_fernanda", nome: "Fernanda Rocha", xp: 220, chamados: 7, ia: 3, acao: "Resolveu um chamado na hora com a NexaIA ⚡", min: 300 },
+      { id: "cli_demo_joao", nome: "João Batista", xp: 60, chamados: 2, ia: 1, acao: "Abriu um chamado sobre atraso de entrega", min: 610 },
+    ];
+
+    const ARTIGOS_SEED = [
+      {
+        titulo: "Cobrança duplicada: estorno em 3 passos",
+        problema: "Cliente relata dois lançamentos iguais na mesma fatura (falha recorrente do gateway).",
+        solucao: "1. Confirme a duplicidade no painel do gateway (mesmo valor, mesma data).\n2. Abra o estorno imediato — o valor retorna em até 5 dias úteis no cartão.\n3. Responda reconhecendo o erro, informe o prazo e registre a ocorrência para o time de faturamento.",
+        tags: ["financeiro", "estorno", "cobrança"],
+      },
+      {
+        titulo: "Pedido não entregue: checklist de rastreio",
+        problema: "Pedido parado em 'saiu para entrega' por vários dias — possível extravio na transportadora.",
+        solucao: "1. Consulte o rastreio na transportadora e confirme a última movimentação.\n2. Parado há mais de 3 dias úteis: abra ocorrência de extravio.\n3. Dispare reenvio com frete expresso sem custo ao cliente.\n4. Ofereça um cupom de desculpas — especialmente em datas importantes (presentes).",
+        tags: ["logística", "entrega", "rastreio"],
+      },
+    ];
+
+    // ===================== CONSTRUÇÃO DOS DOCUMENTOS =====================
+
+    function montarAtendimentoSeed(t, cliente, statusFinal, operadorNome, extras) {
+      extras = extras || {};
+      const dias = extras.dias != null ? extras.dias : (
+        statusFinal === "Em análise" ? intEntre(0, 2) :
+        statusFinal === "Resolvido pela IA" ? intEntre(0, 5) : intEntre(2, 13)
+      );
+
+      const abertura = diasAtras(dias);
+      const dataTexto = textoData(abertura);
+      let ultima = new Date(abertura.getTime() + intEntre(1, 40) * 3600000);
+      if (ultima > new Date()) ultima = new Date();
+
+      const resolvidoIA = statusFinal === "Resolvido pela IA";
+      const concluido = statusFinal === "Concluído";
+      const mensagemOp = extras.mensagem || (concluido || resolvidoIA ? t.resposta : "");
+      const tratadoPor = extras.tratadoPor != null
+        ? extras.tratadoPor
+        : (operadorNome ? "operador" : (resolvidoIA ? "ia" : ""));
+
+      const historico = [
+        { evento: "Atendimento aberto pelo cliente", status: "Recebido", responsavel: cliente.nome, mensagem: t.descricao, data: dataTexto },
+      ];
+      if (resolvidoIA) {
+        historico.push({ evento: "Resolvido automaticamente pela IA", status: "Resolvido pela IA", responsavel: "IA (gemini-2.5-flash)", mensagem: t.resposta, data: dataTexto });
+      } else {
+        historico.push({ evento: "Mensagem analisada pela IA", status: "Em análise", responsavel: "IA (gemini-2.5-flash)", mensagem: t.resumo, data: dataTexto });
+      }
+      if (operadorNome) {
+        historico.push({ evento: "Atendimento atribuído", status: "Em análise", responsavel: operadorNome, mensagem: "Caso assumido por " + operadorNome + ".", data: textoData(new Date(abertura.getTime() + 30 * 60000)) });
+      }
+      if (extras.areaValidada && operadorNome) {
+        historico.push({ evento: "Área validada pelo operador (IA acertou o encaminhamento)", status: "Em análise", responsavel: operadorNome, mensagem: "Encaminhamento da NexaIA confirmado.", data: textoData(new Date(abertura.getTime() + 45 * 60000)) });
+      }
+      if (mensagemOp && operadorNome && !concluido && !resolvidoIA) {
+        historico.push({ evento: "Resposta enviada ao cliente", status: "Em análise", responsavel: operadorNome, mensagem: mensagemOp, data: textoData(new Date(abertura.getTime() + 80 * 60000)) });
+      }
+      if (concluido) {
+        historico.push({ evento: "Atendimento concluído pelo operador", status: "Concluído", responsavel: operadorNome, mensagem: t.resposta, data: textoData(ultima) });
+      }
+
+      const doc = {
+        protocolo: gerarProtocoloUnico(),
+        usuario_id: cliente.uid || "",
+        canal: "Portal Web",
+        origem: "cliente",
+        cliente: {
+          nome: cliente.nome,
+          contato: cliente.email,
+          email: cliente.email,
+          telefone: cliente.telefone || "",
+        },
+        descricao_original: t.descricao,
+        ia: {
+          resumo: t.resumo,
+          intencao: t.intencao,
+          encaminhamento_sugerido: t.area,
+          prioridade: t.prioridade,
+          confianca: t.confianca,
+          tempo_estimado: t.tempo,
+          observacao: t.obs,
+          categoria: t.categoria,
+          subcategoria: t.subcategoria,
+          sentimento: t.sentimento,
+          tags: t.tags,
+          dados_detectados: t.dados,
+          resposta_sugerida: t.resposta,
+          proxima_acao: t.proxima,
+          complexidade: t.complexidade,
+          tempo_espera_fila: t.espera,
+          sla_sugerido: t.sla,
+          probabilidade_primeira_resposta: t.prob,
+          auto_resolvivel: resolvidoIA,
+          resposta_automatica: resolvidoIA ? t.resposta : "",
+          modelo: "gemini-2.5-flash",
+          analisado_em: dataTexto,
+        },
+        intencao: t.intencao,
+        prioridade: t.prioridade,
+        status: statusFinal,
+        area_atual: t.area,
+        area_validada: !!(extras.areaValidada || concluido),
+        justificativa_redirecionamento: "",
+        atribuido_a: operadorNome || "",
+        tratado_por: tratadoPor,
+        mensagem_operacao: mensagemOp,
+        data_criacao: dataTexto,
+        data_criacao_ts: ts(abertura),
+        ultima_atualizacao_ts: ts(concluido || mensagemOp ? ultima : abertura),
+        historico: historico,
+      };
+
+      if (concluido) {
+        doc.avaliacao_ia = {
+          empatia: intEntre(84, 96),
+          clareza: intEntre(82, 95),
+          detalhe: intEntre(78, 94),
+          comentario: "Resposta clara, empática e alinhada à solução do caso.",
+          origem: "ia",
+        };
+      }
+      return doc;
+    }
+
+    function montarPerfilOperadorSeed(o) {
+      return {
+        tipo: "operador",
+        nome: o.nome,
+        cargo: o.cargo,
+        xp: o.xp,
+        casos_concluidos: o.casos,
+        respostas_enviadas: o.respostas,
+        areas_validadas: o.areas,
+        casos_assumidos: o.assumidos,
+        magicos: o.magicos,
+        treinos: o.treinos,
+        artigos_publicados: o.artigos,
+        avaliacoes: o.aval.n,
+        soma_empatia: o.aval.e * o.aval.n,
+        soma_clareza: o.aval.c * o.aval.n,
+        soma_detalhe: o.aval.d * o.aval.n,
+        ultimas_avaliacoes: [
+          {
+            protocolo: gerarProtocoloUnico(),
+            empatia: Math.min(100, o.aval.e + intEntre(-4, 6)),
+            clareza: Math.min(100, o.aval.c + intEntre(-4, 6)),
+            detalhe: Math.min(100, o.aval.d + intEntre(-4, 6)),
+            comentario: "Boa condução do caso — resposta direta e acolhedora.",
+            data: textoData(minAtras(o.min + 60)),
+          },
+          {
+            protocolo: gerarProtocoloUnico(),
+            empatia: Math.min(100, o.aval.e + intEntre(-6, 4)),
+            clareza: Math.min(100, o.aval.c + intEntre(-6, 4)),
+            detalhe: Math.min(100, o.aval.d + intEntre(-6, 4)),
+            comentario: "Detalhe pode melhorar: inclua prazos e próximos passos.",
+            data: textoData(minAtras(o.min)),
+          },
+        ],
+        ultima_acao: o.acao,
+        ultima_acao_ts: ts(minAtras(o.min)),
+      };
+    }
+
+    // ===================== LIMPEZA =====================
+    async function limparColecao(nome) {
+      const snap = await db.collection(nome).get();
+      const refs = [];
+      snap.forEach(function (d) { refs.push(d.ref); });
+      for (let i = 0; i < refs.length; i += 400) {
+        const lote = db.batch();
+        refs.slice(i, i + 400).forEach(function (r) { lote.delete(r); });
+        await lote.commit();
+      }
+      return refs.length;
+    }
+
+    // ===================== EXECUÇÃO =====================
+    const modalConfirmar = new bootstrap.Modal(document.getElementById("modalConfirmar"));
+    document.getElementById("btnConfirmar").addEventListener("click", executarIngestao);
+
+    function abrirConfirmacao() {
+      const limpar = document.getElementById("chkLimpar").checked;
+      const usuarios = document.getElementById("chkUsuarios").checked;
+      document.getElementById("modalTexto").innerHTML =
+        (limpar
+          ? "Os dados atuais de <b>atendimentos, perfis de jogo, eventos e base de conhecimento</b>" + (usuarios ? " <b>+ cadastros de usuários</b>" : "") + " serão <b>apagados</b> e substituídos pelo cenário demo completo."
+          : "O cenário demo será <b>adicionado</b> aos dados existentes (nada será apagado).") +
+        "<br><br>Essa ação não pode ser desfeita.";
+      modalConfirmar.show();
+    }
+
+    async function executarIngestao() {
+      modalConfirmar.hide();
+      const btn = document.getElementById("btnIngerir");
+      btn.disabled = true;
+      btn.querySelector(".texto").innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Populando o Firebase...';
+
+      const cartaoLog = document.getElementById("cartaoLog");
+      cartaoLog.style.display = "block";
+      document.getElementById("log").innerHTML = "";
+      cartaoLog.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      const limpar = document.getElementById("chkLimpar").checked;
+      const limparUsuarios = document.getElementById("chkUsuarios").checked;
+
+      try {
+        const demo = await buscarClienteDemo();
+
+        // ---------- 1. Limpeza ----------
+        if (limpar) {
+          log("🧹 Limpando coleções...", "info");
+          const colecoes = ["atendimentos", "perfis_jogo", "eventos_jogo", "base_conhecimento"];
+          if (limparUsuarios) colecoes.push("usuarios");
+          for (let i = 0; i < colecoes.length; i++) {
+            const n = await limparColecao(colecoes[i]);
+            log("&nbsp;&nbsp;✔ " + colecoes[i] + ": " + n + " documento(s) removido(s)", "del");
+          }
+        } else {
+          log("⏭️ Limpeza pulada — adicionando por cima dos dados atuais.", "info");
+        }
+
+        if (demo) {
+          await db.collection("usuarios").doc(demo.uid).set({
+            nome: demo.nome,
+            email: demo.email,
+            telefone: demo.telefone || "(11) 98888-0101",
+            criado_em: firebase.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+
+        // ---------- 2. Atendimentos ----------
+        if (demo) {
+          log("👤 Conta demo: " + demo.nome + " (" + demo.email + ")", "ok");
+        } else {
+          log("⚠ cliente@nexatalk.com ainda não existe no Auth. Crie a conta no app e rode de novo para vincular a jornada.", "info");
+        }
+
+        log("📨 Criando atendimentos...", "info");
+        const loteAtd = db.batch();
+        let vinculados = 0;
+
+        if (demo) {
+          JORNADA_DEMO.forEach(function (item) {
+            const t = TEMPLATES[item.idx];
+            const doc = montarAtendimentoSeed(t, demo, item.status, item.operador, item.extras);
+            loteAtd.set(db.collection("atendimentos").doc(), doc);
+            vinculados++;
+          });
+        }
+
+        SEQUENCIA.forEach(function (idxTemplate, i) {
+          const t = TEMPLATES[idxTemplate];
+          let statusFinal = t.status;
+          if (i >= 8 && statusFinal === "Em análise") statusFinal = "Concluído";
+
+          let operadorNome = "";
+          if (statusFinal === "Concluído") operadorNome = OPERADORES_POOL[i % OPERADORES_POOL.length];
+          else if (statusFinal === "Em análise" && i % 2 === 0) operadorNome = OPERADORES_POOL[i % OPERADORES_POOL.length];
+
+          const cliente = Object.assign({}, CLIENTES[i % CLIENTES.length]);
+          const extras = {};
+          if (operadorNome && statusFinal === "Em análise") {
+            extras.areaValidada = true;
+            extras.mensagem = "Já estou tratando o seu caso. Qualquer novidade eu te aviso por aqui.\n\n" + operadorNome + " · Equipe NexaTalk AI";
+          }
+          const doc = montarAtendimentoSeed(t, cliente, statusFinal, operadorNome, extras);
+          loteAtd.set(db.collection("atendimentos").doc(), doc);
+        });
+        await loteAtd.commit();
+        log("&nbsp;&nbsp;✔ " + (vinculados + SEQUENCIA.length) + " atendimentos criados" +
+          (vinculados > 0 ? " (" + vinculados + " na conta " + EMAIL_DEMO_CLIENTE + ")" : ""), "ok");
+
+        // ---------- 3. Perfis dos operadores ----------
+        log("🎮 Criando 6 perfis de operadores (Arena + Meu Desempenho)...", "info");
+        const lotePerfis = db.batch();
+        OPERADORES_SEED.forEach(function (o) {
+          lotePerfis.set(db.collection("perfis_jogo").doc(o.id), montarPerfilOperadorSeed(o));
+        });
+
+        // ---------- 4. Perfis de clientes ----------
+        CLIENTES_JOGO_SEED.forEach(function (c) {
+          lotePerfis.set(db.collection("perfis_jogo").doc(c.id), {
+            tipo: "cliente", nome: c.nome, xp: c.xp,
+            chamados_abertos: c.chamados, resolvidos_ia: c.ia,
+            ultima_acao: c.acao, ultima_acao_ts: ts(minAtras(c.min)),
+          });
+        });
+        if (demo) {
+          lotePerfis.set(db.collection("perfis_jogo").doc(demo.uid), {
+            tipo: "cliente",
+            nome: demo.nome,
+            xp: 360,
+            chamados_abertos: JORNADA_DEMO.length,
+            resolvidos_ia: JORNADA_DEMO.filter(function (j) { return j.status === "Resolvido pela IA"; }).length,
+            ultima_acao: "Abriu um chamado sobre cobrança duplicada",
+            ultima_acao_ts: ts(minAtras(25)),
+          });
+        }
+        await lotePerfis.commit();
+        log("&nbsp;&nbsp;✔ " + (OPERADORES_SEED.length + CLIENTES_JOGO_SEED.length + (demo ? 1 : 0)) + " perfis de jogo criados", "ok");
+
+        // ---------- 5. Feed de eventos ----------
+        log("⚡ Publicando 14 eventos no feed da Arena...", "info");
+        const loteEventos = db.batch();
+        EVENTOS_SEED.forEach(function (e) {
+          loteEventos.set(db.collection("eventos_jogo").doc(), {
+            tipo: e.tipo, nome: e.nome, texto: e.texto, xp: e.xp, icone: e.icone,
+            criado_em: ts(minAtras(e.min)),
+          });
+        });
+        await loteEventos.commit();
+        log("&nbsp;&nbsp;✔ Feed \"Acontecendo Agora\" populado", "ok");
+
+        // ---------- 6. Base de conhecimento ----------
+        log("📚 Publicando 2 artigos na Base de Conhecimento Viva...", "info");
+        const loteArtigos = db.batch();
+        ARTIGOS_SEED.forEach(function (a, i) {
+          loteArtigos.set(db.collection("base_conhecimento").doc(), {
+            titulo: a.titulo, problema: a.problema, solucao: a.solucao, tags: a.tags,
+            fonte: "NexaIA (minerado da fila)", aprovado_por: "Marina Duarte",
+            criado_em: ts(minAtras(150 + i * 300)),
+          });
+        });
+        await loteArtigos.commit();
+        log("&nbsp;&nbsp;✔ Base de conhecimento abastecida", "ok");
+
+        log("", "");
+        log("🎉 Ingestão concluída! A conta demo, a fila, a Arena e o Centro de Comando estão populados.", "ok");
+        document.getElementById("atalhosFinal").style.display = "flex";
+        opsToast("Firebase populado com sucesso! 🚀");
+      } catch (e) {
+        console.error(e);
+        log("❌ Erro na ingestão: " + (e.message || e), "del");
+        opsToast("Erro na ingestão — veja o log.", true);
+      } finally {
+        btn.disabled = false;
+        btn.querySelector(".texto").innerHTML = '<i class="bi bi-rocket-takeoff"></i> Popular Firebase com dados demo';
+      }
+    }
+  </script>
+</body>
+</html>

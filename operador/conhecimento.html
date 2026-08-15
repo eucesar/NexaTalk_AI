@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Base de Conhecimento Viva</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>📚 Base de Conhecimento Viva</h1>
+          <div class="subtitulo">
+            <i class="bi bi-magic" style="color: var(--roxo);"></i>
+            A base que se escreve sozinha: a NexaIA lê a fila, detecta temas repetidos e redige os artigos — você só aprova.
+          </div>
+        </div>
+      </div>
+
+      <div id="nexaia"></div>
+
+      <!-- Ações -->
+      <div class="cartao">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <input type="text" id="campoBusca" class="form-control" style="flex: 2; min-width: 220px;"
+            placeholder="Buscar artigo por título, problema ou tag..." oninput="renderizarArtigos()">
+          <button id="btnMinerar" class="btn-magico" style="width:auto; flex: 1; min-width: 240px; margin: 0;" onclick="minerarArtigos()">
+            <span class="texto"><i class="bi bi-stars"></i> Minerar artigos da fila com IA</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Rascunhos minerados -->
+      <div id="areaRascunhos" style="display:none;">
+        <div class="titulo-secao"><i class="bi bi-pencil-square"></i> Rascunhos da NexaIA — aguardando sua aprovação</div>
+        <div id="listaRascunhos"></div>
+      </div>
+
+      <!-- Artigos publicados -->
+      <div class="titulo-secao"><i class="bi bi-journal-check"></i> Artigos publicados</div>
+      <div id="listaArtigos"></div>
+
+      <div id="vazio" class="cartao text-center text-secondary" style="display:none; padding: 40px 16px;">
+        <i class="bi bi-journal-x" style="font-size: 2.4rem;"></i>
+        <p class="mt-2 mb-0">Nenhum artigo ainda. Clique em <b>"Minerar artigos da fila com IA"</b> e a NexaIA escreve os primeiros para você aprovar.</p>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("conhecimento"));
+
+    nexaiaMostrar("nexaia",
+      "Esta base aprende com a operação: eu leio os chamados, percebo o que se repete e escrevo o artigo pronto. " +
+      "Cada artigo aprovado vale +15 XP — e vira munição para responder clientes em segundos (botão \"copiar solução\").");
+
+    let artigos = [];
+    let rascunhos = [];
+
+    // Artigos publicados, ao vivo
+    db.collection("base_conhecimento").orderBy("criado_em", "desc").onSnapshot(function (snap) {
+      artigos = [];
+      snap.forEach(function (doc) {
+        artigos.push(Object.assign({ id: doc.id }, doc.data()));
+      });
+      renderizarArtigos();
+    }, function (e) { console.error(e); });
+
+    function escapar(t) {
+      const div = document.createElement("div");
+      div.textContent = t || "";
+      return div.innerHTML;
+    }
+
+    function renderizarArtigos() {
+      const busca = (document.getElementById("campoBusca").value || "").toLowerCase();
+      const filtrados = artigos.filter(function (a) {
+        const alvo = ((a.titulo || "") + " " + (a.problema || "") + " " + (a.solucao || "") + " " + (a.tags || []).join(" ")).toLowerCase();
+        return alvo.indexOf(busca) >= 0;
+      });
+
+      const alvo = document.getElementById("listaArtigos");
+      document.getElementById("vazio").style.display = (artigos.length === 0 && rascunhos.length === 0) ? "block" : "none";
+      alvo.innerHTML = "";
+
+      filtrados.forEach(function (a) {
+        const tags = (a.tags || []).map(function (t) { return '<span class="chip" style="font-size:0.72rem;">' + escapar(t) + "</span>"; }).join(" ");
+        alvo.innerHTML +=
+          '<div class="cartao">' +
+            '<div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">' +
+              '<div style="min-width:0;">' +
+                '<div class="fw-bold" style="font-size: 1.02rem; color: var(--roxo-claro);"><i class="bi bi-journal-text me-1"></i> ' + escapar(a.titulo) + "</div>" +
+                '<div class="text-secondary" style="font-size: 0.82rem;">' + escapar(a.problema) + "</div>" +
+              "</div>" +
+              '<button class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.8rem;" onclick="copiarSolucao(\'' + a.id + '\')">' +
+                '<i class="bi bi-clipboard me-1"></i> Copiar solução</button>' +
+            "</div>" +
+            '<div class="mt-2" style="font-size: 0.88rem; white-space: pre-line; line-height: 1.65;">' + escapar(a.solucao) + "</div>" +
+            '<div class="d-flex flex-wrap gap-1 align-items-center mt-3">' + tags +
+              '<span class="text-secondary ms-auto" style="font-size: 0.74rem;"><i class="bi bi-robot"></i> ' + escapar(a.fonte || "NexaIA") +
+              " · aprovado por <b>" + escapar(a.aprovado_por || "—") + "</b></span>" +
+            "</div>" +
+          "</div>";
+      });
+
+      if (filtrados.length === 0 && artigos.length > 0) {
+        alvo.innerHTML = '<div class="cartao text-center text-secondary" style="padding: 26px;">Nada encontrado para "' + escapar(busca) + '".</div>';
+      }
+    }
+
+    function copiarSolucao(id) {
+      const artigo = artigos.find(function (a) { return a.id === id; });
+      if (!artigo) return;
+      navigator.clipboard.writeText(artigo.solucao || "").then(function () {
+        opsToast("Solução copiada! Cole na resposta ao cliente. 📋");
+      }).catch(function () {
+        opsToast("Não consegui copiar automaticamente.", true);
+      });
+    }
+
+    // ============ Mineração com IA ============
+    async function minerarArtigos() {
+      const btn = document.getElementById("btnMinerar");
+      btn.disabled = true;
+      btn.querySelector(".texto").innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Lendo a fila e escrevendo...';
+
+      try {
+        const snap = await db.collection("atendimentos").get();
+        const casos = [];
+        snap.forEach(function (doc) { casos.push(doc.data()); });
+
+        if (casos.length === 0) {
+          opsToast("A fila está vazia — abra chamados (ou rode a Ingestão de Dados) antes de minerar.", true);
+          return;
+        }
+
+        const linhas = ordenarPorMaisRecente(casos).slice(0, 20).map(function (a) {
+          return "- [" + (a.intencao || "Outros") + "] " + ((a.ia && a.ia.resumo) || (a.descricao_original || "").slice(0, 100));
+        }).join("\n");
+
+        const bruto = await nexaiaPerguntar(
+          "Você é a NexaIA, redatora da base de conhecimento da NexaTalk AI. Analise os chamados abaixo, identifique até 3 TEMAS RECORRENTES " +
+          "e escreva um artigo de resolução para cada um, voltado aos operadores. " +
+          'Responda APENAS com JSON válido: {"artigos": [{"titulo": "máx 70 caracteres", "problema": "resumo do problema em 1 frase", ' +
+          '"solucao": "passo a passo numerado (1., 2., 3...) de como o operador resolve, máx 500 caracteres", "tags": ["3 a 4 tags curtas"]}]}\n\n' +
+          "Chamados:\n" + linhas
+        );
+        const j = JSON.parse(bruto.replace(/```json/gi, "").replace(/```/g, "").trim());
+        rascunhos = (j.artigos || []).slice(0, 3);
+
+        if (rascunhos.length === 0) {
+          opsToast("A IA não encontrou temas recorrentes suficientes ainda.", true);
+          return;
+        }
+        renderizarRascunhos();
+        opsToast(rascunhos.length + " rascunho(s) minerado(s)! Revise e aprove. ⛏️");
+      } catch (e) {
+        console.error(e);
+        opsToast("Não consegui minerar agora (verifique a chave/cota da Gemini).", true);
+      } finally {
+        btn.disabled = false;
+        btn.querySelector(".texto").innerHTML = '<i class="bi bi-stars"></i> Minerar artigos da fila com IA';
+      }
+    }
+
+    function renderizarRascunhos() {
+      const area = document.getElementById("areaRascunhos");
+      const alvo = document.getElementById("listaRascunhos");
+      area.style.display = rascunhos.length > 0 ? "block" : "none";
+      alvo.innerHTML = "";
+
+      rascunhos.forEach(function (r, i) {
+        const tags = (r.tags || []).map(function (t) { return '<span class="chip" style="font-size:0.72rem;">' + escapar(t) + "</span>"; }).join(" ");
+        alvo.innerHTML +=
+          '<div class="cartao-roxo" id="rascunho' + i + '">' +
+            '<div class="fw-bold" style="font-size: 1.02rem;"><i class="bi bi-lightbulb me-1" style="color: var(--roxo);"></i> ' + escapar(r.titulo) + "</div>" +
+            '<div class="text-secondary" style="font-size: 0.82rem;">' + escapar(r.problema) + "</div>" +
+            '<div class="mt-2" style="font-size: 0.88rem; white-space: pre-line; line-height: 1.65;">' + escapar(r.solucao) + "</div>" +
+            '<div class="d-flex flex-wrap gap-1 mt-2 mb-3">' + tags + "</div>" +
+            '<div class="d-flex gap-2 flex-wrap">' +
+              '<button class="btn-roxo" style="width:auto; flex:1;" onclick="aprovarRascunho(' + i + ')"><i class="bi bi-check-circle me-1"></i> Aprovar e publicar (+15 XP)</button>' +
+              '<button class="btn-roxo-claro" style="width:auto; flex:1;" onclick="descartarRascunho(' + i + ')"><i class="bi bi-x-circle me-1"></i> Descartar</button>' +
+            "</div>" +
+          "</div>";
+      });
+    }
+
+    async function aprovarRascunho(i) {
+      const r = rascunhos[i];
+      if (!r) return;
+      try {
+        await db.collection("base_conhecimento").add({
+          titulo: r.titulo || "",
+          problema: r.problema || "",
+          solucao: r.solucao || "",
+          tags: r.tags || [],
+          fonte: "NexaIA (minerado da fila)",
+          aprovado_por: operador.nome,
+          criado_em: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        rascunhos.splice(i, 1);
+        renderizarRascunhos();
+        opsToast("Artigo publicado na base! +15 XP 📚");
+        await jogoDarXp({
+          id: jogoIdOperador(operador.email),
+          tipo: "operador",
+          nome: operador.nome,
+          cargo: operador.cargo,
+          xp: 15,
+          acao: 'Publicou o artigo "' + (r.titulo || "").slice(0, 60) + '" na Base Viva 📚',
+          icone: "bi-journal-bookmark",
+          contadores: { artigos_publicados: 1 },
+        });
+      } catch (e) {
+        console.error(e);
+        opsToast("Erro ao publicar o artigo.", true);
+      }
+    }
+
+    function descartarRascunho(i) {
+      rascunhos.splice(i, 1);
+      renderizarRascunhos();
+      opsToast("Rascunho descartado.");
+    }
+  </script>
+</body>
+</html>

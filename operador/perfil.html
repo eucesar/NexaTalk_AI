@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Meu Desempenho</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>🎮 Meu Desempenho</h1>
+          <div class="subtitulo">Seu progresso no jogo: cada tratativa vira XP e a NexaIA avalia sua qualidade em tempo real.</div>
+        </div>
+      </div>
+
+      <div class="perfil-grid">
+
+        <!-- ============ COLUNA ESQUERDA: nível + qualidade ============ -->
+        <div>
+          <!-- Cartão do nível -->
+          <div class="cartao-roxo text-center" style="padding: 26px 20px;">
+            <div class="avatar-jogo" style="width: 64px; height: 64px; font-size: 1.3rem;" id="avatarPerfil">?</div>
+            <h4 class="fw-bold mb-1" id="nomePerfil">—</h4>
+            <span class="titulo-nivel" id="tituloNivel">—</span>
+
+            <div class="donut mt-3" id="ringNivel" style="width: 130px; height: 130px; margin: 14px auto;">
+              <div class="donut-buraco" style="width: 96px; height: 96px;">
+                <div class="donut-valor" id="ringNumero">Nv 1</div>
+                <div class="donut-rotulo" id="ringProgresso">0%</div>
+              </div>
+            </div>
+
+            <div class="xp-barra mb-1"><div class="xp-preenchida" id="xpBarra" style="width: 0%;"></div></div>
+            <div class="text-secondary" style="font-size: 0.8rem;" id="xpTexto">0 XP</div>
+          </div>
+
+          <!-- Qualidade avaliada pela IA -->
+          <div class="cartao">
+            <div class="titulo-secao"><i class="bi bi-heart-pulse"></i> Qualidade das Tratativas (nota da NexaIA)</div>
+            <div id="qualidadeVazia" class="text-secondary" style="font-size: 0.86rem;">
+              Conclua um atendimento para a NexaIA avaliar sua empatia, clareza e nível de detalhe.
+            </div>
+            <div id="qualidadeBarras" style="display:none;">
+              <div class="qual-linha">
+                <div class="topo"><span>💜 Empatia com o cliente</span><span id="valEmpatia">—</span></div>
+                <div class="barra-mini"><div class="barra-mini-preenchida" id="barEmpatia" style="width:0%; background: linear-gradient(90deg, #8b5cf6, #c084fc);"></div></div>
+              </div>
+              <div class="qual-linha">
+                <div class="topo"><span>💎 Clareza da resposta</span><span id="valClareza">—</span></div>
+                <div class="barra-mini"><div class="barra-mini-preenchida" id="barClareza" style="width:0%; background: linear-gradient(90deg, #0ea5e9, #38bdf8);"></div></div>
+              </div>
+              <div class="qual-linha">
+                <div class="topo"><span>🔍 Riqueza de detalhes</span><span id="valDetalhe">—</span></div>
+                <div class="barra-mini"><div class="barra-mini-preenchida" id="barDetalhe" style="width:0%;"></div></div>
+              </div>
+              <div class="alerta-risco ok mt-2">
+                <i class="bi bi-award"></i> Nota geral: <b id="valGeral" class="ms-1">—</b>
+                <span class="ms-1" style="opacity:0.8;" id="qtdAvaliacoes"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coach NexaIA -->
+          <div class="cartao">
+            <div class="titulo-secao"><i class="bi bi-megaphone"></i> Coach NexaIA</div>
+            <div id="nexaiaCoach"></div>
+          </div>
+        </div>
+
+        <!-- ============ COLUNA DIREITA: números, conquistas e tratativas ============ -->
+        <div>
+          <!-- Números -->
+          <div class="ops-stats">
+            <div class="ops-stat">
+              <div class="icone verde"><i class="bi bi-check-circle"></i></div>
+              <div><div class="valor" id="numCasos">0</div><div class="rotulo">Casos concluídos</div></div>
+            </div>
+            <div class="ops-stat">
+              <div class="icone roxo"><i class="bi bi-send"></i></div>
+              <div><div class="valor" id="numRespostas">0</div><div class="rotulo">Respostas enviadas</div></div>
+            </div>
+            <div class="ops-stat">
+              <div class="icone amarelo"><i class="bi bi-signpost-split"></i></div>
+              <div><div class="valor" id="numAreas">0</div><div class="rotulo">Áreas validadas</div></div>
+            </div>
+            <div class="ops-stat">
+              <div class="icone rosa"><i class="bi bi-stars"></i></div>
+              <div><div class="valor" id="numMagicos">0</div><div class="rotulo">Resoluções ✨ 1 clique</div></div>
+            </div>
+          </div>
+
+          <!-- Conquistas -->
+          <div class="cartao">
+            <div class="titulo-secao"><i class="bi bi-award"></i> Conquistas <span id="contaConquistas" class="text-secondary" style="font-weight:600; font-size:0.8rem;"></span></div>
+            <div id="listaConquistas"></div>
+          </div>
+
+          <!-- Últimas tratativas avaliadas -->
+          <div class="cartao">
+            <div class="titulo-secao"><i class="bi bi-clipboard-check"></i> Últimas tratativas avaliadas pela IA</div>
+            <div id="listaTratativas" class="text-secondary" style="font-size: 0.86rem;">
+              Nenhuma tratativa avaliada ainda — conclua um caso na fila!
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("perfil"));
+
+    let perfil = null;
+
+    // Perfil em tempo real: o XP sobe na tela conforme você joga
+    jogoAssinarPerfil(jogoIdOperador(operador.email), function (p) {
+      perfil = p || {};
+      renderizar(perfil);
+    });
+
+    function renderizar(p) {
+      const nivel = jogoNivel(p.xp || 0, "operador");
+      const medias = jogoMedias(p);
+
+      // Cartão do nível
+      document.getElementById("avatarPerfil").textContent = jogoIniciais(operador.nome);
+      document.getElementById("nomePerfil").textContent = operador.nome;
+      document.getElementById("tituloNivel").textContent = "Nv " + nivel.numero + " · " + nivel.titulo;
+      document.getElementById("ringNumero").textContent = "Nv " + nivel.numero;
+      document.getElementById("ringProgresso").textContent = nivel.maximo ? "MÁX" : nivel.progresso + "%";
+      jogoPintarDonut("ringNivel", nivel.progresso, "#8b5cf6");
+      document.getElementById("xpBarra").style.width = nivel.progresso + "%";
+      document.getElementById("xpTexto").textContent = (p.xp || 0) + " XP" +
+        (nivel.maximo ? " · nível máximo alcançado! 👑" : " · faltam " + (nivel.xpProximo - (p.xp || 0)) + " XP para o Nv " + (nivel.numero + 1));
+
+      // Números
+      document.getElementById("numCasos").textContent = p.casos_concluidos || 0;
+      document.getElementById("numRespostas").textContent = p.respostas_enviadas || 0;
+      document.getElementById("numAreas").textContent = p.areas_validadas || 0;
+      document.getElementById("numMagicos").textContent = p.magicos || 0;
+
+      // Qualidade
+      if (medias) {
+        document.getElementById("qualidadeVazia").style.display = "none";
+        document.getElementById("qualidadeBarras").style.display = "block";
+        document.getElementById("valEmpatia").textContent = medias.empatia + "%";
+        document.getElementById("valClareza").textContent = medias.clareza + "%";
+        document.getElementById("valDetalhe").textContent = medias.detalhe + "%";
+        document.getElementById("valGeral").textContent = medias.geral + "%";
+        document.getElementById("qtdAvaliacoes").textContent = "(" + (p.avaliacoes || 0) + " avaliação(ões) da IA)";
+        document.getElementById("barEmpatia").style.width = medias.empatia + "%";
+        document.getElementById("barClareza").style.width = medias.clareza + "%";
+        document.getElementById("barDetalhe").style.width = medias.detalhe + "%";
+      }
+
+      // Conquistas
+      const conquistas = jogoConquistasOperador(p, medias);
+      const desbloqueadas = conquistas.filter(function (c) { return c.ok; }).length;
+      document.getElementById("contaConquistas").textContent = "· " + desbloqueadas + "/" + conquistas.length + " desbloqueadas";
+      const lista = document.getElementById("listaConquistas");
+      lista.innerHTML = "";
+      conquistas.forEach(function (c) {
+        const div = document.createElement("div");
+        div.className = "conquista" + (c.ok ? "" : " bloqueada");
+        div.innerHTML =
+          '<span class="emoji">' + c.emoji + "</span>" +
+          "<div><div class=\"nome\">" + c.nome + "</div><div class=\"desc\">" + c.desc + "</div></div>" +
+          (c.ok ? '<span class="selo"><i class="bi bi-check-circle-fill"></i></span>' : '<span class="selo" style="color: var(--texto-cinza);"><i class="bi bi-lock"></i></span>');
+        lista.appendChild(div);
+      });
+
+      // Últimas tratativas avaliadas
+      const avaliacoes = (p.ultimas_avaliacoes || []).slice(-5).reverse();
+      if (avaliacoes.length > 0) {
+        const alvo = document.getElementById("listaTratativas");
+        alvo.innerHTML = "";
+        avaliacoes.forEach(function (av) {
+          const geral = Math.round(((av.empatia || 0) + (av.clareza || 0) + (av.detalhe || 0)) / 3);
+          const div = document.createElement("div");
+          div.className = "mini-cartao mb-2";
+          div.style.textAlign = "left";
+          div.innerHTML =
+            '<div class="d-flex justify-content-between align-items-center flex-wrap gap-1">' +
+              '<span class="fw-bold" style="color: var(--roxo); font-size: 0.88rem;">' + (av.protocolo || "—") + "</span>" +
+              '<span class="badge-nivel ' + (geral >= 80 ? "baixa" : geral >= 60 ? "media" : "alta") + '" style="animation:none;">' + geral + "% geral</span>" +
+            "</div>" +
+            '<div class="text-secondary mt-1" style="font-size: 0.8rem;">💜 ' + (av.empatia || 0) + "% · 💎 " + (av.clareza || 0) + "% · 🔍 " + (av.detalhe || 0) + "%</div>" +
+            (av.comentario ? '<div class="mt-1" style="font-size: 0.8rem; color: var(--texto-escuro);"><i class="bi bi-robot me-1" style="color: var(--roxo);"></i>' + av.comentario + "</div>" : "") +
+            '<div class="text-secondary mt-1" style="font-size: 0.72rem;">' + (av.data || "") + "</div>";
+          alvo.appendChild(div);
+        });
+      }
+
+      // Coach (balão fixo com botão de dicas por IA)
+      montarCoach(p, medias, nivel);
+    }
+
+    let coachGerado = false;
+    function montarCoach(p, medias, nivel) {
+      if (coachGerado) return;
+      let texto;
+      if ((p.casos_concluidos || 0) === 0) {
+        texto = nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) +
+          "! Sou sua coach no Modo Jogo. Conclua sua primeira tratativa na fila que eu começo a avaliar sua empatia, clareza e detalhe — e te dou dicas para subir de nível.";
+      } else {
+        texto = "Você está no Nv " + nivel.numero + " (" + nivel.titulo + ") com " + (p.xp || 0) + " XP" +
+          (medias ? " e qualidade média de " + medias.geral + "%." : ".") +
+          " Quer dicas personalizadas para evoluir mais rápido?";
+      }
+      nexaiaMostrar("nexaiaCoach", texto,
+        (p.casos_concluidos || 0) > 0 ? { acaoTexto: "✨ Pedir dicas ao Coach", aoClicar: pedirDicas } : undefined);
+    }
+
+    async function pedirDicas() {
+      const btn = document.getElementById("nexaiaCoachAcao");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> O coach está analisando...';
+      try {
+        const medias = jogoMedias(perfil);
+        const dicas = await nexaiaPerguntar(
+          "Você é a NexaIA, coach de e-sports do time de atendimento da NexaTalk AI. " +
+          "Com base nas estatísticas do operador abaixo, devolva em português EXATAMENTE 4 linhas curtas: " +
+          "3 dicas práticas para melhorar as notas e subir de nível, e 1 elogio sincero. " +
+          "Cada linha começa com um emoji e tem no máximo 90 caracteres. Sem introdução nem despedida.\n\n" +
+          "Operador: " + operador.nome + "\n" +
+          "XP: " + (perfil.xp || 0) + " | Casos concluídos: " + (perfil.casos_concluidos || 0) +
+          " | Respostas: " + (perfil.respostas_enviadas || 0) +
+          " | Áreas validadas: " + (perfil.areas_validadas || 0) +
+          " | Resoluções com IA em 1 clique: " + (perfil.magicos || 0) + "\n" +
+          (medias
+            ? "Qualidade média: empatia " + medias.empatia + "%, clareza " + medias.clareza + "%, detalhe " + medias.detalhe + "%"
+            : "Ainda sem avaliações de qualidade.")
+        );
+        nexaiaTexto("nexaiaCoach", dicas);
+        btn.style.display = "none";
+        coachGerado = true;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Pedir dicas ao Coach";
+        nexaiaTexto("nexaiaCoach", "O coach está sem voz agora (verifique a chave Gemini ou a cota do dia). Tente de novo mais tarde!");
+      }
+    }
+  </script>
+</body>
+</html>

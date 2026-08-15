@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI · Centro de Comando</title>
+
+  <!-- Bootstrap 5.3.8 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+  <link rel="stylesheet" href="../css/operador.css">
+</head>
+<body class="ops">
+
+  <div class="ops-app" id="app">
+    <!-- Sidebar (montada via JS) -->
+
+    <main class="ops-main">
+
+      <div class="ops-header">
+        <div>
+          <h1>📊 Centro de Comando</h1>
+          <div class="subtitulo">
+            <i class="bi bi-broadcast" style="color:#4ade80;"></i>
+            Visão executiva da operação em tempo real — números, tendências e o relatório da NexaIA.
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros (recortam todos os KPIs e gráficos) -->
+      <div class="comando-filtros">
+        <div class="rotulo-bar"><i class="bi bi-funnel me-1"></i> Recorte da operação — os números abaixo acompanham o filtro</div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <div class="filtros" style="margin: 0;">
+            <span class="pill ativo" data-periodo="tudo" onclick="selecionarPeriodo(this)">Tudo</span>
+            <span class="pill" data-periodo="hoje" onclick="selecionarPeriodo(this)">Hoje</span>
+            <span class="pill" data-periodo="7d" onclick="selecionarPeriodo(this)">7 dias</span>
+            <span class="pill" data-periodo="30d" onclick="selecionarPeriodo(this)">30 dias</span>
+          </div>
+          <select id="filtroArea" class="form-select"><option value="">🗺️ Área: todas</option></select>
+          <select id="filtroPrioridade" class="form-select">
+            <option value="">⚡ Prioridade: todas</option>
+            <option value="alta">🔴 Alta</option>
+            <option value="media">🟡 Média</option>
+            <option value="baixa">🟢 Baixa</option>
+          </select>
+          <select id="filtroStatus" class="form-select">
+            <option value="">📌 Status: todos</option>
+            <option value="análise">⏳ Em análise</option>
+            <option value="resolvido">🤖 Resolvido pela IA</option>
+            <option value="concluído">✅ Concluído</option>
+          </select>
+          <select id="filtroTratando" class="form-select"><option value="">👥 Tratando: todos</option></select>
+          <select id="filtroSentimento" class="form-select">
+            <option value="">😊 Humor: todos</option>
+            <option value="positiv">Positivo</option>
+            <option value="neutro">Neutro</option>
+            <option value="preocupad">Preocupado</option>
+            <option value="frustrad">Frustrado</option>
+          </select>
+          <button type="button" class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.82rem;" onclick="limparFiltros()">
+            <i class="bi bi-x-circle me-1"></i> Limpar
+          </button>
+          <span class="chip" id="chipRecorte" style="margin-left:auto;">—</span>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="ops-stats">
+        <div class="ops-stat">
+          <div class="icone roxo"><i class="bi bi-collection"></i></div>
+          <div><div class="valor" id="kpiTotal">0</div><div class="rotulo">Chamados no período</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone verde"><i class="bi bi-robot"></i></div>
+          <div><div class="valor" id="kpiTaxaIA">0%</div><div class="rotulo">Auto-resolução da IA</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-stopwatch"></i></div>
+          <div><div class="valor" id="kpiTempo">—</div><div class="rotulo">Tempo médio até concluir</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone rosa"><i class="bi bi-heart-pulse"></i></div>
+          <div><div class="valor" id="kpiQualidade">—</div><div class="rotulo">Qualidade média (IA)</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-hourglass-split"></i></div>
+          <div><div class="valor" id="kpiAbertos">0</div><div class="rotulo">Em aberto agora</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone rosa"><i class="bi bi-lightning-charge"></i></div>
+          <div><div class="valor" id="kpiAltas">0</div><div class="rotulo">Alta prioridade em aberto</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone roxo"><i class="bi bi-calendar-day"></i></div>
+          <div><div class="valor" id="kpiHoje">0</div><div class="rotulo" id="kpiHojeRotulo">Chamados hoje</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone verde"><i class="bi bi-people"></i></div>
+          <div><div class="valor" id="kpiClientes">0</div><div class="rotulo">Clientes únicos</div></div>
+        </div>
+      </div>
+
+      <!-- Relatório executivo com IA -->
+      <div id="nexaia"></div>
+
+      <!-- Carregando -->
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-secondary">Conectando aos dados da operação...</p>
+      </div>
+
+      <div id="conteudo" style="display:none;" class="comando-stack">
+
+        <div class="comando-secao">Tendência · 14 dias</div>
+
+        <div class="cartao comando-full mb-0">
+          <div class="titulo-secao"><i class="bi bi-bar-chart-steps"></i> Velas do fluxo — abriu × fechou no dia</div>
+          <p class="text-secondary mb-2" style="font-size: 0.8rem;">Corpo verde = o time fechou mais do que entrou. Vermelho = a fila cresceu. Pavio = pico do dia.</p>
+          <div class="velas" id="graficoVelas"></div>
+          <div class="d-flex flex-wrap gap-3 mt-3">
+            <span class="legenda-ponto"><span class="cor" style="background:#34d399;"></span> fechou ≥ abriu</span>
+            <span class="legenda-ponto"><span class="cor" style="background:#f87171;"></span> abriu mais do que fechou</span>
+            <span class="legenda-ponto"><span class="cor" style="background:rgba(255,255,255,0.25);"></span> pavio = maior volume do dia</span>
+          </div>
+        </div>
+
+        <div class="cartao comando-full mb-0">
+          <div class="titulo-secao"><i class="bi bi-graph-up"></i> Evolução — abertos, finalizados e backlog</div>
+          <div class="grafico-canvas alto"><canvas id="canvasLinha"></canvas></div>
+        </div>
+
+        <div class="comando-secao">Volume e composição</div>
+
+        <div class="cartao comando-full mb-0">
+          <div class="titulo-secao"><i class="bi bi-bar-chart"></i> Volume diário — entrada vs. saída</div>
+          <div class="grafico-canvas"><canvas id="canvasVolume"></canvas></div>
+        </div>
+
+        <div class="comando-grid">
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-pie-chart"></i> Composição por status</div>
+            <div class="grafico-canvas"><canvas id="canvasFunil"></canvas></div>
+            <div class="alerta-risco medio mt-2 mb-0" id="alertaAbertos" style="display:none;"></div>
+          </div>
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-emoji-smile"></i> Sentimento dos clientes</div>
+            <div class="grafico-canvas"><canvas id="canvasSentimento"></canvas></div>
+          </div>
+        </div>
+
+        <div class="comando-secao">Onde a operação concentra esforço</div>
+
+        <div class="comando-grid">
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-bullseye"></i> Top intenções</div>
+            <div id="graficoIntencao"></div>
+          </div>
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-diagram-3"></i> Carga por área</div>
+            <div id="graficoArea"></div>
+          </div>
+        </div>
+
+        <div class="comando-grid">
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-clock-history"></i> Pico de horários</div>
+            <div class="grafico-canvas"><canvas id="canvasHorarios"></canvas></div>
+          </div>
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-lightning-charge"></i> Prioridade em aberto</div>
+            <div class="grafico-canvas"><canvas id="canvasPrioridade"></canvas></div>
+          </div>
+        </div>
+
+        <div class="comando-secao">Risco, qualidade e time</div>
+
+        <div class="comando-grid">
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-alarm"></i> Envelhecimento do backlog</div>
+            <div id="graficoAging"></div>
+            <div class="alerta-risco medio mt-2 mb-0" id="alertaAntigo" style="display:none;"></div>
+          </div>
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-cpu"></i> Precisão da NexaIA</div>
+            <div class="d-flex justify-content-around flex-wrap gap-2">
+              <div class="text-center">
+                <div class="donut" id="donutConfianca">
+                  <div class="donut-buraco">
+                    <div class="donut-valor" id="valorConfianca">—</div>
+                    <div class="donut-rotulo">confiança</div>
+                  </div>
+                </div>
+                <div class="rotulo-pequeno mt-1">Confiança média da triagem</div>
+              </div>
+              <div class="text-center">
+                <div class="donut" id="donutRoteamento">
+                  <div class="donut-buraco">
+                    <div class="donut-valor" id="valorRoteamento">—</div>
+                    <div class="donut-rotulo">acerto</div>
+                  </div>
+                </div>
+                <div class="rotulo-pequeno mt-1">Área sugerida aceita</div>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3" id="linhasPrecisao" style="font-size: 0.8rem;"></div>
+          </div>
+        </div>
+
+        <div class="comando-grid">
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-award"></i> Qualidade por operador</div>
+            <div id="rankingQualidade"></div>
+            <div id="qualidadeVazio" class="text-secondary" style="display:none; font-size: 0.86rem;">
+              Sem avaliações ainda — conclua atendimentos para a IA gerar as notas.
+            </div>
+          </div>
+          <div class="cartao mb-0">
+            <div class="titulo-secao"><i class="bi bi-speedometer2"></i> Produtividade do time</div>
+            <div id="graficoProdutividade"></div>
+            <div id="produtividadeVazio" class="text-secondary" style="display:none; font-size: 0.86rem;">
+              Sem dados de operadores ainda — conclua casos ou rode a Ingestão de Dados.
+            </div>
+          </div>
+        </div>
+
+        <div class="cartao comando-full mb-0">
+          <div class="titulo-secao"><i class="bi bi-tags"></i> Temas mais falados (tags da IA)</div>
+          <div class="chips" id="nuvemTags"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/operador.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("comando"));
+
+    let atendimentos = [];   // tudo que veio do Firestore
+    let visiveis = [];       // recorte após os filtros (usado pelos painéis)
+    let perfisOperadores = [];
+    let estatisticas = null;
+    let balaoMontado = false;
+    let relatorioGerado = false;
+    let filtroPeriodo = "tudo";
+    const graficos = {};
+
+    if (typeof Chart !== "undefined") {
+      Chart.defaults.color = "#a5a0b8";
+      Chart.defaults.borderColor = "rgba(255,255,255,0.08)";
+      Chart.defaults.font.family = "system-ui, Segoe UI, sans-serif";
+    }
+
+    function selecionarPeriodo(el) {
+      document.querySelectorAll(".pill[data-periodo]").forEach(function (p) { p.classList.remove("ativo"); });
+      el.classList.add("ativo");
+      filtroPeriodo = el.getAttribute("data-periodo");
+      calcularErenderizar();
+    }
+
+    function limparFiltros() {
+      filtroPeriodo = "tudo";
+      document.querySelectorAll(".pill[data-periodo]").forEach(function (p) {
+        p.classList.toggle("ativo", p.getAttribute("data-periodo") === "tudo");
+      });
+      document.getElementById("filtroArea").value = "";
+      document.getElementById("filtroPrioridade").value = "";
+      document.getElementById("filtroStatus").value = "";
+      document.getElementById("filtroTratando").value = "";
+      document.getElementById("filtroSentimento").value = "";
+      calcularErenderizar();
+    }
+
+    function aplicarFiltros() {
+      const agoraSeg = Date.now() / 1000;
+      let inicioSeg = 0;
+      if (filtroPeriodo === "hoje") {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        inicioSeg = d.getTime() / 1000;
+      } else if (filtroPeriodo === "7d") inicioSeg = agoraSeg - 7 * 86400;
+      else if (filtroPeriodo === "30d") inicioSeg = agoraSeg - 30 * 86400;
+
+      const area = document.getElementById("filtroArea").value;
+      const prioridade = document.getElementById("filtroPrioridade").value;
+      const status = document.getElementById("filtroStatus").value;
+      const tratando = document.getElementById("filtroTratando").value;
+      const sentimento = document.getElementById("filtroSentimento").value;
+
+      return atendimentos.filter(function (a) {
+        if (inicioSeg > 0 && (!a.data_criacao_ts || a.data_criacao_ts.seconds < inicioSeg)) return false;
+        if (area && (a.area_atual || "") !== area) return false;
+        if (prioridade) {
+          const p = (a.prioridade || "").toLowerCase();
+          if (prioridade === "alta" && p.indexOf("alta") < 0) return false;
+          if (prioridade === "media" && p.indexOf("m") !== 0) return false;
+          if (prioridade === "baixa" && p.indexOf("baixa") < 0) return false;
+        }
+        if (status && (a.status || "").toLowerCase().indexOf(status) < 0) return false;
+        if (tratando === "__ia__" && a.atribuido_a) return false;
+        if (tratando && tratando !== "__ia__" && a.atribuido_a !== tratando) return false;
+        if (sentimento) {
+          const s = ((a.ia && a.ia.sentimento) || "neutro").toLowerCase();
+          if (s.indexOf(sentimento) < 0) return false;
+        }
+        return true;
+      });
+    }
+
+    function preencherSelect(id, html, valorAtual) {
+      const sel = document.getElementById(id);
+      sel.innerHTML = html;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === valorAtual) { sel.value = valorAtual; break; }
+      }
+    }
+
+    function atualizarSelectsFiltro() {
+      const areaAtual = document.getElementById("filtroArea").value;
+      const tratandoAtual = document.getElementById("filtroTratando").value;
+      const areas = {};
+      const nomes = {};
+      atendimentos.forEach(function (a) {
+        if (a.area_atual) areas[a.area_atual] = true;
+        if (a.atribuido_a) nomes[a.atribuido_a] = true;
+      });
+
+      let htmlArea = '<option value="">🗺️ Área: todas</option>';
+      Object.keys(areas).sort().forEach(function (nome) {
+        htmlArea += '<option value="' + nome.replace(/"/g, "&quot;") + '">' + nome + "</option>";
+      });
+      preencherSelect("filtroArea", htmlArea, areaAtual);
+
+      let htmlOp = '<option value="">👥 Tratando: todos</option><option value="__ia__">🤖 NexaIA (sem operador)</option>';
+      Object.keys(nomes).sort().forEach(function (nome) {
+        htmlOp += '<option value="' + nome.replace(/"/g, "&quot;") + '">🎧 ' + nome +
+          (nome === operador.nome ? " (você)" : "") + "</option>";
+      });
+      preencherSelect("filtroTratando", htmlOp, tratandoAtual);
+    }
+
+    // Dados ao vivo — mesma coleção da fila (atendimentos)
+    opsAssinarAtendimentos(function (lista) {
+      atendimentos = lista;
+      document.getElementById("carregando").style.display = "none";
+      document.getElementById("conteudo").style.display = "block";
+      calcularErenderizar();
+      if (!balaoMontado) { balaoMontado = true; montarBalao(); }
+    }, function () {
+      document.getElementById("carregando").innerHTML =
+        '<p class="text-danger mb-0">Não foi possível conectar ao Firestore. Verifique a internet e o arquivo js/config.js.</p>';
+    });
+
+    jogoAssinarRanking(function (lista) {
+      perfisOperadores = lista;
+      renderizarQualidadeOperadores();
+      renderizarProdutividade();
+    });
+
+    ["filtroArea", "filtroPrioridade", "filtroStatus", "filtroTratando", "filtroSentimento"].forEach(function (id) {
+      document.getElementById(id).addEventListener("change", calcularErenderizar);
+    });
+
+    // ============ Cálculos ============
+    function calcularErenderizar() {
+      atualizarSelectsFiltro();
+      visiveis = aplicarFiltros();
+      document.getElementById("chipRecorte").textContent =
+        visiveis.length === atendimentos.length
+          ? atendimentos.length + " chamados no total"
+          : visiveis.length + " de " + atendimentos.length + " chamados no recorte";
+
+      const total = visiveis.length;
+      let resolvidosIA = 0, concluidos = 0, emAnalise = 0;
+      let somaHoras = 0, comTempo = 0;
+      let somaQual = 0, comQual = 0;
+
+      visiveis.forEach(function (a) {
+        const s = (a.status || "").toLowerCase();
+        if (s.indexOf("resolvido") >= 0) resolvidosIA++;
+        else if (s.indexOf("conclu") >= 0) concluidos++;
+        else emAnalise++;
+
+        if (s.indexOf("conclu") >= 0 && a.data_criacao_ts && a.ultima_atualizacao_ts) {
+          const horas = (a.ultima_atualizacao_ts.seconds - a.data_criacao_ts.seconds) / 3600;
+          if (horas >= 0) { somaHoras += horas; comTempo++; }
+        }
+        if (a.avaliacao_ia) {
+          somaQual += Math.round(((a.avaliacao_ia.empatia || 0) + (a.avaliacao_ia.clareza || 0) + (a.avaliacao_ia.detalhe || 0)) / 3);
+          comQual++;
+        }
+      });
+
+      const taxaIA = total > 0 ? Math.round((resolvidosIA / total) * 100) : 0;
+      const tempoMedio = comTempo > 0 ? (somaHoras / comTempo) : null;
+      const qualidade = comQual > 0 ? Math.round(somaQual / comQual) : null;
+
+      document.getElementById("kpiTotal").textContent = total;
+      document.getElementById("kpiTaxaIA").textContent = taxaIA + "%";
+      document.getElementById("kpiTempo").textContent =
+        tempoMedio === null ? "—" : (tempoMedio < 24 ? Math.round(tempoMedio) + " h" : (tempoMedio / 24).toFixed(1) + " d");
+      document.getElementById("kpiQualidade").textContent = qualidade === null ? "—" : qualidade + "%";
+
+      // --- KPIs extras ---
+      const altasAbertas = visiveis.filter(function (a) {
+        return !atendimentoFinalizadoParaCliente(a.status) && (a.prioridade || "").toLowerCase().indexOf("alta") >= 0;
+      }).length;
+
+      const inicioHoje = new Date();
+      inicioHoje.setHours(0, 0, 0, 0);
+      const segHoje = inicioHoje.getTime() / 1000;
+      let hoje = 0, ontem = 0;
+      visiveis.forEach(function (a) {
+        if (!a.data_criacao_ts) return;
+        const s = a.data_criacao_ts.seconds;
+        if (s >= segHoje) hoje++;
+        else if (s >= segHoje - 86400) ontem++;
+      });
+
+      const clientesUnicos = {};
+      visiveis.forEach(function (a) {
+        const chave = ((a.cliente && (a.cliente.email || a.cliente.nome)) || "").toLowerCase();
+        if (chave) clientesUnicos[chave] = true;
+      });
+
+      document.getElementById("kpiAbertos").textContent = emAnalise;
+      document.getElementById("kpiAltas").textContent = altasAbertas;
+      document.getElementById("kpiHoje").textContent = hoje;
+      document.getElementById("kpiHojeRotulo").innerHTML =
+        "Chamados hoje " +
+        (hoje >= ontem ? '<span style="color:#4ade80;">▲</span>' : '<span style="color:#f87171;">▼</span>') +
+        " vs ontem (" + ontem + ")";
+      document.getElementById("kpiClientes").textContent = Object.keys(clientesUnicos).length;
+
+      estatisticas = {
+        total: total, taxaIA: taxaIA, emAnalise: emAnalise, concluidos: concluidos, resolvidosIA: resolvidosIA,
+        qualidade: qualidade, tempoMedio: tempoMedio, altasAbertas: altasAbertas, hoje: hoje, ontem: ontem,
+        clientes: Object.keys(clientesUnicos).length,
+      };
+
+      renderizarVelas();
+      renderizarLinhaBacklog();
+      renderizarVolume();
+      renderizarFunil(emAnalise, resolvidosIA, concluidos, total);
+      renderizarBarrasH("graficoIntencao", contarPor(function (a) { return a.intencao || "Outros"; }));
+      renderizarBarrasH("graficoArea", contarPor(function (a) { return a.area_atual || "Sem área"; }));
+      renderizarPrioridade();
+      renderizarHorarios();
+      renderizarSentimento();
+      renderizarAging();
+      renderizarPrecisao();
+      renderizarTags();
+    }
+
+    function contarPor(extrator) {
+      const mapa = {};
+      visiveis.forEach(function (a) {
+        const chave = extrator(a);
+        mapa[chave] = (mapa[chave] || 0) + 1;
+      });
+      return Object.keys(mapa)
+        .map(function (k) { return { rotulo: k, valor: mapa[k] }; })
+        .sort(function (x, y) { return y.valor - x.valor; })
+        .slice(0, 6);
+    }
+
+    // ============ Gráficos (velas CSS + Chart.js) ============
+
+    function upsertChart(chave, canvasId, config) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || typeof Chart === "undefined") return;
+      if (graficos[chave]) graficos[chave].destroy();
+      graficos[chave] = new Chart(canvas.getContext("2d"), config);
+    }
+
+    function opcoesEixo() {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { boxWidth: 12, color: "#c4b5fd" } },
+        },
+        scales: {
+          x: { ticks: { maxRotation: 0 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(255,255,255,0.06)" } },
+        },
+      };
+    }
+
+    function montarDias(qtd) {
+      const dias = [];
+      for (let i = qtd - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(0, 0, 0, 0);
+        dias.push({
+          inicio: d.getTime() / 1000,
+          fim: d.getTime() / 1000 + 86400,
+          rotulo: d.toLocaleDateString("pt-BR").slice(0, 5),
+          abertos: 0,
+          finalizados: 0,
+          backlog: 0,
+        });
+      }
+      visiveis.forEach(function (a) {
+        if (a.data_criacao_ts) {
+          const s = a.data_criacao_ts.seconds;
+          for (let i = 0; i < dias.length; i++) {
+            if (s >= dias[i].inicio && s < dias[i].fim) { dias[i].abertos++; break; }
+          }
+        }
+        if (atendimentoFinalizadoParaCliente(a.status) && a.ultima_atualizacao_ts) {
+          const f = a.ultima_atualizacao_ts.seconds;
+          for (let i = 0; i < dias.length; i++) {
+            if (f >= dias[i].inicio && f < dias[i].fim) { dias[i].finalizados++; break; }
+          }
+        }
+      });
+      dias.forEach(function (dia) {
+        visiveis.forEach(function (a) {
+          if (!a.data_criacao_ts || a.data_criacao_ts.seconds > dia.fim) return;
+          if (atendimentoFinalizadoParaCliente(a.status)) {
+            const fimSeg = a.ultima_atualizacao_ts ? a.ultima_atualizacao_ts.seconds : a.data_criacao_ts.seconds;
+            if (fimSeg <= dia.fim) return;
+          }
+          dia.backlog++;
+        });
+      });
+      return dias;
+    }
+
+    function renderizarVelas() {
+      const dias = montarDias(14);
+      const max = Math.max(1, Math.max.apply(null, dias.map(function (d) { return Math.max(d.abertos, d.finalizados); })));
+      const alvo = document.getElementById("graficoVelas");
+      alvo.innerHTML = "";
+      dias.forEach(function (d, i) {
+        const alto = Math.max(d.abertos, d.finalizados);
+        const baixo = Math.min(d.abertos, d.finalizados);
+        const fechouMais = d.finalizados >= d.abertos;
+        const vela = document.createElement("div");
+        vela.className = "vela";
+        vela.title = d.rotulo + " · abriu " + d.abertos + " · fechou " + d.finalizados + " · backlog " + d.backlog;
+        vela.innerHTML =
+          '<div class="area">' +
+            '<div class="pavio" style="height:' + Math.round((alto / max) * 100) + '%;"></div>' +
+            (alto > 0
+              ? '<div class="corpo ' + (fechouMais ? "alta" : "baixa") + '" style="bottom:' + Math.round((baixo / max) * 100) +
+                "%; height:" + Math.max(4, Math.round(((alto - baixo) / max) * 100)) + '%;"></div>'
+              : "") +
+          "</div>" +
+          '<div class="rotulo">' + (i % 2 === 0 ? d.rotulo : "·") + "</div>";
+        alvo.appendChild(vela);
+      });
+    }
+
+    function renderizarLinhaBacklog() {
+      const dias = montarDias(14);
+      upsertChart("linha", "canvasLinha", {
+        type: "line",
+        data: {
+          labels: dias.map(function (d) { return d.rotulo; }),
+          datasets: [
+            {
+              label: "Abertos no dia",
+              data: dias.map(function (d) { return d.abertos; }),
+              borderColor: "#c084fc",
+              backgroundColor: "rgba(192,132,252,0.12)",
+              tension: 0.35,
+              fill: false,
+              pointRadius: 3,
+            },
+            {
+              label: "Finalizados no dia",
+              data: dias.map(function (d) { return d.finalizados; }),
+              borderColor: "#34d399",
+              backgroundColor: "rgba(52,211,153,0.12)",
+              tension: 0.35,
+              fill: false,
+              pointRadius: 3,
+            },
+            {
+              label: "Backlog (em aberto)",
+              data: dias.map(function (d) { return d.backlog; }),
+              borderColor: "#a855f7",
+              backgroundColor: "rgba(168,85,247,0.22)",
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              borderWidth: 2.5,
+            },
+          ],
+        },
+        options: opcoesEixo(),
+      });
+    }
+
+    function renderizarVolume() {
+      const dias = montarDias(14);
+      upsertChart("volume", "canvasVolume", {
+        type: "bar",
+        data: {
+          labels: dias.map(function (d) { return d.rotulo; }),
+          datasets: [
+            { label: "Entrada", data: dias.map(function (d) { return d.abertos; }), backgroundColor: "#7c3aed", borderRadius: 6, maxBarThickness: 22 },
+            { label: "Saída", data: dias.map(function (d) { return d.finalizados; }), backgroundColor: "#34d399", borderRadius: 6, maxBarThickness: 22 },
+          ],
+        },
+        options: opcoesEixo(),
+      });
+    }
+
+    function renderizarFunil(emAnalise, resolvidosIA, concluidos, total) {
+      upsertChart("funil", "canvasFunil", {
+        type: "doughnut",
+        data: {
+          labels: ["Em análise", "Resolvidos pela IA", "Concluídos"],
+          datasets: [{
+            data: [emAnalise, resolvidosIA, concluidos],
+            backgroundColor: ["#fbbf24", "#a855f7", "#34d399"],
+            borderColor: "#171029",
+            borderWidth: 3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { color: "#c4b5fd", boxWidth: 12 } },
+          },
+        },
+      });
+
+      const alerta = document.getElementById("alertaAbertos");
+      const altas = visiveis.filter(function (a) {
+        return !atendimentoFinalizadoParaCliente(a.status) && (a.prioridade || "").toLowerCase().indexOf("alta") >= 0;
+      }).length;
+      if (altas > 0) {
+        alerta.style.display = "flex";
+        alerta.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + altas + " caso(s) de prioridade ALTA aguardando tratamento.";
+      } else {
+        alerta.style.display = "none";
+      }
+    }
+
+    function renderizarBarrasH(id, itens) {
+      const alvo = document.getElementById(id);
+      alvo.innerHTML = "";
+      if (itens.length === 0) {
+        alvo.innerHTML = '<div class="text-secondary" style="font-size:0.86rem;">Sem dados ainda.</div>';
+        return;
+      }
+      const max = Math.max(1, itens[0].valor);
+      itens.forEach(function (item) {
+        alvo.innerHTML +=
+          '<div class="linha-h">' +
+            '<div class="rotulo" title="' + item.rotulo + '">' + item.rotulo + "</div>" +
+            '<div class="trilha"><div class="preencho" style="width:' + Math.round((item.valor / max) * 100) + '%;"></div></div>' +
+            '<div class="valor">' + item.valor + "</div>" +
+          "</div>";
+      });
+    }
+
+    function renderizarPrioridade() {
+      const abertos = visiveis.filter(function (a) { return !atendimentoFinalizadoParaCliente(a.status); });
+      const contagem = { Alta: 0, "Média": 0, Baixa: 0 };
+      abertos.forEach(function (a) {
+        const p = (a.prioridade || "").toLowerCase();
+        if (p.indexOf("alta") >= 0) contagem.Alta++;
+        else if (p.indexOf("baixa") >= 0) contagem.Baixa++;
+        else contagem["Média"]++;
+      });
+      upsertChart("prioridade", "canvasPrioridade", {
+        type: "doughnut",
+        data: {
+          labels: ["Alta", "Média", "Baixa"],
+          datasets: [{
+            data: [contagem.Alta, contagem["Média"], contagem.Baixa],
+            backgroundColor: ["#f87171", "#fbbf24", "#34d399"],
+            borderColor: "#171029",
+            borderWidth: 3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { color: "#c4b5fd", boxWidth: 12 } } },
+        },
+      });
+    }
+
+    function renderizarHorarios() {
+      const faixas = [0, 0, 0, 0, 0, 0, 0, 0];
+      visiveis.forEach(function (a) {
+        if (!a.data_criacao_ts) return;
+        const hora = new Date(a.data_criacao_ts.seconds * 1000).getHours();
+        faixas[Math.floor(hora / 3)]++;
+      });
+      upsertChart("horarios", "canvasHorarios", {
+        type: "bar",
+        data: {
+          labels: ["00h", "03h", "06h", "09h", "12h", "15h", "18h", "21h"],
+          datasets: [{
+            label: "Chamados",
+            data: faixas,
+            backgroundColor: "#a855f7",
+            borderRadius: 8,
+            maxBarThickness: 28,
+          }],
+        },
+        options: opcoesEixo(),
+      });
+    }
+
+    function renderizarSentimento() {
+      const contagem = { positivo: 0, neutro: 0, preocupado: 0, frustrado: 0 };
+      visiveis.forEach(function (a) {
+        const s = ((a.ia && a.ia.sentimento) || "").toLowerCase();
+        if (s.indexOf("positiv") >= 0) contagem.positivo++;
+        else if (s.indexOf("frustrad") >= 0) contagem.frustrado++;
+        else if (s.indexOf("preocupad") >= 0) contagem.preocupado++;
+        else contagem.neutro++;
+      });
+      upsertChart("sentimento", "canvasSentimento", {
+        type: "doughnut",
+        data: {
+          labels: ["Positivos", "Neutros", "Preocupados", "Frustrados"],
+          datasets: [{
+            data: [contagem.positivo, contagem.neutro, contagem.preocupado, contagem.frustrado],
+            backgroundColor: ["#34d399", "#94a3b8", "#fbbf24", "#f87171"],
+            borderColor: "#171029",
+            borderWidth: 3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: "bottom", labels: { color: "#c4b5fd", boxWidth: 12 } } },
+        },
+      });
+    }
+
+    // Idade dos casos em aberto (aging do backlog)
+    function renderizarAging() {
+      const abertos = visiveis.filter(function (a) { return !atendimentoFinalizadoParaCliente(a.status); });
+      const agora = Date.now() / 1000;
+      const faixas = [
+        { rotulo: "🟢 até 4 h", valor: 0, cor: "linear-gradient(90deg,#059669,#34d399)" },
+        { rotulo: "🟣 4–24 h", valor: 0, cor: "linear-gradient(90deg,#7c3aed,#c084fc)" },
+        { rotulo: "🟡 1–3 dias", valor: 0, cor: "linear-gradient(90deg,#d97706,#fbbf24)" },
+        { rotulo: "🔴 +3 dias", valor: 0, cor: "linear-gradient(90deg,#dc2626,#f87171)" },
+      ];
+      let maisAntigo = null;
+      abertos.forEach(function (a) {
+        if (!a.data_criacao_ts) return;
+        const horas = (agora - a.data_criacao_ts.seconds) / 3600;
+        if (horas < 4) faixas[0].valor++;
+        else if (horas < 24) faixas[1].valor++;
+        else if (horas < 72) faixas[2].valor++;
+        else faixas[3].valor++;
+        if (!maisAntigo || a.data_criacao_ts.seconds < maisAntigo.data_criacao_ts.seconds) maisAntigo = a;
+      });
+
+      const alvo = document.getElementById("graficoAging");
+      const max = Math.max(1, abertos.length);
+      alvo.innerHTML = "";
+      faixas.forEach(function (item) {
+        alvo.innerHTML +=
+          '<div class="linha-h">' +
+            '<div class="rotulo">' + item.rotulo + "</div>" +
+            '<div class="trilha"><div class="preencho" style="width:' + Math.round((item.valor / max) * 100) + "%; background:" + item.cor + ';"></div></div>' +
+            '<div class="valor">' + item.valor + "</div>" +
+          "</div>";
+      });
+
+      const alerta = document.getElementById("alertaAntigo");
+      if (maisAntigo && maisAntigo.data_criacao_ts) {
+        const horasEsperando = (agora - maisAntigo.data_criacao_ts.seconds) / 3600;
+        alerta.className = "alerta-risco " + (horasEsperando >= 24 ? "alto" : "medio") + " mt-2 mb-0";
+        alerta.style.display = "flex";
+        alerta.innerHTML = '<i class="bi bi-alarm"></i> Mais antigo aguardando: <b>&nbsp;' + (maisAntigo.protocolo || "—") +
+          "&nbsp;</b> (" + jogoTempoRelativo(maisAntigo.data_criacao_ts) + " na fila)";
+      } else {
+        alerta.style.display = "none";
+      }
+    }
+
+    // Donuts de precisão da IA (confiança da triagem + acerto de roteamento)
+    function renderizarPrecisao() {
+      let somaConf = 0, comConf = 0, validados = 0, redirecionados = 0, respostas = 0;
+      visiveis.forEach(function (a) {
+        const c = (a.ia && a.ia.confianca) || 0;
+        if (c > 0) { somaConf += c; comConf++; }
+        if (a.area_validada) {
+          validados++;
+          if (a.justificativa_redirecionamento) redirecionados++;
+        }
+        if (a.mensagem_operacao) respostas++;
+      });
+
+      const conf = comConf > 0 ? Math.round(somaConf / comConf) : 0;
+      const acerto = validados > 0 ? Math.round(((validados - redirecionados) / validados) * 100) : 0;
+
+      document.getElementById("valorConfianca").textContent = comConf > 0 ? conf + "%" : "—";
+      opsPintarDonut("donutConfianca", comConf > 0 ? conf : 0, "#a855f7");
+      document.getElementById("valorRoteamento").textContent = validados > 0 ? acerto + "%" : "—";
+      opsPintarDonut("donutRoteamento", validados > 0 ? acerto : 0, "#34d399");
+
+      document.getElementById("linhasPrecisao").innerHTML =
+        '<span class="chip">🤖 ' + (estatisticas ? estatisticas.resolvidosIA : 0) + " resolvidos sem humano</span>" +
+        '<span class="chip">🗺️ ' + validados + " roteamentos validados</span>" +
+        '<span class="chip">✍️ ' + respostas + " respostas enviadas a clientes</span>";
+    }
+
+    // Casos concluídos por operador (volume, dados de perfis_jogo)
+    function renderizarProdutividade() {
+      const alvo = document.getElementById("graficoProdutividade");
+      if (!alvo) return;
+      const top = perfisOperadores
+        .map(function (p) { return { nome: p.nome, casos: p.casos_concluidos || 0 }; })
+        .filter(function (p) { return p.casos > 0; })
+        .sort(function (a, b) { return b.casos - a.casos; })
+        .slice(0, 6);
+
+      document.getElementById("produtividadeVazio").style.display = top.length === 0 ? "block" : "none";
+      alvo.innerHTML = "";
+      const max = Math.max(1, top.length > 0 ? top[0].casos : 1);
+      top.forEach(function (p) {
+        alvo.innerHTML +=
+          '<div class="linha-h">' +
+            '<div class="rotulo" title="' + p.nome + '">' + p.nome + "</div>" +
+            '<div class="trilha"><div class="preencho" style="width:' + Math.round((p.casos / max) * 100) + '%;"></div></div>' +
+            '<div class="valor">' + p.casos + "</div>" +
+          "</div>";
+      });
+    }
+
+    // Nuvem de tags detectadas pela IA
+    function renderizarTags() {
+      const contagem = {};
+      visiveis.forEach(function (a) {
+        ((a.ia && a.ia.tags) || []).forEach(function (t) {
+          const chave = (t || "").toString().toLowerCase().trim();
+          if (chave) contagem[chave] = (contagem[chave] || 0) + 1;
+        });
+      });
+      const top = Object.keys(contagem)
+        .map(function (k) { return { tag: k, n: contagem[k] }; })
+        .sort(function (a, b) { return b.n - a.n; })
+        .slice(0, 12);
+
+      const alvo = document.getElementById("nuvemTags");
+      if (top.length === 0) {
+        alvo.innerHTML = '<span class="text-secondary" style="font-size:0.86rem;">Sem tags ainda — a IA marca temas a cada chamado analisado.</span>';
+        return;
+      }
+      alvo.innerHTML = "";
+      top.forEach(function (t) {
+        alvo.innerHTML += '<span class="chip">#' + t.tag + ' <b style="opacity:0.7;">· ' + t.n + "</b></span>";
+      });
+    }
+
+    function renderizarQualidadeOperadores() {
+      const alvo = document.getElementById("rankingQualidade");
+      if (!alvo) return;
+      const comNota = perfisOperadores
+        .map(function (p) { return { nome: p.nome, medias: jogoMedias(p), casos: p.casos_concluidos || 0 }; })
+        .filter(function (p) { return p.medias; })
+        .sort(function (a, b) { return b.medias.geral - a.medias.geral; })
+        .slice(0, 5);
+
+      alvo.innerHTML = "";
+      document.getElementById("qualidadeVazio").style.display = comNota.length === 0 ? "block" : "none";
+
+      comNota.forEach(function (p) {
+        alvo.innerHTML +=
+          '<div class="linha-h">' +
+            '<div class="rotulo" title="' + p.nome + '">' + p.nome + "</div>" +
+            '<div class="trilha"><div class="preencho" style="width:' + p.medias.geral + "%; background:" +
+              (p.medias.geral >= 80 ? "linear-gradient(90deg,#059669,#34d399)" : "linear-gradient(90deg,#7c3aed,#c084fc)") + ';"></div></div>' +
+            '<div class="valor">' + p.medias.geral + "%</div>" +
+          "</div>";
+      });
+    }
+
+    // ============ Relatório executivo com IA ============
+    function montarBalao() {
+      nexaiaMostrar("nexaia",
+        "Estou de olho nos números do recorte que você escolheu. Mude o período, a área ou quem está tratando — e eu recalculo tudo. Quer o relatório executivo desse recorte?",
+        { acaoTexto: "✨ Gerar relatório executivo", aoClicar: gerarRelatorio });
+    }
+
+    async function gerarRelatorio() {
+      const btn = document.getElementById("nexaiaAcao");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Escrevendo o relatório...';
+      try {
+        const e = estatisticas || {};
+        const intencoes = contarPor(function (a) { return a.intencao || "Outros"; })
+          .slice(0, 3).map(function (i) { return i.rotulo + " (" + i.valor + ")"; }).join(", ");
+
+        const relatorio = await nexaiaPerguntar(
+          "Você é a NexaIA, analista executiva da operação de atendimento da NexaTalk AI. " +
+          "Com base nos números abaixo, escreva um relatório executivo em português com EXATAMENTE 5 linhas curtas:\n" +
+          "📊 Visão geral: ...\n🤖 IA: ...\n⚠️ Atenção: ...\n🏆 Destaque: ...\n💡 Recomendação: ...\n" +
+          "Cada linha com no máximo 110 caracteres. Sem introdução nem despedida.\n\n" +
+          "Números do período:\n" +
+          "- Total de chamados: " + (e.total || 0) + "\n" +
+          "- Resolvidos automaticamente pela IA: " + (e.resolvidosIA || 0) + " (taxa " + (e.taxaIA || 0) + "%)\n" +
+          "- Em análise (fila humana): " + (e.emAnalise || 0) + "\n" +
+          "- Concluídos pelos operadores: " + (e.concluidos || 0) + "\n" +
+          "- Qualidade média das tratativas (auditoria IA): " + (e.qualidade === null ? "sem dados" : e.qualidade + "%") + "\n" +
+          "- Tempo médio até conclusão: " + (e.tempoMedio === null ? "sem dados" : Math.round(e.tempoMedio) + " horas") + "\n" +
+          "- Casos de prioridade ALTA em aberto: " + (e.altasAbertas || 0) + "\n" +
+          "- Chamados hoje: " + (e.hoje || 0) + " (ontem: " + (e.ontem || 0) + ")\n" +
+          "- Clientes únicos no período: " + (e.clientes || 0) + "\n" +
+          "- Principais intenções: " + (intencoes || "sem dados")
+        );
+        nexaiaTexto("nexaia", relatorio);
+        btn.style.display = "none";
+        relatorioGerado = true;
+      } catch (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = "✨ Gerar relatório executivo";
+        nexaiaTexto("nexaia", "Não consegui gerar o relatório agora (verifique a chave Gemini ou a cota do dia). Os gráficos continuam ao vivo!");
+      }
+    }
+  </script>
+</body>
+</html>
