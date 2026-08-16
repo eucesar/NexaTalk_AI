@@ -49,6 +49,14 @@
           </div>
         </div>
 
+        <button type="button" id="btnVoz" class="btn-gravar" onclick="gravarDescricao()">
+          <i class="bi bi-mic me-2"></i> Falar o problema (voz)
+        </button>
+        <div class="acoes-texto mb-2">
+          <button type="button" class="btn-roxo-claro" onclick="reescreverDescricao('simples')">Simplificar linguagem</button>
+          <button type="button" class="btn-roxo-claro" onclick="reescreverDescricao('es')">Traducir al español</button>
+        </div>
+
         <!-- Melhorar texto com a IA (sob demanda) -->
         <button type="button" id="btnMelhorar" class="btn-roxo-claro" style="padding: 11px; font-size: 0.92rem;" onclick="melhorarDescricao()">
           <i class="bi bi-magic me-2"></i> Melhorar descrição com IA
@@ -156,6 +164,114 @@
       descricao.value = descricaoOriginal;
       contador.textContent = descricao.value.length;
       document.getElementById("msgMelhorar").style.display = "none";
+    }
+
+    let gravacao = null;
+
+    async function gravarDescricao() {
+      const btn = document.getElementById("btnVoz");
+      const msg = document.getElementById("msgMelhorar");
+      msg.style.display = "block";
+
+      if (gravacao && gravacao.gravando) {
+        gravacao.gravando = false;
+        if (gravacao.timer) clearTimeout(gravacao.timer);
+        gravacao.recorder.stop();
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        msg.textContent = "Este navegador não libera o microfone. Abra com Live Server no Edge ou Chrome.";
+        return;
+      }
+      if (typeof MediaRecorder === "undefined") {
+        msg.textContent = "Gravação de áudio indisponível neste navegador.";
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mime = nexaiaMimeAudio();
+        const partes = [];
+        const recorder = mime
+          ? new MediaRecorder(stream, { mimeType: mime })
+          : new MediaRecorder(stream);
+
+        gravacao = { recorder: recorder, gravando: true, timer: null };
+
+        recorder.ondataavailable = function (ev) {
+          if (ev.data && ev.data.size > 0) partes.push(ev.data);
+        };
+
+        recorder.onstop = async function () {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          btn.disabled = true;
+          btn.classList.remove("gravando");
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Transcrevendo com a NexaIA...';
+          msg.textContent = "Enviando o áudio para a IA. Só um instante...";
+          try {
+            const blob = new Blob(partes, { type: recorder.mimeType || mime || "audio/webm" });
+            if (blob.size < 800) {
+              msg.textContent = "Áudio muito curto. Toque de novo, fale por alguns segundos e toque para parar.";
+              return;
+            }
+            const texto = await nexaiaTranscreverAudio(blob);
+            if (!texto || texto.indexOf("não entendi") >= 0) {
+              msg.textContent = "Não entendi a fala. Fale mais perto do microfone e tente de novo.";
+              return;
+            }
+            descricao.value = texto.slice(0, 500);
+            descricao.classList.remove("is-invalid");
+            contador.textContent = descricao.value.length;
+            msg.textContent = "Pronto. Revise o texto e toque em Analisar com IA.";
+          } catch (e) {
+            console.error(e);
+            msg.textContent = "Não consegui transcrever (microfone, chave Gemini ou cota). Tente de novo.";
+          } finally {
+            gravacao = null;
+            btn.disabled = false;
+            btn.classList.remove("gravando");
+            btn.innerHTML = '<i class="bi bi-mic me-2"></i> Falar o problema (voz)';
+          }
+        };
+
+        recorder.start();
+        btn.classList.add("gravando");
+        btn.innerHTML = '<i class="bi bi-stop-circle me-2"></i> Gravando... toque para parar';
+        msg.textContent = "Fale agora. Toque de novo no botão para parar e eu coloco o texto no campo.";
+        gravacao.timer = setTimeout(function () {
+          if (gravacao && gravacao.gravando) {
+            gravacao.gravando = false;
+            recorder.stop();
+          }
+        }, 45000);
+      } catch (e) {
+        console.error(e);
+        gravacao = null;
+        btn.classList.remove("gravando");
+        btn.innerHTML = '<i class="bi bi-mic me-2"></i> Falar o problema (voz)';
+        msg.textContent = "Permita o microfone neste site (ícone ao lado da barra de endereço) e tente de novo.";
+      }
+    }
+
+    async function reescreverDescricao(modo) {
+      const texto = descricao.value.trim();
+      const msg = document.getElementById("msgMelhorar");
+      if (texto.length < 8) {
+        msg.textContent = "Escreva ou grave um pouco mais primeiro.";
+        msg.style.display = "block";
+        return;
+      }
+      msg.style.display = "block";
+      msg.textContent = "Reescrevendo...";
+      try {
+        descricaoOriginal = texto;
+        descricao.value = (await nexaiaReescrever(texto, modo)).slice(0, 500);
+        contador.textContent = descricao.value.length;
+        msg.innerHTML = 'Pronto. <a href="#" onclick="desfazerMelhoria(); return false;" style="color: var(--roxo); font-weight: 600;">Desfazer</a>';
+      } catch (e) {
+        msg.textContent = "Não consegui reescrever agora (Gemini).";
+      }
     }
 
     // Validação + envio do formulário

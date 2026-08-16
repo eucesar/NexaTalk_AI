@@ -46,6 +46,10 @@
           <div class="icone rosa"><i class="bi bi-lightning-charge"></i></div>
           <div><div class="valor" id="statAlta">0</div><div class="rotulo">Prioridade alta</div></div>
         </div>
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-hourglass-split"></i></div>
+          <div><div class="valor" id="statSla">0</div><div class="rotulo">SLA estourado / no limite</div></div>
+        </div>
       </div>
 
       <!-- NexaIA: resumo local + insights sob demanda -->
@@ -108,6 +112,7 @@
               <th>Área (IA)</th>
               <th>Tratando</th>
               <th>Status</th>
+              <th>SLA</th>
               <th>Data</th>
               <th></th>
             </tr>
@@ -171,18 +176,21 @@
     });
 
     function atualizarStats() {
-      let analise = 0, ia = 0, concluido = 0, alta = 0;
+      let analise = 0, ia = 0, concluido = 0, alta = 0, slaRuim = 0;
       todosAtendimentos.forEach(function (a) {
         const s = (a.status || "").toLowerCase();
         if (s.indexOf("conclu") >= 0) concluido++;
         else if (s.indexOf("resolvido") >= 0) ia++;
         else analise++;
         if ((a.prioridade || "").toLowerCase().indexOf("alta") >= 0 && s.indexOf("conclu") < 0) alta++;
+        const sla = opsSlaInfo(a);
+        if (sla.estado === "estourado" || sla.estado === "alerta") slaRuim++;
       });
       document.getElementById("statAnalise").textContent = analise;
       document.getElementById("statIA").textContent = ia;
       document.getElementById("statConcluido").textContent = concluido;
       document.getElementById("statAlta").textContent = alta;
+      document.getElementById("statSla").textContent = slaRuim;
     }
 
     // Widgets: "próximo melhor chamado" (escolha da IA por urgência,
@@ -204,6 +212,9 @@
         if (!melhor.atribuido_a) motivos.push("ninguém assumiu ainda");
         if (melhor.ia && melhor.ia.sla_sugerido) motivos.push("SLA: " + melhor.ia.sla_sugerido);
         if (motivos.length === 0) motivos.push("é o caso mais antigo aguardando");
+        const slaMelhor = opsSlaInfo(melhor);
+        if (slaMelhor.estado === "estourado") motivos.push("SLA ESTOURADO");
+        else if (slaMelhor.estado === "alerta") motivos.push("SLA no limite");
 
         document.getElementById("destaqueProtocolo").textContent = melhor.protocolo || "—";
         document.getElementById("destaqueCliente").textContent = (melhor.cliente && melhor.cliente.nome) || "—";
@@ -274,6 +285,13 @@
       } else {
         texto = nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) + "! Você tem " + abertos.length + " caso(s) aguardando" +
           (altas.length > 0 ? " — " + altas.length + " com prioridade ALTA (sugiro começar pelo " + (altas[0].protocolo || "mais recente") + ")." : ".") +
+          (function () {
+            const ruins = abertos.filter(function (a) {
+              const e = opsSlaInfo(a).estado;
+              return e === "estourado" || e === "alerta";
+            });
+            return ruins.length ? " " + ruins.length + " com SLA no limite ou estourado — escale se precisar." : "";
+          })() +
           " Quer que eu analise a fila e diga por onde atacar?";
       }
 
@@ -393,6 +411,7 @@
           "<td>" + (a.area_atual || "—") + (a.area_validada ? ' <i class="bi bi-patch-check-fill" style="color:#4ade80;" title="Área validada pelo operador"></i>' : "") + "</td>" +
           "<td>" + chipTratando(a) + "</td>" +
           "<td>" + opsBadgeStatus(a.status) + "</td>" +
+          "<td>" + opsChipSla(a) + "</td>" +
           '<td class="data-cel">' + (a.data_criacao || "—") + "</td>" +
           '<td style="text-align:right;"><i class="bi bi-arrow-right" style="color: var(--roxo);"></i></td>';
         tr.addEventListener("click", function () {

@@ -48,6 +48,8 @@
 
         <div class="ops-detalhe">
 
+          <div id="bannerChurn" class="banner-churn" style="display:none; grid-column: 1 / -1;"></div>
+
           <!-- ================= COLUNA ESQUERDA: o caso ================= -->
           <div class="ops-coluna">
 
@@ -471,6 +473,18 @@
       document.getElementById("miniComplexidade").textContent = ia.complexidade || "—";
       document.getElementById("miniSla").textContent = ia.sla_sugerido || "—";
       document.getElementById("miniTempo").textContent = ia.tempo_estimado || "—";
+
+      const churn = opsChurn(a);
+      const boxChurn = document.getElementById("bannerChurn");
+      if (churn) {
+        boxChurn.style.display = "block";
+        boxChurn.innerHTML =
+          "<h3><i class=\"bi bi-heartbreak\"></i> " + churn.titulo + "</h3>" +
+          "<div style=\"font-size:0.82rem;color:#fecaca;\">" + churn.motivo + " — playbook de retenção:</div>" +
+          "<ol>" + churn.passos.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ol>";
+      } else {
+        boxChurn.style.display = "none";
+      }
 
       // Radar de riscos (análise local, sem custo de API)
       const riscos = document.getElementById("listaRiscos");

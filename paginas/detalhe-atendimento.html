@@ -52,6 +52,10 @@
         <div class="cartao">
           <div class="rotulo-pequeno">Descrição original</div>
           <div id="descricao" class="text-secondary" style="font-size: 0.92rem;"></div>
+          <div class="acoes-texto">
+            <button type="button" class="btn-roxo-claro" onclick="reescreverCampo('descricao','simples')">Simplificar</button>
+            <button type="button" class="btn-roxo-claro" onclick="reescreverCampo('descricao','es')">Traducir ES</button>
+          </div>
         </div>
 
         <!-- Resumo da IA -->
@@ -72,6 +76,24 @@
             <i class="bi bi-chat-left-text"></i> Mensagem da operação
           </div>
           <div id="mensagemOperacao" style="font-size: 0.9rem; color: #fde68a;"></div>
+          <div class="acoes-texto">
+            <button type="button" class="btn-roxo-claro" onclick="reescreverCampo('mensagemOperacao','simples')">Simplificar linguagem</button>
+            <button type="button" class="btn-roxo-claro" onclick="reescreverCampo('mensagemOperacao','es')">Traducir al español</button>
+          </div>
+        </div>
+
+        <div id="caixaNps" class="cartao nps-box" style="display:none;">
+          <div class="rotulo-pequeno"><i class="bi bi-star"></i> Como foi o atendimento?</div>
+          <div id="npsEstrelas" class="nps-estrelas mb-2">
+            <span data-n="1">★</span><span data-n="2">★</span><span data-n="3">★</span><span data-n="4">★</span><span data-n="5">★</span>
+          </div>
+          <label class="form-label" style="font-size:0.82rem;">A IA resolveu o seu caso?</label>
+          <select id="npsIa" class="form-select mb-2" style="font-size:0.88rem;">
+            <option value="sim">Sim, a NexaIA resolveu</option>
+            <option value="nao">Não, precisou de humano / não resolveu</option>
+          </select>
+          <button type="button" class="btn-roxo" onclick="enviarNps()">Enviar avaliação</button>
+          <div id="npsMsg" class="text-center text-secondary mt-2" style="font-size:0.8rem;"></div>
         </div>
 
         <!-- Assistente NexaIA -->
@@ -174,7 +196,21 @@
         document.getElementById("intencao").textContent =
           a.intencao || (a.ia && a.ia.intencao) || "Não identificada";
         document.getElementById("mensagemOperacao").textContent = mensagemDaOperacao(a);
-        nexaiaMostrar("nexaia", dicaNexaia(a));
+        nexaiaMostrar("nexaia", dicaNexaia(a), {
+          acaoTexto: "💬 Falar com a NexaIA",
+          aoClicar: function () { window.location.href = "chat-nexaia.html"; }
+        });
+
+        const caixa = document.getElementById("caixaNps");
+        const finalizado = atendimentoFinalizadoParaCliente(a.status);
+        if (finalizado && a.avaliacao_cliente) {
+          caixa.style.display = "block";
+          pintarEstrelas(a.avaliacao_cliente.estrelas || 0);
+          document.getElementById("npsMsg").textContent = "Você já avaliou: " + (a.avaliacao_cliente.estrelas || 0) + " estrelas.";
+          document.querySelector("#caixaNps .btn-roxo").style.display = "none";
+        } else if (finalizado) {
+          caixa.style.display = "block";
+        }
 
         document.getElementById("carregando").style.display = "none";
         document.getElementById("conteudo").style.display = "block";
@@ -186,6 +222,52 @@
     }
 
     carregarDetalhes();
+
+    let npsNota = 0;
+    document.getElementById("npsEstrelas").addEventListener("click", function (e) {
+      const n = e.target.getAttribute("data-n");
+      if (!n) return;
+      npsNota = parseInt(n, 10);
+      pintarEstrelas(npsNota);
+    });
+
+    function pintarEstrelas(n) {
+      document.querySelectorAll("#npsEstrelas span").forEach(function (s) {
+        s.classList.toggle("ativa", parseInt(s.getAttribute("data-n"), 10) <= n);
+      });
+    }
+
+    async function enviarNps() {
+      const msg = document.getElementById("npsMsg");
+      if (!npsNota) {
+        msg.textContent = "Toque nas estrelas (1 a 5) antes de enviar.";
+        return;
+      }
+      try {
+        await salvarAvaliacaoCliente(atendimentoId, {
+          estrelas: npsNota,
+          nps: npsNota,
+          iaResolveu: document.getElementById("npsIa").value === "sim",
+        });
+        msg.textContent = "Obrigado! Sua nota ajuda a NexaIA a melhorar.";
+        document.querySelector("#caixaNps .btn-roxo").style.display = "none";
+      } catch (e) {
+        console.error(e);
+        msg.textContent = "Não foi possível salvar. Tente de novo.";
+      }
+    }
+
+    async function reescreverCampo(id, modo) {
+      const el = document.getElementById(id);
+      const original = el.textContent;
+      el.textContent = "Reescrevendo...";
+      try {
+        el.textContent = await nexaiaReescrever(original, modo);
+      } catch (e) {
+        console.error(e);
+        el.textContent = original;
+      }
+    }
   </script>
 </body>
 </html>

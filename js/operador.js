@@ -103,6 +103,69 @@ function opsSentimentoNegativo(a) {
   return s.indexOf("frustrad") >= 0 || s.indexOf("preocupad") >= 0;
 }
 
+function opsParseSlaMinutos(texto) {
+  const t = (texto || "").toLowerCase().replace(/~/g, " ").trim();
+  if (!t) return 24 * 60;
+  const m = t.match(/(\d+(?:[.,]\d+)?)/);
+  const num = m ? parseFloat(m[1].replace(",", ".")) : 24;
+  if (/min/.test(t)) return Math.max(1, Math.round(num));
+  if (/dia/.test(t)) return Math.round(num * 24 * 60);
+  if (/hora/.test(t) || /h\b/.test(t)) return Math.round(num * 60);
+  return Math.round(num * 60);
+}
+
+function opsSlaInfo(a) {
+  if (!a || atendimentoFinalizadoParaCliente(a.status)) {
+    return { estado: "ok", rotulo: "—", restanteMin: null };
+  }
+  const limite = opsParseSlaMinutos(a.ia && a.ia.sla_sugerido);
+  const inicio = a.data_criacao_ts && a.data_criacao_ts.seconds
+    ? a.data_criacao_ts.seconds * 1000
+    : Date.now();
+  const restanteMin = Math.round((inicio + limite * 60 * 1000 - Date.now()) / 60000);
+  let estado = "ok";
+  if (restanteMin <= 0) estado = "estourado";
+  else if (restanteMin <= Math.max(30, limite * 0.2)) estado = "alerta";
+  let rotulo;
+  if (restanteMin <= 0) rotulo = "estourou " + Math.abs(restanteMin) + " min";
+  else if (restanteMin < 60) rotulo = restanteMin + " min";
+  else rotulo = Math.round(restanteMin / 60) + " h";
+  return { estado: estado, rotulo: rotulo, restanteMin: restanteMin, limite: limite };
+}
+
+function opsChipSla(a) {
+  const info = opsSlaInfo(a);
+  if (info.rotulo === "—") return '<span class="sla-chip ok">—</span>';
+  const icone = info.estado === "estourado" ? "bi-exclamation-octagon" :
+    info.estado === "alerta" ? "bi-hourglass-split" : "bi-clock";
+  return '<span class="sla-chip ' + info.estado + '"><i class="bi ' + icone + '"></i> ' + info.rotulo + "</span>";
+}
+
+function opsChurn(a) {
+  const texto = ((a.descricao_original || "") + " " + ((a.ia && a.ia.observacao) || "") + " " +
+    ((a.ia && a.ia.resumo) || "")).toLowerCase();
+  const juridico = /procon|jur[ií]dic|processo|advogad|lgpd|anatel/.test(texto);
+  const fraude = /fraude|clonad|invadid|acesso indevido|vazamento/.test(texto);
+  const financeiro = /estorno|reembolso|cobran[cç]a (indevida|duplicada)|cancel/.test(texto);
+  const ruim = opsSentimentoNegativo(a);
+  const alta = ((a.prioridade || "").toLowerCase().indexOf("alta") >= 0);
+
+  if (!(juridico || fraude || (financeiro && ruim) || (alta && ruim && financeiro))) return null;
+
+  const passos = [];
+  if (juridico) passos.push("Registrar o caso como risco legal e responder por escrito em até 1 hora.");
+  if (fraude) passos.push("Acionar o protocolo de segurança da conta (bloquear acesso suspeito).");
+  if (financeiro) passos.push("Oferecer crédito/compensação proporcional e confirmar o valor com o cliente.");
+  passos.push("Ligar para o cliente em até 1 hora — retenção vale mais que o ticket.");
+  passos.push("Não deixar o caso na fila sem dono: atribua a si e atualize o status.");
+
+  return {
+    titulo: fraude ? "Risco de fraude / perda de confiança" : "Risco de perda de cliente (churn)",
+    motivo: juridico ? "Menção a Procon/jurídico" : financeiro ? "Cobrança/cancelamento + humor negativo" : "Prioridade alta e cliente insatisfeito",
+    passos: passos.slice(0, 4),
+  };
+}
+
 // ===================== AÇÕES DO OPERADOR =====================
 
 function opsAgoraTexto() {
@@ -274,6 +337,10 @@ function opsRiscos(a) {
   }
   if (((a.prioridade || "").toLowerCase().indexOf("alta") >= 0)) {
     alertas.push({ nivel: "medio", texto: "Prioridade ALTA definida pela IA — SLA sugerido: " + ((a.ia && a.ia.sla_sugerido) || "o quanto antes") + "." });
+  }
+  const churn = opsChurn(a);
+  if (churn) {
+    alertas.unshift({ nivel: "alto", texto: churn.titulo + " — " + churn.motivo + ". Siga o playbook de retenção." });
   }
   if (alertas.length === 0) {
     alertas.push({ nivel: "ok", texto: "Nenhum risco detectado — caso tranquilo, pode seguir o plano de ação." });

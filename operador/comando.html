@@ -100,6 +100,14 @@
           <div class="icone verde"><i class="bi bi-people"></i></div>
           <div><div class="valor" id="kpiClientes">0</div><div class="rotulo">Clientes únicos</div></div>
         </div>
+        <div class="ops-stat">
+          <div class="icone amarelo"><i class="bi bi-hourglass-bottom"></i></div>
+          <div><div class="valor" id="kpiSla">0</div><div class="rotulo">SLA estourado / no limite</div></div>
+        </div>
+        <div class="ops-stat">
+          <div class="icone rosa"><i class="bi bi-star-fill"></i></div>
+          <div><div class="valor" id="kpiNps">—</div><div class="rotulo">NPS / estrelas do cliente</div></div>
+        </div>
       </div>
 
       <!-- Relatório executivo com IA -->
@@ -454,10 +462,22 @@
         " vs ontem (" + ontem + ")";
       document.getElementById("kpiClientes").textContent = Object.keys(clientesUnicos).length;
 
+      let slaRuim = 0, somaNps = 0, comNps = 0;
+      visiveis.forEach(function (a) {
+        const sla = opsSlaInfo(a);
+        if (sla.estado === "estourado" || sla.estado === "alerta") slaRuim++;
+        if (a.avaliacao_cliente && a.avaliacao_cliente.estrelas) {
+          somaNps += a.avaliacao_cliente.estrelas;
+          comNps++;
+        }
+      });
+      document.getElementById("kpiSla").textContent = slaRuim;
+      document.getElementById("kpiNps").textContent = comNps ? (somaNps / comNps).toFixed(1) + " ★" : "—";
+
       estatisticas = {
         total: total, taxaIA: taxaIA, emAnalise: emAnalise, concluidos: concluidos, resolvidosIA: resolvidosIA,
         qualidade: qualidade, tempoMedio: tempoMedio, altasAbertas: altasAbertas, hoje: hoje, ontem: ontem,
-        clientes: Object.keys(clientesUnicos).length,
+        clientes: Object.keys(clientesUnicos).length, slaRuim: slaRuim, nps: comNps ? (somaNps / comNps) : null,
       };
 
       renderizarVelas();
@@ -936,6 +956,8 @@
           "- Casos de prioridade ALTA em aberto: " + (e.altasAbertas || 0) + "\n" +
           "- Chamados hoje: " + (e.hoje || 0) + " (ontem: " + (e.ontem || 0) + ")\n" +
           "- Clientes únicos no período: " + (e.clientes || 0) + "\n" +
+          "- SLA no limite ou estourado: " + (e.slaRuim || 0) + "\n" +
+          "- NPS médio (estrelas 1-5 do cliente): " + (e.nps === null || e.nps === undefined ? "sem dados" : e.nps.toFixed(1)) + "\n" +
           "- Principais intenções: " + (intencoes || "sem dados")
         );
         nexaiaTexto("nexaia", relatorio);

@@ -16,7 +16,7 @@
   <div class="ops-app" id="app">
     <!-- Sidebar (montada via JS) -->
 
-    <main class="ops-main" style="max-width: 980px;">
+    <main class="ops-main">
 
       <div class="ops-header">
         <div>
@@ -27,7 +27,7 @@
             <h1>🚧 Histórico do Atendimento (D4)</h1>
           </div>
           <div class="subtitulo">
-            Tela em construção — e aqui estão TODAS as anotações dos próximos passos: o que já existe, o que falta e como continuar (handoff completo para qualquer pessoa ou chat novo de IA).
+            Entrega atual ~90% — a única tela pendente para a apresentação seguinte é a timeline D4 (esta página). O restante da lista “FAZER” já foi implementado.
           </div>
         </div>
       </div>
@@ -66,6 +66,13 @@
           <li><span class="num">✓</span><span><b>Dojo de Treinamento (dojo.html):</b> a IA simula clientes (fácil/médio/difícil), o operador responde e a sensei NexaIA dá nota, feedback e resposta exemplar. Vale XP (contador <code>treinos</code>).</span></li>
           <li><span class="num">✓</span><span><b>Base de Conhecimento Viva (conhecimento.html):</b> a IA minera temas recorrentes da fila e redige artigos; o operador aprova e publica (coleção <code>base_conhecimento</code>, contador <code>artigos_publicados</code>).</span></li>
           <li><span class="num">✓</span><span><b>Ingestão de Dados demo (ingestao.html):</b> limpa e popula o Firebase com 18 chamados, 6 operadores, perfis, feed e artigos — com opção de vincular chamados ao cliente logado.</span></li>
+          <li><span class="num">✓</span><span><b>Chat da NexaIA no app do cliente (paginas/chat-nexaia.html):</b> atalho na home + botão flutuante; a IA responde com contexto (perfil, chamados, Base Viva, regras do app). Persistido em <code>chats_nexaia</code>.</span></li>
+          <li><span class="num">✓</span><span><b>Chamado por voz:</b> microfone em Novo Atendimento (Web Speech API, Chrome/Edge) transcreve para a descrição.</span></li>
+          <li><span class="num">✓</span><span><b>SLA na fila:</b> chip com relógio (ok / alerta / estourado), KPI na fila e no Centro de Comando; a NexaIA sugere escalar.</span></li>
+          <li><span class="num">✓</span><span><b>NPS do cliente:</b> estrelas 1–5 + “a IA resolveu?” no detalhe do chamado encerrado. Campo <code>avaliacao_cliente</code> e KPI de estrelas no Comando.</span></li>
+          <li><span class="num">✓</span><span><b>Playbook de churn/fraude:</b> banner vermelho no D3 com passos de retenção quando Procon + cobrança + humor ruim.</span></li>
+          <li><span class="num">✓</span><span><b>Acessibilidade / idioma:</b> Simplificar linguagem e Traducir ES na abertura e no detalhe do chamado.</span></li>
+          <li><span class="num">✓</span><span><b>PWA:</b> <code>manifest.json</code> + <code>sw.js</code> + ícone. “Adicionar à tela inicial”; lista em cache se a rede cair.</span></li>
         </ul>
       </div>
 
@@ -101,6 +108,7 @@
             <code>area_atual</code> · <code>area_validada</code> · <code>justificativa_redirecionamento</code> ·
             <code>atribuido_a</code> · <code>tratado_por</code> · <code>mensagem_operacao</code> (resposta que o cliente vê) ·
             <code>avaliacao_ia</code> {empatia, clareza, detalhe, comentario} ·
+            <code>avaliacao_cliente</code> {estrelas, nps, ia_resolveu, comentario, data} ·
             <code>historico[]</code> {evento, status, responsavel, mensagem, data} ·
             <code>data_criacao</code> (texto) · <code>data_criacao_ts</code> / <code>ultima_atualizacao_ts</code> (timestamps).
             Status possíveis: <b>"Em análise"</b>, <b>"Resolvido pela IA"</b>, <b>"Concluído"</b>.
@@ -125,9 +133,9 @@
         </div>
 
         <div class="mini-cartao" style="text-align:left;">
-          <b style="color: var(--roxo);">base_conhecimento</b> <span class="text-secondary" style="font-size:0.8rem;">(artigos da Base Viva, ordenado por criado_em desc)</span>
+          <b style="color: var(--roxo);">chats_nexaia/{uid}</b> <span class="text-secondary" style="font-size:0.8rem;">(conversa do cliente com a NexaIA)</span>
           <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
-            <code>titulo</code> · <code>problema</code> · <code>solucao</code> (passo a passo) · <code>tags[]</code> · <code>fonte</code> · <code>aprovado_por</code> · <code>criado_em</code>.
+            <code>mensagens[]</code> {papel: "eu"|"ia", texto, data} · <code>atualizado_em</code>.
           </div>
         </div>
       </div>
@@ -157,20 +165,13 @@
       <div class="cartao" style="border-color: rgba(167, 139, 250, 0.55);">
         <div class="titulo-secao" style="color: #c4b5fd;"><i class="bi bi-lightning-charge"></i> Próxima entrega — FAZER estes pontos</div>
         <p class="text-secondary" style="font-size: 0.9rem;">
-          Anotações da Fase 6 / próxima sprint. Prioridade sugerida: <b>1 → 2 → 4</b> (mais visíveis na banca). O restante entra se der tempo.
+          Só isto fica pendente para apresentar na próxima entrega (~10% restante). Não implementar o resto da lista antiga: já foi feito nesta sprint.
         </p>
         <ul class="plano-passos">
-          <li><span class="num">1</span><span><b>Histórico / timeline de verdade (esta tela D4):</b> sair deste placeholder e desenhar a linha do tempo do atendimento (aberto → triagem IA → encaminhado → operador → mensagem → concluído), com o card de informações e o resumo da NexaIA. É o gap mais óbvio hoje.</span></li>
-          <li><span class="num">2</span><span><b>Conversar com a NexaIA no app do cliente (ideia principal):</b> no lado do <b>usuário</b> (não na central do operador), colocar um campo / atalho visível (ex.: botão flutuante, item no menu ou card “Falar com a NexaIA”). Ao clicar, abre um chat para o cliente <b>trocar ideia com a IA</b> — dúvidas, status do chamado, orientação, “o que eu faço agora?”. A IA precisa estar <b>bem enriquecida</b>: prompt com contexto completo (quem é o cliente, perfil/XP, chamados abertos e concluídos, protocolo, status, área, última mensagem da operação, artigos da Base Viva, regras do app, o que a triagem já concluiu). Não é chat humano↔humano neste item; é copiloto do cliente, conversacional e informado sobre o sistema inteiro. Persistir o diálogo no Firestore (ex. coleção <code>chats_nexaia</code> ou subcoleção no usuário) para a conversa não sumir ao recarregar.</span></li>
-          <li><span class="num">3</span><span><b>Abrir chamado por voz:</b> no app do cliente, gravar áudio → transcrever (Gemini / speech) → preencher a descrição do chamado. Encaixa no Challenge (telecom, celular, acessibilidade) e impressiona na demo.</span></li>
-          <li><span class="num">4</span><span><b>SLA e alerta de estouro:</b> relógio no card da fila usando <code>ia.sla_sugerido</code> + <code>data_criacao_ts</code>. Amarelo / vermelho. A IA pode sugerir escalar. KPI de SLA no Centro de Comando.</span></li>
-          <li><span class="num">6</span><span><b>Avaliação do cliente + NPS:</b> depois de Concluído / Resolvido pela IA, 1–5 estrelas + “a IA resolveu?”. Gravar no atendimento e usar no relatório executivo. Fecha o ciclo: a IA não só atende, é medida.</span></li>
-          <li><span class="num">7</span><span><b>Radar de fraude / churn virar ação:</b> se sentimento + Procon + cobrança (o copiloto já tem radar de riscos), banner “risco de perda de cliente” e playbook curto (crédito, ligar em 1h, etc.). Bom slide de negócio Claro/retenção.</span></li>
-          <li><span class="num">8</span><span><b>Multilíngue / acessibilidade:</b> botões “simplificar linguagem” e “traduzir” (ex. espanhol) nas respostas da IA e na descrição do chamado. Uma chamada Gemini. Forte em inclusão, barato de fazer.</span></li>
-          <li><span class="num">9</span><span><b>PWA no celular:</b> manifesto + ícone + “Adicionar à tela inicial”. Lista de chamados com fallback se a rede oscilar. Sem virar app nativo; parece app da operadora.</span></li>
+          <li><span class="num">1</span><span><b>Histórico / timeline de verdade (esta tela D4):</b> sair deste placeholder e desenhar a linha do tempo do atendimento (aberto → triagem IA → encaminhado → operador → mensagem → concluído), com o card de informações e o resumo da NexaIA. É o único gap visível para a banca. Os dados já estão em <code>historico[]</code>.</span></li>
         </ul>
         <div class="alerta-risco ok mt-3 mb-0">
-          <i class="bi bi-stars"></i> O item <b>&nbsp;2&nbsp;</b> é o diferencial combinado: campo no app do usuário → conversa rica com a NexaIA (contexto total do cliente + sistema), não mais um balão estático.
+          <i class="bi bi-check2-all"></i> Já entregues agora (não refazer): chat NexaIA no app, voz, SLA, NPS, playbook de churn, simplificar/traduzir e PWA.
         </div>
       </div>
 
@@ -178,16 +179,16 @@
       <div class="cartao" style="border-color: rgba(248, 113, 113, 0.4);">
         <div class="titulo-secao" style="color: #fca5a5;"><i class="bi bi-x-octagon"></i> Próxima entrega — NÃO colocar estes pontos</div>
         <p class="text-secondary" style="font-size: 0.9rem;">
-          Ficam de fora de propósito. Não implementar agora (diluem a demo ou já estão saturados no protótipo).
+          Continuam de fora de propósito. Não implementar na próxima entrega (nem nesta).
         </p>
         <ul class="plano-passos">
-          <li><span class="num">✕</span><span><b>Modo supervisor (ideia 5):</b> tela só do supervisor (redistribuir fila, congelar auto-resolução). O login <code>supervisor@nexatalk.com</code> já existe; não criar um produto paralelo nesta entrega.</span></li>
-          <li><span class="num">✕</span><span><b>Auth real do operador + regras fechadas do Firestore (ideia 10):</b> Firebase Auth com papéis, custom claims, restringir <code>firestore.rules</code>. Importante no TCC longo, mas não entra nesta próxima entrega. Login demo (<code>operador@nexatalk.com</code> / <code>nexa123</code>) permanece.</span></li>
-          <li><span class="num">✕</span><span><b>Chat humano cliente ↔ operador:</b> mensagens bidirecionais com a equipe (estilo WhatsApp da operação). Nesta sprint o chat é <b>só cliente ↔ NexaIA</b> (item 2 acima).</span></li>
-          <li><span class="num">✕</span><span><b>Outro dashboard / mais gráficos no Centro de Comando:</b> já tem KPIs, velas, funil, filtros e relatório executivo. Não acrescentar mais tela de gráfico.</span></li>
-          <li><span class="num">✕</span><span><b>Mais gamificação:</b> missões diárias, novos níveis, novas conquistas, mais XP. Arena / Perfil / Dojo já estão completos — a banca acharia “mais do mesmo”.</span></li>
-          <li><span class="num">✕</span><span><b>Mais artigos / features na Base Viva:</b> mineração + aprovação já existem. Não expandir a Base nesta entrega (nem “sugerir artigo no D3” agora).</span></li>
-          <li><span class="num">✕</span><span><b>Notificações push / toasts de status</b> e <b>filtro extra de período no Comando</b> (itens velhos do backlog): não priorizar; o Comando já filtra período.</span></li>
+          <li><span class="num">✕</span><span><b>Modo supervisor (ideia 5):</b> tela só do supervisor (redistribuir fila, congelar auto-resolução). O login <code>supervisor@nexatalk.com</code> já existe; não criar um produto paralelo.</span></li>
+          <li><span class="num">✕</span><span><b>Auth real do operador + regras fechadas do Firestore (ideia 10):</b> Firebase Auth com papéis, custom claims, restringir <code>firestore.rules</code>. Login demo (<code>operador@nexatalk.com</code> / <code>nexa123</code>) permanece.</span></li>
+          <li><span class="num">✕</span><span><b>Chat humano cliente ↔ operador:</b> mensagens bidirecionais com a equipe. O chat existente é <b>só cliente ↔ NexaIA</b>.</span></li>
+          <li><span class="num">✕</span><span><b>Outro dashboard / mais gráficos no Centro de Comando:</b> já tem KPIs (incluindo SLA e NPS), velas, funil, filtros e relatório executivo.</span></li>
+          <li><span class="num">✕</span><span><b>Mais gamificação:</b> missões diárias, novos níveis, novas conquistas. Arena / Perfil / Dojo já estão completos.</span></li>
+          <li><span class="num">✕</span><span><b>Mais artigos / features na Base Viva:</b> mineração + aprovação já existem. Não expandir a Base.</span></li>
+          <li><span class="num">✕</span><span><b>Notificações push / toasts de status</b> e <b>filtro extra de período no Comando</b>: o Comando já filtra período.</span></li>
         </ul>
       </div>
 
@@ -239,8 +240,7 @@
     }
 
     nexaiaMostrar("nexaia",
-      "Anotação da próxima entrega: fazer a timeline D4, o chat do cliente comigo (NexaIA enriquecida), voz, SLA, NPS, churn, acessibilidade e PWA. " +
-      "Não fazer agora: modo supervisor, Auth do operador, chat humano, mais dashboard, mais jogo nem mais Base Viva. 😉");
+      "Para a banca: o protótipo está ~90%. A única tela que você apresenta como pendente é esta — a timeline D4. Chat, voz, SLA, NPS, churn, acessibilidade e PWA já estão no ar. 😉");
 
     // Prova viva: mostra quantos eventos o caso da URL já tem gravados
     async function conferirDados() {

@@ -1624,6 +1624,98 @@ html::after {
   80% { transform: translateX(3px); }
 }
 
+/* ===== Chat NexaIA, voz, NPS, PWA ===== */
+.nexa-fab {
+  position: fixed;
+  right: calc(50% - 195px);
+  bottom: 28px;
+  z-index: 40;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.25rem;
+  text-decoration: none;
+  background: var(--grad-marca);
+  box-shadow: 0 10px 28px rgba(109, 40, 217, 0.45);
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.nexa-fab:hover { color: #fff; transform: translateY(-2px); }
+
+.chat-nexa-corpo { padding-bottom: 88px !important; }
+.chat-nexa-aviso {
+  font-size: 0.78rem;
+  color: var(--texto-cinza);
+  background: var(--roxo-mais-claro);
+  border: 1px solid rgba(167,139,250,0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.chat-nexa-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 240px;
+}
+.chat-bolha {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.chat-bolha.ia {
+  align-self: flex-start;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+}
+.chat-bolha.eu {
+  align-self: flex-end;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.chat-nexa-composer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px 16px;
+  background: linear-gradient(180deg, transparent, #070310 30%);
+}
+
+.btn-gravar {
+  width: 100%;
+  padding: 11px;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(167,139,250,0.45);
+  background: transparent;
+  color: var(--roxo-claro);
+  margin-bottom: 8px;
+}
+.btn-gravar.gravando {
+  border-color: #f87171;
+  color: #fca5a5;
+  animation: respirar-avatar 1s ease infinite;
+}
+
+.nps-box { margin-top: 12px; }
+.nps-estrelas { display: flex; gap: 6px; font-size: 1.5rem; cursor: pointer; }
+.nps-estrelas span { color: rgba(255,255,255,0.25); }
+.nps-estrelas span.ativa { color: #fbbf24; }
+
+.acoes-texto { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.acoes-texto button {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
 /* Acessibilidade: reduz animações se o usuário preferir */
 @media (prefers-reduced-motion: reduce) {
   *,

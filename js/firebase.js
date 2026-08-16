@@ -204,6 +204,20 @@ async function concluirAtendimentoPeloOperador(atendimentoId, dados) {
   });
 }
 
+async function salvarAvaliacaoCliente(atendimentoId, dados) {
+  await db.collection("atendimentos").doc(atendimentoId).update({
+    avaliacao_cliente: {
+      estrelas: dados.estrelas || 0,
+      nps: dados.nps || 0,
+      ia_resolveu: !!dados.iaResolveu,
+      comentario: dados.comentario || "",
+      data: new Date().toLocaleDateString("pt-BR") + " às " +
+        new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    },
+    ultima_atualizacao_ts: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
 // Gera um número de protocolo no formato #ATD-ANO-XXXXX
 function gerarProtocolo() {
   const ano = new Date().getFullYear();

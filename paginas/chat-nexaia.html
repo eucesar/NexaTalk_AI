@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaTalk AI - Falar com a NexaIA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../css/estilo.css">
+</head>
+<body id="paginaChat">
+
+  <div class="celular">
+    <div class="cabecalho">
+      <a class="voltar" href="../index.html"><i class="bi bi-arrow-left"></i></a>
+      <span class="titulo-topo">NexaIA</span>
+      <a class="acao-topo" href="#" onclick="limparChat(); return false;" title="Limpar conversa"><i class="bi bi-trash"></i></a>
+    </div>
+
+    <div class="corpo chat-nexa-corpo">
+      <div class="chat-nexa-aviso">
+        <i class="bi bi-stars"></i> Eu conheço seus chamados, o app e a base viva. Pode perguntar qualquer coisa — não sou um atendente humano.
+      </div>
+      <div id="listaMsgs" class="chat-nexa-lista"></div>
+    </div>
+
+    <div class="chat-nexa-composer">
+      <input id="campoMsg" type="text" class="form-control" placeholder="Pergunte à NexaIA..." autocomplete="off">
+      <button type="button" class="btn-roxo" id="btnEnviar" onclick="enviarMsg()" style="width:auto; padding: 10px 14px;">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+  <script src="../js/config.js"></script>
+  <script>
+    if (typeof FIREBASE_CONFIG === "undefined") {
+      document.write('<script src="../js/config.example.js"><\/script>');
+    }
+  </script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/nexaia.js"></script>
+  <script src="../js/jogo.js"></script>
+
+  <script>
+    let uidAtual = "";
+    let mensagens = [];
+
+    auth.onAuthStateChanged(function (usuario) {
+      if (!usuario) {
+        window.location.href = "../index.html";
+        return;
+      }
+      uidAtual = usuario.uid;
+      iniciar(usuario);
+    });
+
+    async function iniciar(usuario) {
+      mensagens = await nexaiaChatCarregar(uidAtual);
+      if (mensagens.length === 0) {
+        const nome = nexaiaPrimeiroNome(usuario.displayName || "cliente");
+        mensagens.push({
+          papel: "ia",
+          texto: nexaiaSaudacao() + ", " + nome + "! Sou a NexaIA. Posso falar dos seus chamados, explicar status, orientar 2ª via, prazos e o que fazer agora. O que você precisa?",
+          data: nexaiaAgoraTexto(),
+        });
+        await nexaiaChatSalvar(uidAtual, mensagens);
+      }
+      desenhar();
+    }
+
+    function desenhar() {
+      const lista = document.getElementById("listaMsgs");
+      lista.innerHTML = "";
+      mensagens.forEach(function (m) {
+        const div = document.createElement("div");
+        div.className = "chat-bolha " + (m.papel === "eu" ? "eu" : "ia");
+        div.textContent = m.texto;
+        lista.appendChild(div);
+      });
+      lista.scrollTop = lista.scrollHeight;
+    }
+
+    async function enviarMsg() {
+      const campo = document.getElementById("campoMsg");
+      const texto = campo.value.trim();
+      if (!texto || !uidAtual) return;
+      campo.value = "";
+      mensagens.push({ papel: "eu", texto: texto, data: nexaiaAgoraTexto() });
+      desenhar();
+      document.getElementById("btnEnviar").disabled = true;
+
+      const thinking = document.createElement("div");
+      thinking.className = "chat-bolha ia";
+      thinking.id = "pensando";
+      thinking.textContent = "Pensando com o contexto dos seus chamados...";
+      document.getElementById("listaMsgs").appendChild(thinking);
+      document.getElementById("listaMsgs").scrollTop = document.getElementById("listaMsgs").scrollHeight;
+
+      try {
+        const usuario = auth.currentUser;
+        const resposta = await nexaiaChatResponder(usuario, mensagens);
+        mensagens.push({ papel: "ia", texto: resposta, data: nexaiaAgoraTexto() });
+        await nexaiaChatSalvar(uidAtual, mensagens);
+      } catch (e) {
+        console.error(e);
+        mensagens.push({
+          papel: "ia",
+          texto: "Não consegui responder agora (chave Gemini ou cota). Tente de novo em instantes — seus chamados continuam salvos.",
+          data: nexaiaAgoraTexto(),
+        });
+      }
+      document.getElementById("btnEnviar").disabled = false;
+      desenhar();
+    }
+
+    async function limparChat() {
+      if (!uidAtual) return;
+      mensagens = [];
+      await nexaiaChatSalvar(uidAtual, mensagens);
+      iniciar(auth.currentUser);
+    }
+
+    document.getElementById("campoMsg").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") enviarMsg();
+    });
+  </script>
+</body>
+</html>
