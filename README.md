@@ -37,11 +37,14 @@ Tudo persiste no **Firebase** (Authentication + Cloud Firestore).
 
 Moldura de celular, tema dark animado. Login/cadastro com Firebase Auth.
 
-- Abrir chamado com “melhorar descrição com IA”
+- Abrir chamado com “melhorar descrição com IA”, **voz** (grava e a Gemini transcreve) e simplificar/traduzir
 - Triagem que resolve na hora **ou** encaminha
 - Protocolo, meus atendimentos, detalhes e mensagem da operação
+- **Falar com a NexaIA** (chat enriquecido com contexto dos chamados)
 - Consulta **sem login** por protocolo ou e-mail
+- **NPS** após concluir (estrelas + “a IA resolveu?”)
 - **Perfil Nexa** com XP, níveis e conquistas
+- **PWA** (instalar na tela inicial do celular)
 
 **Login de demo do cliente (já vem preenchido):** `cliente@nexatalk.com` · senha `nexa123`  
 A conta **já existe** no Firebase (nome **Cliente Demo**). É só **Entrar**. Se o Auth pedir cadastro num clone novo, use **Criar conta** com os mesmos dados.
@@ -65,15 +68,15 @@ Layout de sistema corporativo, com barra lateral.
 | Módulo | Função |
 |---|---|
 | **Login operacional** | Acesso da equipe (credencial demo abaixo) |
-| **Fila de Atendimentos** | Tempo real, filtros (status + quem está tratando), busca, “Priorizar com IA”, pulso emocional da fila e “próximo melhor chamado” |
-| **Detalhe do chamado** | Caso completo, **Atribuir a mim**, validar área da IA, copilot (riscos, plano, resposta, melhorar rascunho) e **Resolver com IA em 1 clique** |
-| **Centro de Comando** | KPIs e gráficos ao vivo (velas, linhas, roscas), filtros de período/área/prioridade/humor e relatório executivo da NexaIA |
+| **Fila de Atendimentos** | Tempo real, filtros, busca, “Priorizar com IA”, pulso emocional, próximo melhor chamado e **SLA** (ok / alerta / estourado) |
+| **Detalhe do chamado** | Caso completo, atribuir, validar área, copiloto, playbook de **churn/fraude**, “Resolver com IA em 1 clique” |
+| **Centro de Comando** | KPIs ao vivo (inclui SLA e NPS), gráficos, filtros e relatório executivo da NexaIA |
 | **Arena ao Vivo** | Ranking do time, pódio e feed de XP em tempo real |
 | **Meu Desempenho** | Nível, empatia/clareza/detalhe, conquistas e Coach IA |
 | **Dojo de Treinamento** | A IA simula um cliente difícil; o operador responde e ganha nota + XP |
 | **Base de Conhecimento Viva** | A IA minera a fila, escreve artigos; o operador aprova e copia a solução |
 | **Ingestão de Dados** | Recria o cenário demo: jornada da conta `cliente@nexatalk.com` + fila, Arena, operadores e artigos |
-| **Histórico** | Timeline / documentação do caso no ciclo do atendimento |
+| **Histórico** | Timeline visual completa do caso (cliente · IA · equipe) + resumo da NexaIA (+5 XP) |
 
 **Login demo do operador:** `operador@nexatalk.com` · senha `nexa123`  
 (também vale `supervisor@nexatalk.com` · senha `nexa123`)
@@ -85,10 +88,13 @@ Na home do app: **Acessar Central do Operador**. Na sidebar: **App do Cliente**.
 ## Inteligência artificial (onde a NexaIA entra)
 
 - Triagem e auto-resolução na abertura do chamado
-- Melhoria da descrição do cliente
+- Melhoria da descrição, simplificar linguagem e traduzir (ES)
+- **Transcrição de voz** (grava o microfone → Gemini devolve o texto no campo)
+- **Chat conversacional** com o cliente (contexto de chamados, perfil e Base Viva)
 - Insights da fila e relatório executivo do Centro de Comando
 - Plano de ação, rascunho de resposta e resolução em 1 clique
 - Auditoria de qualidade (empatia, clareza, detalhe) ao concluir
+- **Resumo do histórico** (timeline do caso em 3 linhas)
 - Cliente simulado no Dojo e mineração de artigos na base viva
 - Assistente contextual em todas as telas do fluxo
 
@@ -111,6 +117,7 @@ Cliente e operador sobem de nível com XP no Firestore (`perfis_jogo` + `eventos
 | Resolver com 1 clique | +35 (+ bônus) |
 | Treino no Dojo | +15 / +20 / +30 (+10 se nota ≥ 80) |
 | Publicar artigo na Base Viva | +15 |
+| Operador: resumir histórico com IA | +5 |
 
 Níveis: 0 → 100 → 300 → 700 → 1200 → 2000 XP.
 
@@ -186,10 +193,12 @@ Fui cobrado duas vezes na fatura deste mês e quero o estorno do valor duplicado
 
 1. Home → **Acessar Central do Operador**  
    `operador@nexatalk.com` / `nexa123`
-2. A **Fila** já lista os chamados da conta demo (um livre + dois com Ana e Marina). Abra um caso → **Atribuir a mim** → **Resolver com IA em 1 clique**.
+2. A **Fila** já lista os chamados da conta demo (um livre + dois com Ana e Marina). Abra um caso → **Atribuir a mim** → **Resolver com IA em 1 clique** (ou **Ver Histórico** para a timeline + resumo da NexaIA).
 3. **Centro de Comando** → filtre 7 dias / Financeiro / Alta e gere o relatório executivo.
-4. Volte no app do cliente: o chamado tratado aparece **Concluído** com a mensagem da operação.
+4. Volte no app do cliente: o chamado tratado aparece **Concluído** com a mensagem da operação (e o cliente pode dar NPS).
 5. Só rode **Ingestão de Dados** se a base estiver vazia ou você quiser resetar o cenário (ela reata a jornada em `cliente@nexatalk.com`).
+
+**Dica:** no app do cliente, o botão **Falar com a NexaIA** abre o chat contextual. Em **Novo Atendimento**, use **Falar o problema (voz)** (permita o microfone → fale → toque de novo para parar → a Gemini preenche o texto).
 
 ---
 
@@ -207,6 +216,7 @@ Coleções no Firestore (criadas automaticamente no uso / ingestão):
 - `perfis_jogo` — XP e qualidade  
 - `eventos_jogo` — feed da Arena  
 - `base_conhecimento` — artigos da Base Viva  
+- `chats_nexaia` — conversa do cliente com a NexaIA  
 
 ---
 
@@ -215,8 +225,9 @@ Coleções no Firestore (criadas automaticamente no uso / ingestão):
 - HTML5, CSS3 e JavaScript (sem build)
 - Bootstrap 5.3 + Bootstrap Icons
 - Chart.js (Centro de Comando)
-- Firebase Authentication + Cloud Firestore
-- Google Gemini API
+- Firebase Authentication + Cloud Firestore (GCP)
+- Google Gemini API (`gemini-2.5-flash`)
+- PWA (`manifest.json` + `sw.js`)
 - VS Code / Cursor + Live Server
 - Git / GitHub
 
@@ -224,10 +235,12 @@ Coleções no Firestore (criadas automaticamente no uso / ingestão):
 
 ```text
 index.html                 App do cliente (entrada)
-paginas/                   Telas do cliente
-operador/                  Central desktop
+paginas/                   Telas do cliente (inclui chat-nexaia.html)
+operador/                  Central desktop (fila, detalhe, histórico, comando…)
 js/                        firebase, gemini, nexaia, operador, jogo, config
 css/                       estilo.css (mobile) · operador.css (desktop)
+img/                       Ícone PWA
+manifest.json · sw.js      Progressive Web App
 firestore.rules            Regras do protótipo (leitura/escrita liberadas para o MVP)
 ```
 

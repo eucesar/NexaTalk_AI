@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexaTalk AI · Histórico (D4 em construção)</title>
+  <title>NexaTalk AI · Histórico do Atendimento</title>
 
-  <!-- Bootstrap 5.3.8 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <link rel="stylesheet" href="../css/estilo.css">
@@ -14,209 +13,128 @@
 <body class="ops">
 
   <div class="ops-app" id="app">
-    <!-- Sidebar (montada via JS) -->
-
     <main class="ops-main">
 
-      <div class="ops-header">
-        <div>
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <a id="linkVoltar" href="fila.html" class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.85rem; text-decoration:none;">
-              <i class="bi bi-arrow-left"></i>
+      <div id="carregando" class="carregando-ia">
+        <div class="spinner-border mb-2" role="status" style="color: var(--roxo);">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-secondary">Carregando a linha do tempo do atendimento...</p>
+      </div>
+
+      <div id="semId" class="cartao" style="display:none;">
+        <div class="titulo-secao"><i class="bi bi-info-circle"></i> Nenhum chamado selecionado</div>
+        <p class="text-secondary mb-3">Abra um atendimento na fila e toque em <b>Ver Histórico</b> para ver a timeline completa.</p>
+        <a href="fila.html" class="btn-roxo" style="display:inline-block; width:auto; padding: 11px 22px; text-decoration:none;">
+          <i class="bi bi-list-task me-2"></i> Ir para a Fila
+        </a>
+      </div>
+
+      <div id="conteudo" style="display:none;">
+
+        <div class="ops-header">
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <a id="linkVoltar" href="fila.html" class="btn-roxo-claro" style="width:auto; padding: 8px 14px; font-size: 0.85rem; text-decoration:none;">
+                <i class="bi bi-arrow-left"></i>
+              </a>
+              <h1 id="tituloProtocolo">Histórico</h1>
+              <span id="badgeStatus"></span>
+              <span id="badgePrioridade"></span>
+            </div>
+            <div class="subtitulo" id="subtituloCaso">
+              Linha do tempo completa · cliente, NexaIA e equipe operacional
+            </div>
+          </div>
+          <button type="button" id="btnResumir" class="btn-roxo" style="width:auto; padding: 11px 18px;" onclick="resumirHistorico()">
+            <i class="bi bi-stars me-2"></i> Resumir com a NexaIA
+          </button>
+        </div>
+
+        <div class="hist-marcos" id="marcosStatus"></div>
+
+        <div id="nexaia"></div>
+        <div id="caixaResumoIa" class="cartao-roxo hist-resumo-ia" style="display:none;">
+          <div class="rotulo-pequeno" style="color: var(--roxo);"><i class="bi bi-stars"></i> Resumo da NexaIA</div>
+          <div id="textoResumoIa" class="text-secondary" style="font-size: 0.92rem; white-space: pre-wrap;"></div>
+        </div>
+
+        <div class="hist-layout">
+
+          <div class="hist-timeline-col">
+            <div class="titulo-secao mb-3"><i class="bi bi-clock-history"></i> Linha do tempo</div>
+            <div id="timeline" class="hist-timeline"></div>
+            <div id="timelineVazia" class="text-center text-secondary py-4" style="display:none;">
+              <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+              <p class="mt-2 mb-0">Nenhum evento gravado neste atendimento.</p>
+            </div>
+          </div>
+
+          <aside class="hist-info-col">
+            <div class="cartao hist-info-card">
+              <div class="titulo-secao"><i class="bi bi-card-heading"></i> Informações</div>
+
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Protocolo</span>
+                <span id="infoProtocolo" class="fw-semibold">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Status atual</span>
+                <span id="infoStatus">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Cliente</span>
+                <span id="infoCliente" class="fw-semibold">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Área</span>
+                <span id="infoArea" class="fw-semibold">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Tratando</span>
+                <span id="infoTratando" class="fw-semibold">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Aberto em</span>
+                <span id="infoData" class="fw-semibold">—</span>
+              </div>
+              <div class="hist-info-linha">
+                <span class="rotulo-pequeno">Eventos</span>
+                <span id="infoEventos" class="fw-semibold">0</span>
+              </div>
+
+              <div id="blocoAvaliacao" style="display:none;">
+                <hr style="border-color: rgba(255,255,255,0.08); margin: 14px 0;">
+                <div class="rotulo-pequeno mb-2"><i class="bi bi-award"></i> Qualidade (auditoria IA)</div>
+                <div class="hist-notas">
+                  <div class="hist-nota"><span>Empatia</span><b id="notaEmpatia">—</b></div>
+                  <div class="hist-nota"><span>Clareza</span><b id="notaClareza">—</b></div>
+                  <div class="hist-nota"><span>Detalhe</span><b id="notaDetalhe">—</b></div>
+                </div>
+                <p id="notaComentario" class="text-secondary mt-2 mb-0" style="font-size: 0.8rem;"></p>
+              </div>
+
+              <div id="blocoNps" style="display:none;">
+                <hr style="border-color: rgba(255,255,255,0.08); margin: 14px 0;">
+                <div class="rotulo-pequeno mb-1"><i class="bi bi-star-fill"></i> Avaliação do cliente</div>
+                <div id="infoNps" class="fw-semibold" style="color:#fbbf24;"></div>
+              </div>
+            </div>
+
+            <a id="linkCaso" href="fila.html" class="btn-roxo-claro" style="display:block; text-align:center; text-decoration:none; padding: 12px;">
+              <i class="bi bi-arrow-left me-2"></i> Voltar ao caso
             </a>
-            <h1>🚧 Histórico do Atendimento (D4)</h1>
-          </div>
-          <div class="subtitulo">
-            Entrega atual ~90% — a única tela pendente para a apresentação seguinte é a timeline D4 (esta página). O restante da lista “FAZER” já foi implementado.
-          </div>
+          </aside>
+
         </div>
       </div>
-
-      <!-- ================= CONTEXTO RÁPIDO ================= -->
-      <div class="cartao-roxo">
-        <div class="titulo-secao"><i class="bi bi-info-circle"></i> Contexto em 30 segundos</div>
-        <p class="mb-2" style="font-size: 0.92rem;">
-          <b>NexaTalk AI</b> é um sistema de atendimento com IA (projeto acadêmico FIAP · Challenge):
-          o <b>cliente</b> abre chamados num app <b>mobile web</b> (moldura de celular), a <b>Gemini</b> faz a triagem
-          (resolve na hora ou encaminha) e o <b>operador</b> trata tudo numa central <b>desktop</b> com a NexaIA de copilota.
-          Tudo persiste no <b>Firebase</b> (Auth + Firestore). Sem Node/npm: HTML + CSS + JS puro com Bootstrap 5, rodando no Live Server.
-        </p>
-        <div class="d-flex flex-wrap gap-2" style="font-size: 0.82rem;">
-          <span class="chip">Cliente: index.html + paginas/*.html</span>
-          <span class="chip">Operador: operador/*.html</span>
-          <span class="chip">Lógica: js/firebase.js · js/gemini.js · js/nexaia.js · js/operador.js · js/jogo.js</span>
-          <span class="chip">Estilo: css/estilo.css · css/operador.css</span>
-        </div>
-        <div class="alerta-risco ok mt-3 mb-0">
-          <i class="bi bi-key"></i> Login demo do operador: <b>&nbsp;operador@nexatalk.com&nbsp;</b> · senha <b>&nbsp;nexa123&nbsp;</b>
-          · Chave Gemini vai em <b>&nbsp;js/config.js&nbsp;</b> (copie de js/config.example.js)
-        </div>
-      </div>
-
-      <!-- ================= O QUE JÁ ESTÁ PRONTO ================= -->
-      <div class="cartao">
-        <div class="titulo-secao"><i class="bi bi-check-circle"></i> O que já está pronto (não refazer)</div>
-        <ul class="plano-passos">
-          <li><span class="num">✓</span><span><b>Jornada do cliente (8 telas):</b> login/cadastro, novo atendimento com "melhorar com IA", triagem que resolve na hora ou encaminha, análise completa, protocolo, meus atendimentos, consulta pública por protocolo/e-mail e 404.</span></li>
-          <li><span class="num">✓</span><span><b>Operador D1 (login.html):</b> login demo da equipe (sessionStorage, protótipo).</span></li>
-          <li><span class="num">✓</span><span><b>Operador D2 (fila.html):</b> fila em tempo real (onSnapshot), métricas, busca, filtros, "Priorizar com IA", insights da fila via Gemini, widget "Próximo melhor chamado" e "Pulso emocional".</span></li>
-          <li><span class="num">✓</span><span><b>Operador D3 (atendimento.html):</b> caso completo + validação de área da IA + "Atribuir a mim" (sai da IA, entra o humano) + responder/concluir + Copiloto NexaIA (radar de riscos, plano de ação, resposta pronta, melhorar rascunho e "Resolver com IA em 1 clique").</span></li>
-          <li><span class="num">✓</span><span><b>Modo Jogo completo:</b> XP e níveis para operador E cliente, conquistas, avaliação de qualidade da tratativa pela IA (empatia/clareza/detalhe), Arena ao Vivo (ranking + feed em tempo real + análise do time por IA), Meu Desempenho (Coach IA) e Perfil Nexa do cliente.</span></li>
-          <li><span class="num">✓</span><span><b>Centro de Comando (comando.html):</b> dashboard executivo ao vivo — KPIs, volume por dia, funil, intenções, carga por área, qualidade por operador e relatório executivo escrito pela Gemini.</span></li>
-          <li><span class="num">✓</span><span><b>Dojo de Treinamento (dojo.html):</b> a IA simula clientes (fácil/médio/difícil), o operador responde e a sensei NexaIA dá nota, feedback e resposta exemplar. Vale XP (contador <code>treinos</code>).</span></li>
-          <li><span class="num">✓</span><span><b>Base de Conhecimento Viva (conhecimento.html):</b> a IA minera temas recorrentes da fila e redige artigos; o operador aprova e publica (coleção <code>base_conhecimento</code>, contador <code>artigos_publicados</code>).</span></li>
-          <li><span class="num">✓</span><span><b>Ingestão de Dados demo (ingestao.html):</b> limpa e popula o Firebase com 18 chamados, 6 operadores, perfis, feed e artigos — com opção de vincular chamados ao cliente logado.</span></li>
-          <li><span class="num">✓</span><span><b>Chat da NexaIA no app do cliente (paginas/chat-nexaia.html):</b> atalho na home + botão flutuante; a IA responde com contexto (perfil, chamados, Base Viva, regras do app). Persistido em <code>chats_nexaia</code>.</span></li>
-          <li><span class="num">✓</span><span><b>Chamado por voz:</b> microfone em Novo Atendimento (Web Speech API, Chrome/Edge) transcreve para a descrição.</span></li>
-          <li><span class="num">✓</span><span><b>SLA na fila:</b> chip com relógio (ok / alerta / estourado), KPI na fila e no Centro de Comando; a NexaIA sugere escalar.</span></li>
-          <li><span class="num">✓</span><span><b>NPS do cliente:</b> estrelas 1–5 + “a IA resolveu?” no detalhe do chamado encerrado. Campo <code>avaliacao_cliente</code> e KPI de estrelas no Comando.</span></li>
-          <li><span class="num">✓</span><span><b>Playbook de churn/fraude:</b> banner vermelho no D3 com passos de retenção quando Procon + cobrança + humor ruim.</span></li>
-          <li><span class="num">✓</span><span><b>Acessibilidade / idioma:</b> Simplificar linguagem e Traducir ES na abertura e no detalhe do chamado.</span></li>
-          <li><span class="num">✓</span><span><b>PWA:</b> <code>manifest.json</code> + <code>sw.js</code> + ícone. “Adicionar à tela inicial”; lista em cache se a rede cair.</span></li>
-        </ul>
-      </div>
-
-      <!-- ================= A ÚNICA TELA PENDENTE ================= -->
-      <div class="cartao" style="border-color: rgba(251, 191, 36, 0.4);">
-        <div class="titulo-secao" style="color: #fcd34d;"><i class="bi bi-cone-striped"></i> ÚNICA TELA PENDENTE — D4: Histórico / Timeline (esta página é o placeholder dela)</div>
-        <p class="text-secondary" style="font-size: 0.9rem;">
-          Criar a linha do tempo completa do atendimento, no lugar desta página, mantendo o layout desktop
-          (sidebar via <code>opsMontarSidebar()</code>). Receve <code>?id=&lt;docId&gt;</code> na URL.
-        </p>
-        <ul class="plano-passos">
-          <li><span class="num">1</span><span>Carregar o atendimento com <code>buscarAtendimentoPorId(id)</code> (js/firebase.js) e ler o array <code>historico[]</code>.</span></li>
-          <li><span class="num">2</span><span>Renderizar timeline vertical: cada evento tem <code>evento</code>, <code>status</code>, <code>responsavel</code>, <code>mensagem</code> e <code>data</code>.</span></li>
-          <li><span class="num">3</span><span>Diferenciar autores por ícone/cor: 🧑 cliente (evento "aberto pelo cliente"), 🤖 IA (responsável começa com "IA"), 🎧 equipe (demais).</span></li>
-          <li><span class="num">4</span><span>Destacar marcos de status (Recebido → Em análise → Concluído) como divisores na linha.</span></li>
-          <li><span class="num">5</span><span>Mostrar card lateral "Informações" com protocolo, status atual, área, responsável e a <code>avaliacao_ia</code> (nota de qualidade) se existir.</span></li>
-          <li><span class="num">6</span><span>Bônus de IA: botão "Resumir histórico com a NexaIA" usando <code>nexaiaPerguntar()</code> com os eventos concatenados (3 linhas de resumo).</span></li>
-          <li><span class="num">7</span><span>Bônus de jogo: dar +5 XP ao operador ao usar o resumo (usar <code>jogoDarXp()</code> de js/jogo.js).</span></li>
-        </ul>
-        <div id="resumoDados" class="alerta-risco ok" style="display:none;"></div>
-      </div>
-
-      <!-- ================= CONTRATO DE DADOS ================= -->
-      <div class="cartao">
-        <div class="titulo-secao"><i class="bi bi-database"></i> Contrato de dados no Firestore (já em produção — não quebrar)</div>
-
-        <div class="mini-cartao mb-2" style="text-align:left;">
-          <b style="color: var(--roxo);">atendimentos/{docId}</b>
-          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
-            <code>protocolo</code> ("#ATD-ANO-12345") · <code>usuario_id</code> (uid do cliente) · <code>cliente</code> {nome, contato, email, telefone} ·
-            <code>descricao_original</code> · <code>ia</code> {resumo, intencao, prioridade, confianca, sentimento, tags[], resposta_sugerida, resposta_automatica, auto_resolvivel, sla_sugerido, complexidade, proxima_acao...} ·
-            <code>intencao</code> / <code>prioridade</code> / <code>status</code> (rasos, p/ lista) ·
-            <code>area_atual</code> · <code>area_validada</code> · <code>justificativa_redirecionamento</code> ·
-            <code>atribuido_a</code> · <code>tratado_por</code> · <code>mensagem_operacao</code> (resposta que o cliente vê) ·
-            <code>avaliacao_ia</code> {empatia, clareza, detalhe, comentario} ·
-            <code>avaliacao_cliente</code> {estrelas, nps, ia_resolveu, comentario, data} ·
-            <code>historico[]</code> {evento, status, responsavel, mensagem, data} ·
-            <code>data_criacao</code> (texto) · <code>data_criacao_ts</code> / <code>ultima_atualizacao_ts</code> (timestamps).
-            Status possíveis: <b>"Em análise"</b>, <b>"Resolvido pela IA"</b>, <b>"Concluído"</b>.
-          </div>
-        </div>
-
-        <div class="mini-cartao mb-2" style="text-align:left;">
-          <b style="color: var(--roxo);">perfis_jogo/{id}</b> <span class="text-secondary" style="font-size:0.8rem;">(id: uid do cliente ou "op_" + e-mail normalizado do operador)</span>
-          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
-            <code>tipo</code> ("cliente"|"operador") · <code>nome</code> · <code>cargo</code> · <code>xp</code> ·
-            contadores: <code>casos_concluidos</code>, <code>respostas_enviadas</code>, <code>areas_validadas</code>, <code>casos_assumidos</code>, <code>magicos</code>, <code>treinos</code>, <code>artigos_publicados</code>, <code>chamados_abertos</code>, <code>resolvidos_ia</code> ·
-            qualidade: <code>soma_empatia</code>, <code>soma_clareza</code>, <code>soma_detalhe</code>, <code>avaliacoes</code>, <code>ultimas_avaliacoes[]</code> ·
-            <code>ultima_acao</code> + <code>ultima_acao_ts</code>.
-          </div>
-        </div>
-
-        <div class="mini-cartao mb-2" style="text-align:left;">
-          <b style="color: var(--roxo);">eventos_jogo</b> <span class="text-secondary" style="font-size:0.8rem;">(feed da Arena, ordenado por criado_em desc)</span>
-          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
-            <code>tipo</code> · <code>nome</code> · <code>texto</code> · <code>xp</code> · <code>icone</code> (classe bootstrap-icons) · <code>criado_em</code> (serverTimestamp).
-          </div>
-        </div>
-
-        <div class="mini-cartao" style="text-align:left;">
-          <b style="color: var(--roxo);">chats_nexaia/{uid}</b> <span class="text-secondary" style="font-size:0.8rem;">(conversa do cliente com a NexaIA)</span>
-          <div class="text-secondary mt-1" style="font-size: 0.83rem; line-height: 1.7;">
-            <code>mensagens[]</code> {papel: "eu"|"ia", texto, data} · <code>atualizado_em</code>.
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= REGRAS DE XP ================= -->
-      <div class="cartao">
-        <div class="titulo-secao"><i class="bi bi-controller"></i> Regras de XP e níveis (js/jogo.js)</div>
-        <div class="d-flex flex-wrap gap-2 mb-3" style="font-size: 0.83rem;">
-          <span class="chip">Cliente: abrir chamado +20</span>
-          <span class="chip">Cliente: resolver com IA +30</span>
-          <span class="chip">Operador: assumir caso +10</span>
-          <span class="chip">Operador: validar área +10</span>
-          <span class="chip">Operador: responder +15</span>
-          <span class="chip">Operador: concluir +50 + bônus qualidade (até +10)</span>
-          <span class="chip">Operador: resolver ✨ 1 clique +35 + bônus</span>
-          <span class="chip">Operador: treino no Dojo +15/+20/+30 (+10 se nota ≥ 80)</span>
-          <span class="chip">Operador: publicar artigo na Base Viva +15</span>
-        </div>
-        <div class="text-secondary" style="font-size: 0.85rem;">
-          Níveis (XP): 0 → 100 → 300 → 700 → 1200 → 2000. A cada conclusão a NexaIA audita a resposta
-          (empatia/clareza/detalhe 0-100) via <code>jogoAvaliarTratativa()</code>; se a Gemini falhar, cai no
-          fallback local e a gamificação nunca trava.
-        </div>
-      </div>
-
-      <!-- ================= PRÓXIMA ENTREGA — FAZER ================= -->
-      <div class="cartao" style="border-color: rgba(167, 139, 250, 0.55);">
-        <div class="titulo-secao" style="color: #c4b5fd;"><i class="bi bi-lightning-charge"></i> Próxima entrega — FAZER estes pontos</div>
-        <p class="text-secondary" style="font-size: 0.9rem;">
-          Só isto fica pendente para apresentar na próxima entrega (~10% restante). Não implementar o resto da lista antiga: já foi feito nesta sprint.
-        </p>
-        <ul class="plano-passos">
-          <li><span class="num">1</span><span><b>Histórico / timeline de verdade (esta tela D4):</b> sair deste placeholder e desenhar a linha do tempo do atendimento (aberto → triagem IA → encaminhado → operador → mensagem → concluído), com o card de informações e o resumo da NexaIA. É o único gap visível para a banca. Os dados já estão em <code>historico[]</code>.</span></li>
-        </ul>
-        <div class="alerta-risco ok mt-3 mb-0">
-          <i class="bi bi-check2-all"></i> Já entregues agora (não refazer): chat NexaIA no app, voz, SLA, NPS, playbook de churn, simplificar/traduzir e PWA.
-        </div>
-      </div>
-
-      <!-- ================= PRÓXIMA ENTREGA — NÃO COLOCAR ================= -->
-      <div class="cartao" style="border-color: rgba(248, 113, 113, 0.4);">
-        <div class="titulo-secao" style="color: #fca5a5;"><i class="bi bi-x-octagon"></i> Próxima entrega — NÃO colocar estes pontos</div>
-        <p class="text-secondary" style="font-size: 0.9rem;">
-          Continuam de fora de propósito. Não implementar na próxima entrega (nem nesta).
-        </p>
-        <ul class="plano-passos">
-          <li><span class="num">✕</span><span><b>Modo supervisor (ideia 5):</b> tela só do supervisor (redistribuir fila, congelar auto-resolução). O login <code>supervisor@nexatalk.com</code> já existe; não criar um produto paralelo.</span></li>
-          <li><span class="num">✕</span><span><b>Auth real do operador + regras fechadas do Firestore (ideia 10):</b> Firebase Auth com papéis, custom claims, restringir <code>firestore.rules</code>. Login demo (<code>operador@nexatalk.com</code> / <code>nexa123</code>) permanece.</span></li>
-          <li><span class="num">✕</span><span><b>Chat humano cliente ↔ operador:</b> mensagens bidirecionais com a equipe. O chat existente é <b>só cliente ↔ NexaIA</b>.</span></li>
-          <li><span class="num">✕</span><span><b>Outro dashboard / mais gráficos no Centro de Comando:</b> já tem KPIs (incluindo SLA e NPS), velas, funil, filtros e relatório executivo.</span></li>
-          <li><span class="num">✕</span><span><b>Mais gamificação:</b> missões diárias, novos níveis, novas conquistas. Arena / Perfil / Dojo já estão completos.</span></li>
-          <li><span class="num">✕</span><span><b>Mais artigos / features na Base Viva:</b> mineração + aprovação já existem. Não expandir a Base.</span></li>
-          <li><span class="num">✕</span><span><b>Notificações push / toasts de status</b> e <b>filtro extra de período no Comando</b>: o Comando já filtra período.</span></li>
-        </ul>
-      </div>
-
-      <!-- ================= COMO RODAR ================= -->
-      <div class="cartao">
-        <div class="titulo-secao"><i class="bi bi-play-circle"></i> Como rodar o projeto</div>
-        <ul class="plano-passos mb-0">
-          <li><span class="num">1</span><span>Copiar <code>js/config.example.js</code> para <code>js/config.js</code> e colar a chave Gemini (o Firebase já vem preenchido).</span></li>
-          <li><span class="num">2</span><span>Abrir com Live Server (porta 5500) a partir do <code>index.html</code>.</span></li>
-          <li><span class="num">3</span><span>Cliente: criar conta e abrir um chamado. Operador: "Acessar Central do Operador" na home → login demo → tratar o chamado.</span></li>
-        </ul>
-      </div>
-
-      <!-- NexaIA -->
-      <div id="nexaia"></div>
-
-      <a id="linkVoltarCaso" href="fila.html" class="btn-roxo" style="display:block; text-align:center; text-decoration:none;">
-        <i class="bi bi-arrow-left me-2"></i> Voltar
-      </a>
 
     </main>
   </div>
 
-  <!-- Firebase SDK (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   <script src="../js/config.js"></script>
   <script>
@@ -230,34 +148,211 @@
   <script src="../js/jogo.js"></script>
 
   <script>
-    opsExigirLogin();
-    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar(""));
+    const operador = opsExigirLogin();
+    document.getElementById("app").insertAdjacentHTML("afterbegin", opsMontarSidebar("historico"));
 
     const atendimentoId = new URLSearchParams(window.location.search).get("id");
-    if (atendimentoId) {
-      document.getElementById("linkVoltarCaso").href = "atendimento.html?id=" + atendimentoId;
+    let atendimentoAtual = null;
+    let jaResumiuXp = false;
+
+    if (!atendimentoId) {
+      document.getElementById("carregando").style.display = "none";
+      document.getElementById("semId").style.display = "block";
+      nexaiaMostrar("nexaia", "Abra um caso na fila e toque em Ver Histórico para ver a timeline completa aqui.");
+    } else {
       document.getElementById("linkVoltar").href = "atendimento.html?id=" + atendimentoId;
+      document.getElementById("linkCaso").href = "atendimento.html?id=" + atendimentoId;
+      carregarHistorico();
     }
 
-    nexaiaMostrar("nexaia",
-      "Para a banca: o protótipo está ~90%. A única tela que você apresenta como pendente é esta — a timeline D4. Chat, voz, SLA, NPS, churn, acessibilidade e PWA já estão no ar. 😉");
+    function classificarAutor(ev) {
+      const evento = (ev.evento || "").toLowerCase();
+      const resp = (ev.responsavel || "").toLowerCase();
+      if (evento.indexOf("aberto pelo cliente") >= 0 || evento.indexOf("cliente") === 0) return "cliente";
+      if (resp.indexOf("ia") === 0 || resp.indexOf("nexaia") >= 0 || evento.indexOf("ia") >= 0 && evento.indexOf("resolvido") >= 0) return "ia";
+      if (resp.indexOf("ia (") === 0 || resp.indexOf("ia(") === 0) return "ia";
+      return "equipe";
+    }
 
-    // Prova viva: mostra quantos eventos o caso da URL já tem gravados
-    async function conferirDados() {
-      if (!atendimentoId) return;
+    function metaAutor(tipo) {
+      if (tipo === "cliente") return { icone: "bi-person-fill", rotulo: "Cliente", classe: "cliente" };
+      if (tipo === "ia") return { icone: "bi-robot", rotulo: "NexaIA", classe: "ia" };
+      return { icone: "bi-headset", rotulo: "Equipe", classe: "equipe" };
+    }
+
+    function ehMarco(status) {
+      const s = (status || "").toLowerCase();
+      return s.indexOf("recebido") >= 0 || s.indexOf("análise") >= 0 || s.indexOf("analise") >= 0 ||
+        s.indexOf("resolvido") >= 0 || s.indexOf("conclu") >= 0;
+    }
+
+    function renderMarcos(a) {
+      const status = (a.status || "").toLowerCase();
+      const passos = [
+        { id: "recebido", rotulo: "Recebido", ok: true },
+        { id: "analise", rotulo: "Em análise", ok: true },
+        { id: "resolvido", rotulo: "Resolvido / Em tratamento", ok: status.indexOf("resolvido") >= 0 || status.indexOf("conclu") >= 0 || !!a.atribuido_a },
+        { id: "concluido", rotulo: "Concluído", ok: status.indexOf("conclu") >= 0 || status.indexOf("resolvido") >= 0 },
+      ];
+      if (status.indexOf("resolvido") >= 0) {
+        passos[2].rotulo = "Resolvido pela IA";
+        passos[3].rotulo = "Encerrado";
+        passos[3].ok = true;
+      }
+      document.getElementById("marcosStatus").innerHTML = passos.map(function (p, i) {
+        return '<div class="hist-marco' + (p.ok ? " ativo" : "") + '" style="animation-delay:' + (i * 0.08) + 's">' +
+          '<div class="hist-marco-bolha">' + (p.ok ? '<i class="bi bi-check-lg"></i>' : (i + 1)) + "</div>" +
+          "<span>" + p.rotulo + "</span></div>" +
+          (i < passos.length - 1 ? '<div class="hist-marco-linha' + (p.ok ? " ativa" : "") + '"></div>' : "");
+      }).join("");
+    }
+
+    function renderTimeline(lista) {
+      const box = document.getElementById("timeline");
+      const vazio = document.getElementById("timelineVazia");
+      box.innerHTML = "";
+      if (!lista || lista.length === 0) {
+        vazio.style.display = "block";
+        return;
+      }
+      vazio.style.display = "none";
+
+      lista.forEach(function (ev, i) {
+        const tipo = classificarAutor(ev);
+        const meta = metaAutor(tipo);
+        const marco = ehMarco(ev.status);
+        const item = document.createElement("div");
+        item.className = "hist-item hist-" + meta.classe + (marco ? " hist-marco-item" : "");
+        item.style.animationDelay = (0.05 + i * 0.07) + "s";
+        item.innerHTML =
+          '<div class="hist-eixo">' +
+            '<div class="hist-dot"><i class="bi ' + meta.icone + '"></i></div>' +
+            (i < lista.length - 1 ? '<div class="hist-linha"></div>' : "") +
+          "</div>" +
+          '<div class="hist-card">' +
+            '<div class="hist-card-topo">' +
+              '<span class="hist-autor"><i class="bi ' + meta.icone + '"></i> ' + meta.rotulo + "</span>" +
+              (ev.status ? '<span class="hist-status-chip">' + ev.status + "</span>" : "") +
+              '<span class="hist-data">' + (ev.data || "") + "</span>" +
+            "</div>" +
+            '<div class="hist-evento">' + (ev.evento || "Evento") + "</div>" +
+            (ev.responsavel ? '<div class="hist-resp text-secondary">Por: ' + ev.responsavel + "</div>" : "") +
+            (ev.mensagem ? '<div class="hist-msg">' + String(ev.mensagem).replace(/</g, "&lt;") + "</div>" : "") +
+          "</div>";
+        box.appendChild(item);
+      });
+    }
+
+    async function carregarHistorico() {
       try {
         const a = await buscarAtendimentoPorId(atendimentoId);
-        if (a && a.historico) {
-          const el = document.getElementById("resumoDados");
-          el.style.display = "flex";
-          el.innerHTML = '<i class="bi bi-check-circle"></i> O caso ' + (a.protocolo || "") +
-            " já tem <b>&nbsp;" + a.historico.length + " evento(s)&nbsp;</b> gravados esperando esta timeline.";
+        if (!a) {
+          document.getElementById("carregando").innerHTML =
+            '<p class="text-danger mb-0">Atendimento não encontrado.</p>';
+          return;
+        }
+        atendimentoAtual = a;
+
+        document.getElementById("tituloProtocolo").textContent = a.protocolo || "Histórico";
+        document.getElementById("badgeStatus").innerHTML = opsBadgeStatus(a.status);
+        document.getElementById("badgePrioridade").innerHTML = opsBadgePrioridade(a.prioridade);
+        document.getElementById("subtituloCaso").textContent =
+          ((a.cliente && a.cliente.nome) || "Cliente") + " · " +
+          (a.intencao || (a.ia && a.ia.intencao) || "Sem intenção") +
+          " · " + ((a.historico && a.historico.length) || 0) + " evento(s)";
+
+        document.getElementById("infoProtocolo").textContent = a.protocolo || "—";
+        document.getElementById("infoStatus").innerHTML = opsBadgeStatus(a.status);
+        document.getElementById("infoCliente").textContent = (a.cliente && a.cliente.nome) || "—";
+        document.getElementById("infoArea").textContent =
+          (a.area_atual || "—") + (a.area_validada ? " ✓" : "");
+        document.getElementById("infoTratando").textContent = a.atribuido_a || "NexaIA / fila";
+        document.getElementById("infoData").textContent = a.data_criacao || "—";
+        document.getElementById("infoEventos").textContent = (a.historico && a.historico.length) || 0;
+
+        if (a.avaliacao_ia) {
+          document.getElementById("blocoAvaliacao").style.display = "block";
+          document.getElementById("notaEmpatia").textContent = a.avaliacao_ia.empatia;
+          document.getElementById("notaClareza").textContent = a.avaliacao_ia.clareza;
+          document.getElementById("notaDetalhe").textContent = a.avaliacao_ia.detalhe;
+          document.getElementById("notaComentario").textContent = a.avaliacao_ia.comentario || "";
+        }
+
+        if (a.avaliacao_cliente && a.avaliacao_cliente.estrelas) {
+          document.getElementById("blocoNps").style.display = "block";
+          const est = a.avaliacao_cliente.estrelas;
+          document.getElementById("infoNps").textContent =
+            "★".repeat(est) + "☆".repeat(5 - est) + " · " + est + "/5" +
+            (a.avaliacao_cliente.ia_resolveu ? " · IA resolveu" : "");
+        }
+
+        renderMarcos(a);
+        renderTimeline(a.historico || []);
+
+        nexaiaMostrar("nexaia",
+          nexaiaSaudacao() + ", " + nexaiaPrimeiroNome(operador.nome) +
+          "! Este é o histórico completo do " + (a.protocolo || "chamado") +
+          ". Quer um resumo em 3 linhas? Toque em \"Resumir com a NexaIA\".");
+
+        document.getElementById("carregando").style.display = "none";
+        document.getElementById("conteudo").style.display = "block";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("carregando").innerHTML =
+          '<p class="text-danger mb-0">Não foi possível carregar o histórico. Verifique o Firebase.</p>';
+      }
+    }
+
+    async function resumirHistorico() {
+      if (!atendimentoAtual) return;
+      const btn = document.getElementById("btnResumir");
+      const eventos = atendimentoAtual.historico || [];
+      if (eventos.length === 0) {
+        opsToast("Sem eventos para resumir.", true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Resumindo...';
+
+      const linhas = eventos.map(function (ev, i) {
+        return (i + 1) + ". [" + (ev.data || "?") + "] " + (ev.evento || "") +
+          " · " + (ev.responsavel || "") +
+          (ev.mensagem ? " — " + String(ev.mensagem).slice(0, 120) : "");
+      }).join("\n");
+
+      try {
+        const texto = await nexaiaPerguntar(
+          "Você é a NexaIA. Resuma o histórico do atendimento " + (atendimentoAtual.protocolo || "") +
+          " em EXATAMENTE 3 linhas curtas em português, no formato:\n" +
+          "1) O que aconteceu\n2) Quem atuou e o desfecho\n3) Próximo cuidado / risco\n" +
+          "Sem introdução nem despedida.\n\nHistórico:\n" + linhas
+        );
+        document.getElementById("caixaResumoIa").style.display = "block";
+        document.getElementById("textoResumoIa").textContent = texto;
+        nexaiaTexto("nexaia", "Pronto — resumi a timeline em 3 linhas. Role um pouco para cima se precisar.");
+
+        if (!jaResumiuXp && operador) {
+          jaResumiuXp = true;
+          await jogoDarXp({
+            id: jogoIdOperador(operador.email),
+            tipo: "operador",
+            nome: operador.nome,
+            cargo: operador.cargo,
+            xp: 5,
+            acao: "Resumiu o histórico de " + (atendimentoAtual.protocolo || "um caso"),
+            icone: "bi-clock-history",
+          });
+          opsToast("+5 XP por resumir o histórico");
         }
       } catch (e) {
         console.error(e);
+        opsToast("Não consegui resumir agora (Gemini). Tente de novo.", true);
       }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-stars me-2"></i> Resumir com a NexaIA';
     }
-    conferirDados();
   </script>
 </body>
 </html>

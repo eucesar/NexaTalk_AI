@@ -293,7 +293,7 @@ function opsMontarSidebar(telaAtiva) {
       "</div>" +
       '<nav class="ops-nav">' +
         '<div class="rotulo-nav">Operação</div>' +
-        '<a href="fila.html" class="' + (telaAtiva === "fila" ? "ativo" : "") + '"><i class="bi bi-list-task"></i> Fila de Atendimentos</a>' +
+        '<a href="fila.html" class="' + (telaAtiva === "fila" || telaAtiva === "historico" ? "ativo" : "") + '"><i class="bi bi-list-task"></i> Fila de Atendimentos</a>' +
         '<a href="comando.html" class="' + (telaAtiva === "comando" ? "ativo" : "") + '"><i class="bi bi-graph-up-arrow"></i> Centro de Comando</a>' +
         '<div class="rotulo-nav">Modo Jogo</div>' +
         '<a href="arena.html" class="' + (telaAtiva === "arena" ? "ativo" : "") + '"><i class="bi bi-trophy"></i> Arena ao Vivo</a>' +

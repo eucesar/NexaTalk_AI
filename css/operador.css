@@ -813,6 +813,17 @@ body.ops {
   font-size: 0.88rem;
   font-weight: 600;
   backdrop-filter: blur(4px);
+  animation: hist-entrar 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.ops-login-brand .beneficio:nth-child(4) { animation-delay: 0.08s; }
+.ops-login-brand .beneficio:nth-child(5) { animation-delay: 0.16s; }
+.ops-login-brand .beneficio:nth-child(6) { animation-delay: 0.24s; }
+
+.ops-login-brand .beneficio:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .ops-login-form {
@@ -1495,4 +1506,284 @@ button.chip-nivel {
   padding: 0;
   font-size: 0.85rem;
   color: #fecaca;
+}
+
+/* ===================== HISTÓRICO / TIMELINE (D4) ===================== */
+.hist-marcos {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+}
+
+.hist-marco {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--texto-cinza);
+  animation: hist-entrar 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hist-marco.ativo { color: var(--roxo-claro); }
+
+.hist-marco-bolha {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hist-marco.ativo .hist-marco-bolha {
+  background: var(--grad-marca);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+}
+
+.hist-marco-linha {
+  flex: 1;
+  min-width: 24px;
+  height: 2px;
+  margin: 0 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+.hist-marco-linha.ativa {
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+.hist-resumo-ia {
+  margin-bottom: 18px;
+  animation: hist-entrar 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hist-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 22px;
+  align-items: start;
+}
+
+.hist-timeline {
+  position: relative;
+}
+
+.hist-item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+  animation: hist-entrar 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hist-eixo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hist-dot {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  z-index: 1;
+  border: 1px solid transparent;
+}
+
+.hist-item.hist-cliente .hist-dot {
+  background: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.hist-item.hist-ia .hist-dot {
+  background: rgba(139, 92, 246, 0.22);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.4);
+  animation: pulsar-suave 2.8s ease-in-out infinite;
+}
+
+.hist-item.hist-equipe .hist-dot {
+  background: rgba(52, 211, 153, 0.16);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.hist-linha {
+  flex: 1;
+  width: 2px;
+  min-height: 18px;
+  margin: 4px 0;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.45), rgba(255, 255, 255, 0.06));
+  border-radius: 2px;
+}
+
+.hist-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hist-card:hover {
+  border-color: rgba(167, 139, 250, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+.hist-marco-item .hist-card {
+  border-color: rgba(167, 139, 250, 0.28);
+  background: rgba(139, 92, 246, 0.07);
+}
+
+.hist-card-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hist-autor {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--roxo-claro);
+}
+
+.hist-cliente .hist-autor { color: #93c5fd; }
+.hist-equipe .hist-autor { color: #6ee7b7; }
+
+.hist-status-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--texto-cinza);
+}
+
+.hist-data {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--texto-cinza);
+}
+
+.hist-evento {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--texto-escuro);
+  margin-bottom: 2px;
+}
+
+.hist-resp { font-size: 0.8rem; margin-bottom: 6px; }
+
+.hist-msg {
+  font-size: 0.88rem;
+  color: var(--texto-cinza);
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 3px solid rgba(167, 139, 250, 0.5);
+  white-space: pre-wrap;
+}
+
+.hist-info-card { position: sticky; top: 20px; }
+
+.hist-info-linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.88rem;
+}
+
+.hist-info-linha:last-of-type { border-bottom: none; }
+
+.hist-notas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.hist-nota {
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 12px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+}
+
+.hist-nota span {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--texto-cinza);
+  margin-bottom: 2px;
+}
+
+.hist-nota b {
+  font-size: 1.05rem;
+  color: var(--roxo-claro);
+}
+
+@keyframes hist-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Polish geral: cartões e stats do operador */
+body.ops .cartao,
+body.ops .cartao-roxo,
+body.ops .ops-stat {
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+body.ops .ops-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(109, 40, 217, 0.18);
+}
+
+body.ops .tabela-ops tbody tr {
+  transition: background 0.18s ease, transform 0.15s ease;
+}
+
+body.ops .tabela-ops tbody tr:hover {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+@media (max-width: 980px) {
+  .hist-layout {
+    grid-template-columns: 1fr;
+  }
+  .hist-info-card { position: static; }
 }
