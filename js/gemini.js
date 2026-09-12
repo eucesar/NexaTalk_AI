@@ -6,6 +6,100 @@
 // encaminhamento, prioridade, confiança, tempo e observação).
 // ============================================================
 
+const GEMINI_TIMEOUT_MS = 45000;
+
+function geminiMontarCorpo(textoPrompt, opcoes) {
+  opcoes = opcoes || {};
+  const generationConfig = {
+    // Sem "thinking" o gemini-2.5-flash responde em poucos segundos
+    // (com thinking a triagem podia passar de 30–60s e parecer travada).
+    thinkingConfig: { thinkingBudget: 0 },
+  };
+  if (opcoes.json) generationConfig.responseMimeType = "application/json";
+
+  return {
+    contents: [{ parts: [{ text: textoPrompt }] }],
+    generationConfig: generationConfig,
+  };
+}
+
+function geminiExtrairTexto(dados) {
+  const parts =
+    dados &&
+    dados.candidates &&
+    dados.candidates[0] &&
+    dados.candidates[0].content &&
+    dados.candidates[0].content.parts;
+  if (!parts || !parts.length) return "";
+  return parts
+    .map(function (p) { return p.text || ""; })
+    .join("\n")
+    .trim();
+}
+
+function geminiParseJson(texto) {
+  let limpo = (texto || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+  try {
+    return JSON.parse(limpo);
+  } catch (e) {
+    const inicio = limpo.indexOf("{");
+    const fim = limpo.lastIndexOf("}");
+    if (inicio >= 0 && fim > inicio) {
+      return JSON.parse(limpo.slice(inicio, fim + 1));
+    }
+    throw e;
+  }
+}
+
+async function geminiFetchJson(corpo) {
+  if (!GEMINI_CONFIG || !GEMINI_CONFIG.apiKey || GEMINI_CONFIG.apiKey.indexOf("SUA_CHAVE") >= 0) {
+    const erro = new Error("Chave da Gemini não configurada em js/config.js");
+    erro.status = 401;
+    throw erro;
+  }
+
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl
+    ? setTimeout(function () { ctrl.abort(); }, GEMINI_TIMEOUT_MS)
+    : null;
+
+  let resposta;
+  try {
+    resposta = await fetch(GEMINI_CONFIG.endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_CONFIG.apiKey,
+      },
+      body: JSON.stringify(corpo),
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+  } catch (e) {
+    if (e && e.name === "AbortError") {
+      const erro = new Error("A IA demorou demais para responder.");
+      erro.status = 408;
+      throw erro;
+    }
+    throw e;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+
+  if (!resposta.ok) {
+    let detalhe = "";
+    try {
+      const err = await resposta.json();
+      detalhe = err.error && err.error.message ? err.error.message : "";
+    } catch (ignore) {}
+    const erro = new Error("Erro na chamada da Gemini API: " + resposta.status);
+    erro.status = resposta.status;
+    erro.detalhe = detalhe;
+    throw erro;
+  }
+
+  return resposta.json();
+}
+
 async function analisarComIA(descricao) {
   // Instrução enviada para a IA. Pedimos a resposta em JSON
   // para conseguir preencher a tela e enriquecer o banco de dados.
@@ -60,50 +154,11 @@ Regra de ouro: na dúvida, prefira true com uma resposta_automatica completa. S�
 
 Importante: "confianca" e "probabilidade_primeira_resposta" devem ser números inteiros de 0 a 100 (ex: 95), nunca frações como 0.95.
 
-Mensagem do cliente: "${descricao}"
+Mensagem do cliente: ${JSON.stringify(String(descricao || ""))}
 `;
 
-  const corpo = {
-    contents: [
-      {
-        parts: [{ text: prompt }],
-      },
-    ],
-  };
-
-  const resposta = await fetch(GEMINI_CONFIG.endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-goog-api-key": GEMINI_CONFIG.apiKey,
-    },
-    body: JSON.stringify(corpo),
-  });
-
-  if (!resposta.ok) {
-    let detalhe = "";
-    try {
-      const err = await resposta.json();
-      detalhe = err.error && err.error.message ? err.error.message : "";
-    } catch (ignore) {}
-    const erro = new Error("Erro na chamada da Gemini API: " + resposta.status);
-    erro.status = resposta.status;
-    erro.detalhe = detalhe;
-    throw erro;
-  }
-
-  const dados = await resposta.json();
-
-  if (!dados.candidates || !dados.candidates[0] || !dados.candidates[0].content) {
-    throw new Error("A IA não devolveu resposta válida.");
-  }
-
-  // Texto bruto devolvido pela IA
-  let textoIA = dados.candidates[0].content.parts[0].text;
-
-  // Remove cercas de código (```json ... ```) caso a IA inclua
-  textoIA = textoIA.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-  // Converte o texto em objeto JavaScript
-  return JSON.parse(textoIA);
+  const dados = await geminiFetchJson(geminiMontarCorpo(prompt, { json: true }));
+  const textoIA = geminiExtrairTexto(dados);
+  if (!textoIA) throw new Error("A IA não devolveu resposta válida.");
+  return geminiParseJson(textoIA);
 }

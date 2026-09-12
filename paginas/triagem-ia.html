@@ -29,8 +29,8 @@
         <div class="spinner-border mb-3" role="status" style="color: var(--roxo);">
           <span class="visually-hidden">Carregando...</span>
         </div>
-        <p class="fw-semibold" style="color: var(--roxo);">A IA está verificando se consegue resolver agora...</p>
-        <p class="text-secondary" style="font-size: 0.9rem;">Analisando o tipo da sua solicitação.</p>
+        <p id="carregandoTitulo" class="fw-semibold" style="color: var(--roxo);">A IA está verificando se consegue resolver agora...</p>
+        <p id="carregandoSub" class="text-secondary" style="font-size: 0.9rem;">Analisando o tipo da sua solicitação.</p>
       </div>
 
       <!-- ESTADO: Erro -->
@@ -149,17 +149,40 @@
     document.getElementById("msgOriginal").textContent = descricaoCliente;
 
     let analiseAtual = null; // guarda a análise para usar ao confirmar
+    let timerCarregando = null;
 
     // Mostra um dos estados: carregando, erro, resolvido, encaminhar ou agradecimento
     function mostrarEstado(estado) {
       ["carregando", "erro", "resolvido", "encaminhar", "agradecimento"].forEach(function (id) {
         document.getElementById(id).style.display = id === estado ? "block" : "none";
       });
+      if (estado !== "carregando" && timerCarregando) {
+        clearInterval(timerCarregando);
+        timerCarregando = null;
+      }
+    }
+
+    function animarCarregando() {
+      const passos = [
+        ["A IA está verificando se consegue resolver agora...", "Analisando o tipo da sua solicitação."],
+        ["Classificando prioridade e área...", "Quase lá — isso leva só alguns segundos."],
+        ["Montando a resposta da NexaIA...", "Se der para resolver na hora, você já vê a solução."],
+      ];
+      let i = 0;
+      document.getElementById("carregandoTitulo").textContent = passos[0][0];
+      document.getElementById("carregandoSub").textContent = passos[0][1];
+      if (timerCarregando) clearInterval(timerCarregando);
+      timerCarregando = setInterval(function () {
+        i = (i + 1) % passos.length;
+        document.getElementById("carregandoTitulo").textContent = passos[i][0];
+        document.getElementById("carregandoSub").textContent = passos[i][1];
+      }, 2200);
     }
 
     // Faz a triagem com a IA
     async function iniciarTriagem() {
       mostrarEstado("carregando");
+      animarCarregando();
       try {
         const analise = await analisarComIA(descricaoCliente);
         analiseAtual = analise;
@@ -180,7 +203,11 @@
         if (e.status === 429) {
           document.getElementById("erroTitulo").textContent = "Limite da IA atingido.";
           document.getElementById("erroTexto").textContent =
-            "A cota gratuita deste modelo no Google AI Studio foi esgotada (ex.: 20 req/dia no gemini-3.5-flash). Aguarde o reset diário (meia-noite horário do Pacífico/EUA) ou troque o model em js/config.js (ex.: gemini-2.5-flash).";
+            "A cota gratuita deste modelo no Google AI Studio foi esgotada. Aguarde o reset diário ou troque o model em js/config.js.";
+        } else if (e.status === 408) {
+          document.getElementById("erroTitulo").textContent = "A IA demorou demais.";
+          document.getElementById("erroTexto").textContent =
+            "A resposta passou do tempo limite. Toque em Tentar Novamente.";
         } else if (e.status === 403 || e.status === 401) {
           document.getElementById("erroTitulo").textContent = "Chave da IA inválida.";
           document.getElementById("erroTexto").textContent =
@@ -188,7 +215,7 @@
         } else {
           document.getElementById("erroTitulo").textContent = "Não foi possível analisar agora.";
           document.getElementById("erroTexto").textContent =
-            "Verifique sua conexão com a internet e tente novamente.";
+            (e && e.detalhe) || "Verifique sua conexão com a internet e tente novamente.";
         }
         mostrarEstado("erro");
       }

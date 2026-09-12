@@ -55,13 +55,28 @@ function nexaiaPrimeiroNome(nome) {
 
 // Pergunta curta à Gemini (usada nas ações sob demanda)
 async function nexaiaPerguntar(instrucao) {
+  // Reaproveita o helper da triagem quando disponível (timeout + sem thinking)
+  if (typeof geminiFetchJson === "function" && typeof geminiMontarCorpo === "function") {
+    const dados = await geminiFetchJson(geminiMontarCorpo(instrucao));
+    const texto = typeof geminiExtrairTexto === "function"
+      ? geminiExtrairTexto(dados)
+      : ((dados.candidates && dados.candidates[0] && dados.candidates[0].content &&
+          dados.candidates[0].content.parts && dados.candidates[0].content.parts[0] &&
+          dados.candidates[0].content.parts[0].text) || "");
+    if (!texto) throw new Error("A IA não devolveu resposta.");
+    return texto.trim();
+  }
+
   const resposta = await fetch(GEMINI_CONFIG.endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-goog-api-key": GEMINI_CONFIG.apiKey,
     },
-    body: JSON.stringify({ contents: [{ parts: [{ text: instrucao }] }] }),
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: instrucao }] }],
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+    }),
   });
 
   if (!resposta.ok) {
@@ -69,13 +84,12 @@ async function nexaiaPerguntar(instrucao) {
   }
 
   const dados = await resposta.json();
-  const texto =
+  const parts =
     dados.candidates &&
     dados.candidates[0] &&
     dados.candidates[0].content &&
-    dados.candidates[0].content.parts &&
-    dados.candidates[0].content.parts[0] &&
-    dados.candidates[0].content.parts[0].text;
+    dados.candidates[0].content.parts;
+  const texto = (parts || []).map(function (p) { return p.text || ""; }).join("\n").trim();
 
   if (!texto) throw new Error("A IA não devolveu resposta.");
   return texto.trim();
@@ -123,19 +137,19 @@ async function nexaiaTranscreverAudio(blob) {
           { inline_data: { mime_type: mime, data: base64 } },
         ],
       }],
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
     }),
   });
   if (!resposta.ok) {
     throw new Error("Gemini API indisponível (" + resposta.status + ")");
   }
   const dados = await resposta.json();
-  const texto =
+  const parts =
     dados.candidates &&
     dados.candidates[0] &&
     dados.candidates[0].content &&
-    dados.candidates[0].content.parts &&
-    dados.candidates[0].content.parts[0] &&
-    dados.candidates[0].content.parts[0].text;
+    dados.candidates[0].content.parts;
+  const texto = (parts || []).map(function (p) { return p.text || ""; }).join("\n").trim();
   if (!texto) throw new Error("A IA não devolveu transcrição.");
   return texto.trim().replace(/^["']|["']$/g, "");
 }
