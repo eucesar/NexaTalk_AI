@@ -9,8 +9,8 @@ Este repositório é o projeto **NexaTalk AI** (Challenge FIAP / Claro): uma pla
 | | |
 |---|---|
 | **Repositório** | https://github.com/eucesar/NexaTalk_AI |
-| **Demo visual (GitHub Pages)** | https://eucesar.github.io/NexaTalk_AI/ |
-| **Como rodar de verdade** | Clone + Live Server (passos abaixo). Sem Node, sem npm. |
+| **Demo visual (Vercel)** | https://nexa-talk-ai.vercel.app |
+| **Como rodar de verdade** | Clone + Live Server (passos abaixo). Sem Node, sem npm. | Ou pode acessar o link do vercel
 
 > A GitHub Pages mostra o **layout**. Login, banco e IA completos rodam **no computador**, porque a chave da Gemini não sobe no GitHub.
 
