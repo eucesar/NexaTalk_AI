@@ -204,29 +204,80 @@ flowchart TB
 
 ## Rodar localmente
 
-Não precisa de Node, npm nem banco local. O Firebase já está configurado; só a IA precisa de uma chave.
+Em cerca de 5 minutos você tem o projeto completo, com a IA funcionando, no seu computador.
+Não precisa instalar Node, npm nem banco de dados: o Firebase já está configurado e **só a IA precisa de uma chave sua** (gratuita).
 
-**1. Clone o repositório**
+**Você vai precisar de:**
+
+- [VS Code](https://code.visualstudio.com/) (ou Cursor)
+- Uma conta Google, para gerar a chave da Gemini
+- Chrome, Edge, Firefox ou Brave
+
+### 1. Baixe o projeto
+
+Com Git:
 
 ```bash
 git clone https://github.com/eucesar/NexaTalk_AI.git
 ```
 
-**2. Configure a chave da Gemini**
+Sem Git: na página do repositório, clique em **Code → Download ZIP** e extraia a pasta.
 
-Copie `js/config.example.js` para `js/config.js` e troque o valor de `apiKey`:
+Depois abra a pasta `NexaTalk_AI` no VS Code (**File → Open Folder**).
+
+### 2. Gere sua chave da Gemini (grátis)
+
+1. Acesse o [Google AI Studio](https://aistudio.google.com/apikey) e entre com sua conta Google.
+2. Clique em **Create API key**.
+3. Copie a chave gerada.
+
+### 3. Crie o arquivo `js/config.js`
+
+1. Dentro da pasta `js`, faça uma cópia de `config.example.js`.
+2. Renomeie a cópia para **`config.js`**.
+
+> **Atenção no Windows:** se as extensões estiverem ocultas, o arquivo pode virar `config.js.js` sem você perceber. Pelo próprio VS Code não tem erro: clique com o botão direito em `config.example.js` → **Copy**, cole na pasta `js` e renomeie com **F2**.
+
+3. Abra o `config.js` e cole a sua chave **no primeiro `apiKey`**, o que está dentro de `GEMINI_CONFIG`:
 
 ```javascript
-apiKey: "SUA_CHAVE_GEMINI_AQUI",
+const GEMINI_CONFIG = {
+  apiKey: "COLE_SUA_CHAVE_AQUI",   // ← só este
+  model: "gemini-2.5-flash",
+  ...
+};
 ```
 
-A chave é gratuita no [Google AI Studio](https://aistudio.google.com/apikey). O `js/config.js` está no `.gitignore` e nunca sobe para o GitHub.
+> **Não mexa no `apiKey` do `FIREBASE_CONFIG`**, mais abaixo no mesmo arquivo. Ele já está certo e é o que faz o login e o banco funcionarem.
 
-> Sem o `config.js`, o app usa o `config.example.js`: login e banco funcionam, só a IA fica desligada.
+4. Salve o arquivo. O `config.js` está no `.gitignore`, então a sua chave nunca sobe para o GitHub.
 
-**3. Suba o site**
+### 4. Suba o site
 
-Abra a pasta no VS Code ou Cursor, instale a extensão **Live Server** e clique com o botão direito em `index.html` → **Open with Live Server** (porta 5500).
+1. No VS Code, instale a extensão **Live Server** (o projeto já a sugere ao abrir a pasta).
+2. Clique com o botão direito em `index.html` → **Open with Live Server**.
+3. O navegador abre em `http://127.0.0.1:5500`.
+
+> Não abra o `index.html` com dois cliques. Pelo endereço `file://` o login do Firebase não funciona — use sempre o Live Server.
+
+### 5. Confirme que a IA está ligada
+
+1. Entre com `cliente@nexatalk.com` / `nexa123` (já vem preenchido).
+2. Clique em **Iniciar Atendimento**, escreva *"Como emito a segunda via do meu boleto?"* e envie.
+3. Em poucos segundos deve aparecer **"Resolvido pela IA!"** com a resposta. Se apareceu, está tudo funcionando.
+
+### Deu erro?
+
+| O que aparece | O que fazer |
+|---|---|
+| **"Chave da IA inválida"** | A chave está errada, faltando ou no `apiKey` do Firebase em vez do da Gemini. Confira o passo 3. |
+| **"Limite da IA atingido"** | A cota gratuita do dia acabou. Espere algumas horas ou gere outra chave. |
+| **"A IA demorou demais"** | Instabilidade momentânea da Gemini. Toque em **Tentar Novamente**. |
+| Login não funciona | Você abriu pelo `file://`. Use o Live Server (passo 4). |
+| A IA não responde em lugar nenhum | O arquivo não se chama exatamente `config.js` (veja o aviso do Windows) ou não está dentro da pasta `js`. |
+| Mudei o arquivo e nada mudou | Recarregue a página com **Ctrl + F5**. |
+
+> Sem o `config.js`, o app usa automaticamente o `config.example.js`: login, banco e central do operador continuam funcionando, só a IA fica desligada.
 
 ---
 

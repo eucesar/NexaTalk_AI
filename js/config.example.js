@@ -1,9 +1,10 @@
 // ============================================================
 // NexaTalk AI - Configurações do projeto (EXEMPLO)
 // ============================================================
-// 1. Copie este arquivo para config.js
-// 2. Cole a chave Gemini (PDF FIAP ON) em GEMINI_CONFIG.apiKey
-// 3. O Firebase abaixo já pode ser usado como está
+// 1. Copie este arquivo para config.js (mesma pasta js/)
+// 2. Cole sua chave Gemini em GEMINI_CONFIG.apiKey
+//    (gratuita em https://aistudio.google.com/apikey)
+// 3. NÃO altere o FIREBASE_CONFIG: ele já está pronto para uso
 // ============================================================
 
 // ----- Gemini API -----
