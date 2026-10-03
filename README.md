@@ -1,252 +1,304 @@
+<div align="center">
+
+<img src="img/icon-nexa.png" alt="NexaTalk AI" width="110">
+
 # NexaTalk AI
 
-**ITSM B2B com inteligência artificial** — o cliente abre o chamado no celular, a IA faz a triagem, o operador trata no desktop com um copiloto e o ciclo fecha no Firebase em tempo real.
+### Atendimento corporativo (ITSM B2B) em que a IA resolve primeiro e o humano entra só quando precisa
 
-Olá, professor! Sou **Cesar Iglesias (RM 98007)**.
+O cliente abre o chamado no celular, a **NexaIA** (Google Gemini) faz a triagem em segundos, resolve sozinha o que dá e manda o resto, já analisado, para uma central de operadores com copiloto. Tudo sincronizado em tempo real no Firebase.
 
-Este repositório é o projeto **NexaTalk AI** (Challenge FIAP / Claro): uma plataforma de atendimento corporativo (ITSM) em que a **NexaIA** (Google Gemini) reduz trabalho manual do time e o cliente acompanha tudo num app mobile web.
+<br>
 
-| | |
-|---|---|
-| **Repositório** | https://github.com/eucesar/NexaTalk_AI |
-| **Demo visual (Vercel)** | https://nexa-talk-ai.vercel.app |
-| **Como rodar de verdade** | Clone + Live Server (passos abaixo). Sem Node, sem npm. | Ou pode acessar o link do vercel
+[![Demo online](https://img.shields.io/badge/▶_Demo_online-nexa--talk--ai.vercel.app-7c3aed?style=for-the-badge)](https://nexa-talk-ai.vercel.app)
+[![Repositório](https://img.shields.io/badge/GitHub-eucesar%2FNexaTalk__AI-181717?style=for-the-badge&logo=github)](https://github.com/eucesar/NexaTalk_AI)
 
-> A GitHub Pages mostra o **layout**. Login, banco e IA completos rodam **no computador**, porque a chave da Gemini não sobe no GitHub.
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
+![Bootstrap](https://img.shields.io/badge/Bootstrap_5.3-7952B3?style=flat-square&logo=bootstrap&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)
+![Gemini](https://img.shields.io/badge/Google_Gemini_2.5_Flash-8E75B2?style=flat-square&logo=googlegemini&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=flat-square&logo=chartdotjs&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
+
+<sub>Projeto do <b>Challenge FIAP × Claro</b> · desenvolvido por <a href="https://github.com/eucesar">Cesar Iglesias</a></sub>
+
+</div>
 
 ---
 
-## O que é este projeto
+## Teste em 30 segundos
 
-Empresas B2B recebem dezenas de chamados por dia (cobrança, logística, suporte, cadastro). Um ITSM clássico joga tudo numa fila humana. O NexaTalk AI inverte isso:
+Abra **[nexa-talk-ai.vercel.app](https://nexa-talk-ai.vercel.app)** e entre com as contas de demonstração. Os campos do cliente já vêm preenchidos.
 
-1. O **cliente** descreve o problema no app (moldura de celular).
-2. A **NexaIA** analisa intenção, prioridade, sentimento e risco.
-3. Se der para resolver na hora (dúvida, 2ª via, orientação), a IA **fecha sozinha**.
-4. Se exigir ação humana (estorno, fraude, Procon, cancelamento), o chamado cai **ao vivo** na central do **operador** (tela de notebook).
-5. O operador quase não digita: plano de ação, resposta pronta, “resolver com IA em 1 clique”, qualidade auditada pela própria IA.
+| Experiência | Onde entrar | E-mail | Senha |
+|---|---|---|---|
+| 📱 **App do cliente** (mobile) | Tela inicial | `cliente@nexatalk.com` | `nexa123` |
+| 🖥️ **Central do operador** (desktop) | Botão **Acessar Central do Operador** | `operador@nexatalk.com` | `nexa123` |
+| 👔 Supervisor (opcional) | Mesma central | `supervisor@nexatalk.com` | `nexa123` |
+
+> **O que funciona na demo online:** login, banco de dados em tempo real, os chamados da conta demo, a fila do operador, o Centro de Comando, a Arena e a gamificação.
+> **Os recursos de IA generativa** (triagem, copiloto, chat, voz) usam uma chave da Gemini que fica só na máquina local e não é publicada. Para ver a IA ao vivo, rode o projeto localmente — leva 2 minutos ([veja como](#rodar-localmente)).
+
+---
+
+## O problema
+
+Empresas B2B recebem dezenas de chamados por dia: cobrança, logística, suporte, cadastro. Um ITSM clássico joga tudo numa fila humana — inclusive a pergunta "como tiro a 2ª via do boleto?". O time gasta horas com o que poderia ser automático e os casos críticos (fraude, Procon, cancelamento) esperam junto com o resto.
+
+## A solução
+
+O NexaTalk AI inverte a lógica: **a IA atende primeiro e o humano vira exceção.**
+
+```mermaid
+flowchart LR
+    A["📱 Cliente descreve<br/>o problema no app"] --> B{"🤖 NexaIA analisa<br/>intenção, prioridade,<br/>sentimento e risco"}
+    B -->|"Dúvida, 2ª via,<br/>orientação"| C["✅ Resolvido pela IA<br/>na hora, sem fila"]
+    B -->|"Estorno, fraude,<br/>Procon, cancelamento"| D["🖥️ Cai ao vivo na<br/>central do operador"]
+    D --> E["🧠 Copiloto sugere plano<br/>e resposta pronta"]
+    E --> F["⚡ Operador resolve<br/>com 1 clique"]
+    F --> G["📲 Cliente vê Concluído<br/>e avalia (NPS)"]
+    C --> G
+```
+
+1. O **cliente** descreve o problema no app — digitando ou falando.
+2. A **NexaIA** classifica intenção, prioridade, sentimento e risco.
+3. Se der para resolver na hora, a IA **fecha o chamado sozinha**.
+4. Se exigir ação humana, o chamado aparece **em tempo real** na central do operador, já analisado.
+5. O operador quase não digita: plano de ação, resposta pronta e **"Resolver com IA em 1 clique"**, com a qualidade auditada pela própria IA.
 6. O cliente vê a resposta e o status **Concluído** no app.
 
-Tudo persiste no **Firebase** (Authentication + Cloud Firestore).
+---
+
+## Destaques
+
+- 🤖 **Triagem com auto-resolução** — a IA decide sozinha o que resolve e o que escala, seguindo uma política clara de risco.
+- 🎙️ **Abrir chamado por voz** — o cliente fala, a Gemini transcreve e preenche o texto.
+- 🧠 **Copiloto do operador** — radar de riscos, plano de ação, resposta pronta, playbook de churn e fraude.
+- ⚡ **Resolver com 1 clique** — a IA escreve a resposta final e a auditoria de qualidade dá nota de empatia, clareza e detalhe.
+- 📊 **Centro de Comando** — KPIs ao vivo (SLA, NPS, volume, humor da fila) e relatório executivo escrito pela IA.
+- 🎮 **Modo Jogo** — XP, níveis, conquistas, ranking ao vivo e um Dojo em que a IA simula clientes difíceis para treinar o time.
+- 📚 **Base de Conhecimento Viva** — a IA minera a fila e escreve artigos; o operador aprova.
+- 📲 **PWA** — instala na tela inicial do celular.
 
 ---
 
 ## Duas experiências
 
-### App do cliente (mobile web)
+### 📱 App do cliente (mobile web)
 
-Moldura de celular, tema dark animado. Login/cadastro com Firebase Auth.
+Moldura de celular, tema dark animado, login com Firebase Auth.
 
-- Abrir chamado com “melhorar descrição com IA”, **voz** (grava e a Gemini transcreve) e simplificar/traduzir
-- Triagem que resolve na hora **ou** encaminha
-- Protocolo, meus atendimentos, detalhes e mensagem da operação
-- **Falar com a NexaIA** (chat enriquecido com contexto dos chamados)
+- Abrir chamado com **"melhorar descrição com IA"**, **voz** e opção de simplificar ou traduzir o texto
+- Triagem que resolve na hora **ou** encaminha com protocolo
+- Meus atendimentos, detalhes e a mensagem que a operação enviou
+- **Falar com a NexaIA** — chat que conhece os chamados e o perfil do cliente
 - Consulta **sem login** por protocolo ou e-mail
-- **NPS** após concluir (estrelas + “a IA resolveu?”)
+- **NPS** depois da conclusão (estrelas + "a IA resolveu?")
 - **Perfil Nexa** com XP, níveis e conquistas
-- **PWA** (instalar na tela inicial do celular)
 
-**Login de demo do cliente (já vem preenchido):** `cliente@nexatalk.com` · senha `nexa123`  
-A conta **já existe** no Firebase (nome **Cliente Demo**). É só **Entrar**. Se o Auth pedir cadastro num clone novo, use **Criar conta** com os mesmos dados.
+A conta `cliente@nexatalk.com` já vem com uma jornada completa para explorar:
 
-Essa conta já tem uma jornada pronta para a apresentação (app + fila do operador):
-
-| Chamado | O que mostra |
+| Chamado | Situação |
 |---|---|
-| Cobrança duplicada | Aberto na fila, ainda sem operador |
-| App fechando no Android | Em tratamento pela **Ana Operadora** (com mensagem) |
-| Pedido #77412 atrasado | Em tratamento pela **Marina Duarte** (com mensagem) |
-| 2ª via de boleto · planos · cadastro | **Resolvidos pela IA** |
-| Cancelamento Premium | **Concluído** pelo **Carlos Supervisor** |
+| Cobrança duplicada | Aberto na fila, aguardando operador |
+| App fechando no Android | Em tratamento pela **Ana Operadora**, com mensagem ao cliente |
+| Pedido #77412 atrasado | Em tratamento pela **Marina Duarte**, com mensagem ao cliente |
+| 2ª via de boleto · dúvida de planos · cadastro | **Resolvidos pela IA** |
+| Cancelamento do plano Premium | **Concluído** pelo **Carlos Supervisor** |
 
-No **Perfil Nexa**: 360 XP, nível Cliente Estrela e as 4 conquistas.
+No **Perfil Nexa**: 360 XP, nível *Cliente Estrela* e as 4 conquistas desbloqueadas.
 
-### Central do operador (desktop)
+### 🖥️ Central do operador (desktop)
 
-Layout de sistema corporativo, com barra lateral.
+Layout de sistema corporativo com barra lateral.
 
-| Módulo | Função |
+| Módulo | O que faz |
 |---|---|
-| **Login operacional** | Acesso da equipe (credencial demo abaixo) |
-| **Fila de Atendimentos** | Tempo real, filtros, busca, “Priorizar com IA”, pulso emocional, próximo melhor chamado e **SLA** (ok / alerta / estourado) |
-| **Detalhe do chamado** | Caso completo, atribuir, validar área, copiloto, playbook de **churn/fraude**, “Resolver com IA em 1 clique” |
-| **Centro de Comando** | KPIs ao vivo (inclui SLA e NPS), gráficos, filtros e relatório executivo da NexaIA |
+| **Fila de Atendimentos** | Tempo real, filtros, busca, "Priorizar com IA", pulso emocional da fila, próximo melhor chamado e **SLA** (ok / alerta / estourado) |
+| **Detalhe do chamado** | Caso completo, atribuir a mim, validar a área sugerida pela IA, copiloto, playbook de churn e fraude, **Resolver com IA em 1 clique** |
+| **Histórico** | Linha do tempo do caso (cliente · IA · equipe) com resumo da NexaIA |
+| **Centro de Comando** | KPIs ao vivo (SLA, NPS), gráficos, filtros e relatório executivo da IA |
 | **Arena ao Vivo** | Ranking do time, pódio e feed de XP em tempo real |
-| **Meu Desempenho** | Nível, empatia/clareza/detalhe, conquistas e Coach IA |
-| **Dojo de Treinamento** | A IA simula um cliente difícil; o operador responde e ganha nota + XP |
-| **Base de Conhecimento Viva** | A IA minera a fila, escreve artigos; o operador aprova e copia a solução |
-| **Ingestão de Dados** | Recria o cenário demo: jornada da conta `cliente@nexatalk.com` + fila, Arena, operadores e artigos |
-| **Histórico** | Timeline visual completa do caso (cliente · IA · equipe) + resumo da NexaIA (+5 XP) |
-
-**Login demo do operador:** `operador@nexatalk.com` · senha `nexa123`  
-(também vale `supervisor@nexatalk.com` · senha `nexa123`)
-
-Na home do app: **Acessar Central do Operador**. Na sidebar: **App do Cliente**.
+| **Meu Desempenho** | Nível, notas de empatia/clareza/detalhe, conquistas e Coach IA |
+| **Dojo de Treinamento** | A IA simula um cliente difícil; o operador responde e recebe nota e XP |
+| **Base de Conhecimento Viva** | A IA escreve artigos a partir da fila; o operador aprova |
+| **Ingestão de Dados** | Recria o cenário de demonstração completo com um clique |
 
 ---
 
-## Inteligência artificial (onde a NexaIA entra)
+## Onde a IA entra
 
-- Triagem e auto-resolução na abertura do chamado
-- Melhoria da descrição, simplificar linguagem e traduzir (ES)
-- **Transcrição de voz** (grava o microfone → Gemini devolve o texto no campo)
-- **Chat conversacional** com o cliente (contexto de chamados, perfil e Base Viva)
-- Insights da fila e relatório executivo do Centro de Comando
-- Plano de ação, rascunho de resposta e resolução em 1 clique
-- Auditoria de qualidade (empatia, clareza, detalhe) ao concluir
-- **Resumo do histórico** (timeline do caso em 3 linhas)
-- Cliente simulado no Dojo e mineração de artigos na base viva
-- Assistente contextual em todas as telas do fluxo
+Toda a inteligência usa o **Google Gemini 2.5 Flash**, com o modo de raciocínio estendido desligado para responder em poucos segundos.
 
-Se a cota da Gemini estourar no dia, o app **não quebra**: a fila, o banco e a gamificação seguem; várias telas têm fallback local.
+| No app do cliente | Na central do operador |
+|---|---|
+| Triagem e auto-resolução | Insights e priorização da fila |
+| Melhorar, simplificar e traduzir a descrição | Plano de ação e resposta pronta |
+| Transcrição de voz | Resolver com 1 clique |
+| Chat com contexto dos chamados | Auditoria de qualidade da resposta |
+| Assistente em todas as telas | Resumo do histórico do caso |
+| | Cliente simulado no Dojo e artigos da Base Viva |
+| | Relatório executivo do Centro de Comando |
+
+Se a cota da Gemini acabar, **o app não quebra**: fila, banco de dados e gamificação continuam, e várias telas têm um plano B local.
 
 ---
 
-## Modo Jogo (gamificação)
+## Modo Jogo
 
-Cliente e operador sobem de nível com XP no Firestore (`perfis_jogo` + `eventos_jogo`).
+Cliente e operador sobem de nível com XP salvo no Firestore.
 
 | Ação | XP |
 |---|---|
-| Cliente abre chamado | +20 |
+| Cliente abre um chamado | +20 |
 | Cliente resolve com a IA na hora | +30 |
 | Operador assume o caso | +10 |
-| Validar / redirecionar área | +10 |
-| Enviar resposta | +15 |
+| Validar ou redirecionar a área | +10 |
+| Enviar resposta ao cliente | +15 |
 | Concluir chamado | +50 (+ bônus de qualidade) |
 | Resolver com 1 clique | +35 (+ bônus) |
 | Treino no Dojo | +15 / +20 / +30 (+10 se nota ≥ 80) |
 | Publicar artigo na Base Viva | +15 |
-| Operador: resumir histórico com IA | +5 |
+| Resumir histórico com IA | +5 |
 
 Níveis: 0 → 100 → 300 → 700 → 1200 → 2000 XP.
 
 ---
 
-## Como o professor roda o projeto do zero
+## Arquitetura
 
-Não precisa instalar Node, npm nem banco local.
+Sem backend próprio e sem build: o front-end fala direto com o Firebase e com a API da Gemini.
 
-### 1. Clonar
+```mermaid
+flowchart TB
+    subgraph Front["Front-end estático (Vercel / Live Server)"]
+        CLI["📱 App do cliente<br/>index.html + paginas/"]
+        OPS["🖥️ Central do operador<br/>operador/"]
+    end
+    subgraph Firebase["Firebase (Google Cloud)"]
+        AUTH["Authentication"]
+        DB[("Cloud Firestore<br/>tempo real")]
+    end
+    GEM["🤖 Google Gemini 2.5 Flash"]
+
+    CLI --> AUTH
+    CLI <--> DB
+    OPS <--> DB
+    CLI --> GEM
+    OPS --> GEM
+```
+
+| Coleção no Firestore | Conteúdo |
+|---|---|
+| `usuarios` | Cadastro do cliente |
+| `atendimentos` | Chamados, compartilhados entre cliente e operador |
+| `perfis_jogo` | XP e notas de qualidade |
+| `eventos_jogo` | Feed da Arena |
+| `base_conhecimento` | Artigos da Base Viva |
+| `chats_nexaia` | Conversa do cliente com a NexaIA |
+
+---
+
+## Rodar localmente
+
+Não precisa de Node, npm nem banco local. O Firebase já está configurado; só a IA precisa de uma chave.
+
+**1. Clone o repositório**
 
 ```bash
 git clone https://github.com/eucesar/NexaTalk_AI.git
 ```
 
-Abra a pasta no **VS Code** ou **Cursor**.
+**2. Configure a chave da Gemini**
 
-### 2. Única chave que precisa colar: Gemini
-
-O Firebase **já está no código**. Só a IA pede a chave do grupo.
-
-1. Copie o arquivo de exemplo:
-
-```text
-js/config.example.js  →  js/config.js
-```
-
-(No Windows: copie o arquivo na pasta `js` e renomeie a cópia para `config.js`.)
-
-2. Abra `js/config.js` e troque:
+Copie `js/config.example.js` para `js/config.js` e troque o valor de `apiKey`:
 
 ```javascript
 apiKey: "SUA_CHAVE_GEMINI_AQUI",
 ```
 
-pela chave do **PDF de entrega FIAP ON** do grupo (começa com `AQ.`).
+A chave é gratuita no [Google AI Studio](https://aistudio.google.com/apikey). O `js/config.js` está no `.gitignore` e nunca sobe para o GitHub.
 
-3. Salve. **Não commite** o `js/config.js` — ele está no `.gitignore`.
+> Sem o `config.js`, o app usa o `config.example.js`: login e banco funcionam, só a IA fica desligada.
 
-Se o `config.js` não existir, o app cai no `config.example.js` (Firebase funciona; a IA só responde depois da chave).
+**3. Suba o site**
 
-### 3. Subir o site
+Abra a pasta no VS Code ou Cursor, instale a extensão **Live Server** e clique com o botão direito em `index.html` → **Open with Live Server** (porta 5500).
 
-1. Instale a extensão **Live Server** (já sugerida em `.vscode/extensions.json`).
-2. Clique com o botão direito em `index.html` → **Open with Live Server**.
-3. Porta **5500** (já configurada em `.vscode/settings.json`).
+---
 
-Chrome, Edge, Firefox, Opera ou Brave.
-
-### 4. Roteiro de demonstração (5 minutos)
+## Roteiro de demonstração (5 minutos)
 
 **Cliente**
 
-1. Home → e-mail e senha já vêm `cliente@nexatalk.com` / `nexa123` → **Entrar**.
-2. Mostre **Meus Atendimentos** (abertos, em tratamento e resolvidos) e o **Perfil Nexa** (XP e conquistas).
-3. Opcional, ao vivo: **Iniciar Atendimento** e teste estes textos:
+1. Entre com `cliente@nexatalk.com` / `nexa123`.
+2. Veja **Meus Atendimentos** (abertos, em tratamento e resolvidos) e o **Perfil Nexa**.
+3. Com a IA ligada, abra um chamado novo e compare os dois caminhos:
 
-Resolvido pela IA (não vai para a fila humana):
+Este a IA resolve sozinha, sem ir para a fila:
 
 ```text
 Como faço para emitir a segunda via do meu boleto? E qual o horário de atendimento de vocês?
 ```
 
-Encaminhado ao operador (prioridade alta / risco):
+Este vai para o operador com prioridade alta:
 
 ```text
 Fui cobrado duas vezes na fatura deste mês e quero o estorno do valor duplicado. Se não resolverem, vou abrir reclamação no Procon.
 ```
 
-4. Anote o protocolo do chamado novo e veja na lista (os outros 7 da demo continuam lá).
-
 **Operador**
 
-1. Home → **Acessar Central do Operador**  
-   `operador@nexatalk.com` / `nexa123`
-2. A **Fila** já lista os chamados da conta demo (um livre + dois com Ana e Marina). Abra um caso → **Atribuir a mim** → **Resolver com IA em 1 clique** (ou **Ver Histórico** para a timeline + resumo da NexaIA).
-3. **Centro de Comando** → filtre 7 dias / Financeiro / Alta e gere o relatório executivo.
-4. Volte no app do cliente: o chamado tratado aparece **Concluído** com a mensagem da operação (e o cliente pode dar NPS).
-5. Só rode **Ingestão de Dados** se a base estiver vazia ou você quiser resetar o cenário (ela reata a jornada em `cliente@nexatalk.com`).
+1. Na tela inicial, clique em **Acessar Central do Operador** e entre com `operador@nexatalk.com` / `nexa123`.
+2. Na **Fila**, abra um caso → **Atribuir a mim** → **Resolver com IA em 1 clique** (ou **Ver Histórico** para a linha do tempo).
+3. No **Centro de Comando**, filtre 7 dias / Financeiro / Alta e gere o relatório executivo.
+4. Volte ao app do cliente: o chamado aparece **Concluído** e o cliente pode dar a nota (NPS).
 
-**Dica:** no app do cliente, o botão **Falar com a NexaIA** abre o chat contextual. Em **Novo Atendimento**, use **Falar o problema (voz)** (permita o microfone → fale → toque de novo para parar → a Gemini preenche o texto).
-
----
-
-## Chaves e serviços
-
-| Serviço | Precisa colar algo? | Onde |
-|---|---|---|
-| **Firebase** (Auth + Firestore) | Não | `FIREBASE_CONFIG` já preenchido em `js/config.example.js` (projeto `nexatalkai-d6540`) |
-| **Google Gemini** | Sim, 1 linha | `GEMINI_CONFIG.apiKey` em `js/config.js` (copie do example). Modelo: `gemini-2.5-flash` |
-
-Coleções no Firestore (criadas automaticamente no uso / ingestão):
-
-- `usuarios` — cadastro do cliente  
-- `atendimentos` — chamados (cliente ↔ operador)  
-- `perfis_jogo` — XP e qualidade  
-- `eventos_jogo` — feed da Arena  
-- `base_conhecimento` — artigos da Base Viva  
-- `chats_nexaia` — conversa do cliente com a NexaIA  
+Se a base estiver vazia, use **Ingestão de Dados** para recriar o cenário completo.
 
 ---
 
 ## Stack
 
-- HTML5, CSS3 e JavaScript (sem build)
-- Bootstrap 5.3 + Bootstrap Icons
-- Chart.js (Centro de Comando)
-- Firebase Authentication + Cloud Firestore (GCP)
-- Google Gemini API (`gemini-2.5-flash`)
-- PWA (`manifest.json` + `sw.js`)
-- VS Code / Cursor + Live Server
-- Git / GitHub
-
-### Pastas
+| Camada | Tecnologia |
+|---|---|
+| Interface | HTML5, CSS3, JavaScript puro (sem build), Bootstrap 5.3, Bootstrap Icons |
+| Gráficos | Chart.js |
+| Autenticação e dados | Firebase Authentication + Cloud Firestore |
+| Inteligência artificial | Google Gemini API (`gemini-2.5-flash`) |
+| Mobile | PWA (`manifest.json` + `sw.js`) |
+| Deploy | Vercel |
 
 ```text
-index.html                 App do cliente (entrada)
-paginas/                   Telas do cliente (inclui chat-nexaia.html)
-operador/                  Central desktop (fila, detalhe, histórico, comando…)
-js/                        firebase, gemini, nexaia, operador, jogo, config
-css/                       estilo.css (mobile) · operador.css (desktop)
-img/                       Ícone PWA
-manifest.json · sw.js      Progressive Web App
-firestore.rules            Regras do protótipo (leitura/escrita liberadas para o MVP)
+index.html            App do cliente (entrada)
+paginas/              Telas do cliente (triagem, chat, detalhes, perfil…)
+operador/             Central do operador (fila, detalhe, histórico, comando, arena…)
+js/                   firebase · gemini · nexaia · operador · jogo · config
+css/                  estilo.css (mobile) · operador.css (desktop)
+img/                  Ícone do PWA
+manifest.json, sw.js  Progressive Web App
+firestore.rules       Regras do Firestore
 ```
 
 ---
 
-Qualquer dúvida, estou à disposição.
+## Próximos passos
 
-**Cesar Iglesias (RM 98007)**  
-NexaTalk AI — ITSM B2B com inteligência artificial
+Este é um protótipo acadêmico funcional. Para produção, os próximos passos seriam:
+
+- Login do operador com Firebase Auth e papéis (hoje é um acesso de demonstração).
+- Regras do Firestore restritas por usuário e papel (hoje estão abertas para o protótipo).
+- Chamadas à Gemini por um backend ou Cloud Function, para a chave nunca ficar no navegador.
+
+---
+
+<div align="center">
+
+Desenvolvido por **[Cesar Iglesias](https://github.com/eucesar)** · RM 98007 · Challenge FIAP × Claro
+
+Se o projeto chamou sua atenção, deixe uma ⭐ no repositório.
+
+</div>
